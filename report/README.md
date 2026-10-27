@@ -26,8 +26,8 @@ latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
 
-The score table, per-seed table, dataset-count macros, source inventory, analysis,
-and conclusion inputs are generated from the scored run. Complete 80–1,000-item
+The abstract scores, primary and larger-pool score tables, per-seed table,
+dataset-count macros, source inventory, analysis, and conclusion inputs are generated from the scored run. Complete 80–1,000-item
 groups are split in half; the comparison uses seeds 42, 43, and 44.
 Edit methodological text in `main.tex` and the native TikZ method figure in
 `figures/asrp_method.tex`. Figure 2 retains the requested maximum width of
@@ -36,3 +36,6 @@ Edit methodological text in `main.tex` and the native TikZ method figure in
 Per-item predictions and acquisition trajectories are released in
 [`results/proxy`](../results/proxy). These are public-proxy results, not private
 Codabench results. The NeurIPS checklist is not included in this competition report.
+
+The runtime appendix specifies metadata-prior fallbacks, kernel preprocessing,
+Beta mixture weights, and the conditional covariance acquisition rule.

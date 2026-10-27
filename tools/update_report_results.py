@@ -34,7 +34,10 @@ def main():
     for k in ORDER:
         seed_table+=LABELS[k]+' & '+' & '.join(f"{c[k]['per_seed_alc'][str(s)]:.4f}" for s in result['seeds'])+f" & {c[k]['alc_seed_sd']:.4f}"+r'\\'+'\n'
     save('results_seed_table.tex',seed_table+r'\bottomrule'+'\n'+r'\end{tabular}')
+    large_rows=''.join(LABELS[k]+' & '+' & '.join(f'{v:.4f}' for v in large['combinations'][k]['brier']+[large['combinations'][k]['alc']])+r'\\'+'\n' for k in ORDER)
+    save('results_large_table.tex',header+large_rows+r'\bottomrule'+'\n'+r'\end{tabular}')
     a,b=c['asrp_adaptive'],c['empirical_mean_random']
+    save('results_abstract.tex',f"ASRP + Adaptive achieves a mean Brier ALC of ${a['alc']:.4f}$, compared with ${c['asrp_random']['alc']:.4f}$ for ASRP + Random and ${b['alc']:.4f}$ for Empirical Mean + Random (lower is better).")
     wins=sum(x<y for x,y in zip(a['brier'],b['brier']));gain=b['alc']-a['alc']
     overview=(r'Table~\ref{tab:proxy} reports the \textbf{four predictor--acquisition combinations}, averaged equally over groups and then over seeds 42, 43, and 44. '
               +f"ASRP + Adaptive has a mean Brier ALC of ${a['alc']:.4f}$, compared with ${b['alc']:.4f}$ for Empirical Mean + Random "
@@ -47,19 +50,28 @@ def main():
         x,y=c['asrp_'+policy],c['empirical_mean_'+policy];d=y['alc']-x['alc']
         analysis+=f"Under {policy.capitalize()} acquisition, ASRP's mean ALC is ${x['alc']:.4f}$ versus ${y['alc']:.4f}$ for Empirical Mean, "
         analysis+=f"a {'reduction' if d>=0 else 'increase'} of ${abs(d):.4f}$. "
-    analysis+=r'At budget zero the acquisition policies have no effect. The Rasch hybrid supplies the initial prediction; the kernel branch receives increasing weight as labels become available.'+'\n\n'
+    analysis+=f"Empirical Mean + Random rises from ${b['brier'][0]:.4f}$ at zero labels to ${b['brier'][1]:.4f}$ at one label: a single outcome makes its prediction either zero or one. ASRP smooths early evidence using public priors. "
+    analysis+=r'At budget zero the acquisition policies have no effect. The Rasch hybrid followed by topic correction supplies the initial prediction; the kernel branch receives increasing weight as labels become available.'+'\n\n'
     analysis+=r'\paragraph{Acquisition effect with the predictor held fixed.}'+'\n'
     for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
         e=result['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
         seed_phrase="all three seeds" if e["seeds_improved"]==3 else f"{e['seeds_improved']} of the three seeds"
         analysis+=f"For {label}, Adaptive {'lowers' if d<0 else 'raises'} mean ALC by ${abs(d):.4f}$ relative to Random, and has lower ALC in {seed_phrase}. "
+    smallest_seed=min(result['acquisition_effect']['asrp']['per_seed'],key=lambda seed:abs(result['acquisition_effect']['asrp']['per_seed'][seed]))
+    smallest_diff=result['acquisition_effect']['asrp']['per_seed'][smallest_seed]
+    analysis+=f"The closest ASRP pair differs by only ${smallest_diff:+.5f}$ (Adaptive minus Random, seed {smallest_seed}). "
     analysis+=r'Table~\ref{tab:seeds} shows the individual seed results and their sample standard deviation; three seeds summarize sensitivity to these draws rather than establishing universal superiority.'+'\n\n'
     analysis+=r'\paragraph{Groups with more room for selection.}'+'\n'
-    analysis+=f"The prespecified subset of {large['n_groups']} groups with at least 160 items leaves at least 80 acquisition candidates. "
+    analysis+=f"The prespecified subset of {large['n_groups']} groups with at least 160 items leaves at least 80 acquisition candidates "+r'(Table~\ref{tab:large}). '
     for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
         e=large['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
         analysis+=f"In this subset, Adaptive {'lowers' if d<0 else 'raises'} {label}'s mean ALC by ${abs(d):.4f}$ relative to Random. "
     analysis+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
+    max_budget=max(result['budgets'])
+    forced_groups=[g for g in manifest['groups'] if (g['n_items']+1)//2-min(16,max(0,(g['n_items']+1)//2-max_budget))<=max_budget]
+    if len(forced_groups)==1:
+        size=forced_groups[0]['n_items'];warmup=(size+1)//2-max_budget
+        analysis+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
     analysis+=r'Topic calibration is active; the source-name guard remains inactive because the benchmark aliases are anonymous.'
     save('results_analysis.tex',analysis)
     d=result['acquisition_effect']['asrp']['adaptive_minus_random_alc']
