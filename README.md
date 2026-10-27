@@ -16,7 +16,6 @@ artifacts/manifest.sha256.json  Integrity checks for inference files
 baselines/empirical_mean/   Official Empirical Mean predictor and license
 report/                    Paper source, PDF, figures, and recorded results
 tools/                     Submission builder, smoke test, integrity check
-docs/validation.md         Release validation record
 pyproject.toml + uv.lock   Reproducible CPU environment
 dist/                      Generated submission ZIPs (not tracked)
 ```
@@ -89,7 +88,7 @@ ASRP scores. Replotting `report/results_proxy.json` is not re-evaluation.
 Historical diagnostic rows are retained locally and excluded from this release
 because their ASRP predictions belong to an earlier version.
 
-See [validation notes](docs/validation.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+See [third-party notices](THIRD_PARTY_NOTICES.md).
 Competition-specific artifacts derive from the permitted public
 [measurement-db](https://huggingface.co/datasets/aims-foundations/measurement-db)
 release. Codex assisted with development and report preparation; it is not an
