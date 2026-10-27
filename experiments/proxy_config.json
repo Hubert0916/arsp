@@ -1,7 +1,6 @@
 {
   "dataset": "aims-foundations/measurement-db",
   "revision": "54074453da7b9911be0f48e4c560be547bc84d21",
-  "seed": 20261028,
   "budgets": [
     0,
     1,
@@ -18,9 +17,6 @@
     0.2,
     0.1
   ],
-  "items_per_group": 80,
-  "acquisition_items": 40,
-  "evaluation_items": 40,
   "sources": [
     "abstract_reason",
     "adaptivestep",
@@ -165,8 +161,26 @@
     "workbench_revisited",
     "worldcentralbanks"
   ],
+  "version": 2,
+  "group_seed": 20261028,
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "policies": [
+    "random",
+    "adaptive"
+  ],
+  "min_group_items": 80,
+  "max_group_items": 1000,
+  "subjects_per_source": 1,
+  "large_group_min_items": 160,
   "benchmark_ids": "anonymous SHA256 aliases",
-  "subject_selection": "minimum SHA256(seed, source, subject_id) among eligible groups",
-  "item_selection": "minimum 80 SHA256(seed, source, subject_id, item_id), first 40 acquisition; last 40 evaluation",
-  "response_selection": "lowest (trial, response_id) binary response for each subject/item"
+  "subject_selection": "minimum SHA256(group_seed, source, subject_id) among complete eligible groups; fixed across seeds",
+  "item_selection": "all distinct items in the selected 80-1000-item group; no truncation",
+  "split": "seeded SHA256 item ordering; first ceil(N/2) acquisition, remaining floor(N/2) evaluation",
+  "response_selection": "lowest (trial, response_id) binary response per subject/item, fixed across policies and seeds",
+  "random_acquisition": "deterministic uniform stream: u < labels_remaining / items_remaining",
+  "adaptive_acquisition": "packaged adaptive_4_warm hook, unchanged"
 }

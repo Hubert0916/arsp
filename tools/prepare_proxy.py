@@ -29,9 +29,15 @@ def write_json(path, value):
     path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
 
 
+def split_group(group, seed):
+    ordered = sorted(group["items"], key=lambda r: digest(seed, "split", group["source"], group["subject_id"], r["item_id"]))
+    midpoint = (len(ordered) + 1) // 2
+    return ordered[:midpoint], ordered[midpoint:]
+
+
 def prepare(config, cache_only=False):
     con = duckdb.connect(config={"threads": 2, "memory_limit": "2GB"})
-    groups, files, selections = [], {}, []
+    groups, files, selections, inventory = [], {}, [], []
     for source in config["sources"]:
         tables = {}
         for name in ("benchmarks", "subjects", "items", "responses"):
@@ -48,14 +54,18 @@ def prepare(config, cache_only=False):
             raise ValueError(f"{source}: expected declared binary responses")
         eligible = rows("""SELECT subject_id, count(DISTINCT item_id) AS n
             FROM read_parquet(?) WHERE response IN (0,1)
-            GROUP BY subject_id HAVING n >= ?""", [tables["responses"], config["items_per_group"]])
+            GROUP BY subject_id HAVING n BETWEEN ? AND ?""",
+            [tables["responses"], config["min_group_items"], config["max_group_items"]])
+        inventory.append({"source": source, "eligible_groups": len(eligible),
+                          "status": "included" if eligible else "no_complete_80_1000_item_group"})
         if not eligible:
-            raise ValueError(f"{source}: no eligible subject; refusing silent source removal")
-        sid = min(eligible, key=lambda r: digest(config["seed"], source, r["subject_id"]))["subject_id"]
+            print(f"Excluded {source}: no complete eligible group", flush=True)
+            continue
+        sid = min(eligible, key=lambda r: digest(config["group_seed"], source, r["subject_id"]))["subject_id"]
         observed = rows("""SELECT * FROM read_parquet(?) WHERE subject_id=? AND response IN (0,1)
             QUALIFY row_number() OVER (PARTITION BY item_id ORDER BY trial, response_id)=1""",
                         [tables["responses"], sid])
-        selected = sorted(observed, key=lambda r: digest(config["seed"], source, sid, r["item_id"]))[:config["items_per_group"]]
+        selected = sorted(observed, key=lambda r: r["item_id"])
         ids = [r["item_id"] for r in selected]
         # Stream content columns: HTML-heavy sources can have multi-GB row groups.
         items = []
@@ -69,24 +79,29 @@ def prepare(config, cache_only=False):
         if len(subjects) != 1:
             raise ValueError(f"{source}: expected exactly one subject record")
         subject = {k: str(subjects[0][k] or "") for k in FIELDS}
-        alias = "benchmark_" + digest(config["seed"], source)[:16]
+        alias = "benchmark_" + digest(config["group_seed"], source)[:16]
         group = {"source": source, "subject_id": sid, "subject_alias": "subject_" + digest(source, sid)[:16],
-                 "benchmark_alias": alias, "subject": subject, "acquisition": [], "evaluation": []}
+                 "benchmark_alias": alias, "subject": subject, "items": []}
         selection = {k: group[k] for k in ("source", "subject_id", "subject_alias", "benchmark_alias")}
         for index, record in enumerate(selected):
             item = item_map[record["item_id"]]
-            part = "acquisition" if index < config["acquisition_items"] else "evaluation"
             entry = {"item_id": record["item_id"], "response_id": record["response_id"],
                      "label": int(record["response"]),
                      "input": [subject, {"item_content": item["content"] or "", "item_features": item["item_features"] or "",
                                          "interactors": record["interactors"] or "", "benchmark_id": alias}]}
-            group[part].append(entry)
-            selection.setdefault(part, []).append({k: entry[k] for k in ("item_id", "response_id")})
+            group["items"].append(entry)
+        selection["n_items"] = len(group["items"])
+        selection["splits"] = {}
+        for seed in config["seeds"]:
+            acquisition, evaluation = split_group(group, seed)
+            selection["splits"][str(seed)] = {
+                name: [{k: r[k] for k in ("item_id", "response_id")} for r in rows_]
+                for name, rows_ in [("acquisition", acquisition), ("evaluation", evaluation)]}
         groups.append(group)
         selections.append(selection)
         print(f"Prepared {len(groups)}/{len(config['sources'])}: {source}", flush=True)
     con.close()
-    return groups, {"config": config, "files": files, "groups": selections}
+    return groups, {"config": config, "files": files, "groups": selections, "source_inventory": inventory}
 
 
 def main():

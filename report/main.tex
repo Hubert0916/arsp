@@ -27,11 +27,13 @@ National Taiwan University}
 \newcommand{\brier}{\mathrm{Brier}}
 \newcommand{\alc}{\mathrm{ALC}}
 
+\input{results_metadata}
+
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Predicting whether an AI system will solve a particular evaluation item is harder than estimating an aggregate benchmark score: item difficulty, subject ability, and the small number of revealed labels all matter. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A budget-dependent ensemble combines these branches, followed by conservative topic residual calibration; source-keyed guards are available when a public-source identifier matches. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We report a public-data proxy evaluation over 5,680 held-out item outcomes from 142 public binary sources and clearly separate it from the hidden Codabench evaluation.
+Predicting whether an AI system will solve a particular evaluation item is harder than estimating an aggregate benchmark score: item difficulty, subject ability, and the small number of revealed labels all matter. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A budget-dependent ensemble combines these branches, followed by conservative topic residual calibration; source-keyed guards are available when a public-source identifier matches. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We evaluate \ProxySources{} public-source groups over three fixed seeds, with \ProxyTargets{} evaluation outcomes per seed. A paired comparison of ASRP and Empirical Mean under both Random and Adaptive acquisition separates predictor quality from acquisition effects.
 \end{abstract}
 
 \section{Introduction}
@@ -52,9 +54,9 @@ Agent Psychometrics extends IRT to predict task-level success for agentic coding
 \paragraph{Capability calibration.}
 \emph{On Calibration of Large Language Models: From Response to Capability} distinguishes confidence that one sampled response is correct from confidence that a model can solve a query overall \citep{capability_calibration}. ASRP targets the latter quantity: $p(x)$ is the probability that the subject answers the current item correctly, and Brier score evaluates this query-level probability. This motivates the conservative calibration layer applied after the Rasch--kernel ensemble.
 
-ASRP has three design choices. First, a frozen MiniLM encoder maps item text to a semantic representation, and a small feed-forward difficulty model maps that representation and text-derived numeric features to an item difficulty. Second, a Rasch-style predictor combines that difficulty with a public-data subject prior. Third, a support-conditioned kernel probe uses acquired item representations and a centered ridge fit to model local residuals. We blend these signals using fixed weights for the six official budgets and apply shrunk topic corrections only after the ensemble.
+ASRP combines frozen text-based difficulty and public subject priors with a kernel residual fitted to acquired labels. Fixed budget-specific weights blend these signals, followed by shrunk topic corrections.
 
-The current report makes three scope commitments. The public proxy numbers below are not hidden-test results and are not used to infer a Codabench score. The official Empirical Mean is the external baseline used for comparison. Finally, all competition-specific training artifacts are derived from the permitted public measurement-db release; no hidden response table is queried at runtime.
+We compare against the official Empirical Mean on a local public proxy. Competition-specific artifacts use permitted public measurement-db data; runtime inference never queries hidden responses.
 
 \section{Competition setting}
 
@@ -76,7 +78,7 @@ The official score averages these group-level ALC values equally across subject-
 
 \section{Data and permitted training}
 
-The predictor is trained and calibrated from the public \path{aims-foundations/measurement-db} release and its permitted benchmark inventory \citep{measurementdb}. The public proxy analysis uses the \textbf{142 binary sources} for which the local release contains an eligible group and 40 held-out item outcomes per source, giving 5,680 evaluated rows. The complete source inventory used in that analysis is included in Appendix~\ref{app:sources}; the release itself remains the authoritative source for benchmark metadata and licenses.
+The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. The evaluation starts from a fixed inventory of 142 binary sources and retains sources containing a complete subject group with 80--1,000 distinct binary-response items. This yields \textbf{\ProxySources{} sources}; \ProxyExcluded{} sources have no qualifying group. One eligible subject is fixed per source, and all items in that group are retained without truncation. The selected groups contain \ProxyItems{} items in total. Appendix~\ref{app:sources} lists the evaluated sources; the manifest records both inclusions and exclusions. Upstream metadata and licenses remain authoritative.
 
 The subject prior and metadata statistics are computed from public response aggregates. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
@@ -87,7 +89,7 @@ Figure~\ref{fig:method} gives the complete data flow. The upper lane contains of
 \begin{figure}[H]
   \centering
   \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
-  \caption{ASRP overview. A pretrained MiniLM encoder is frozen, and permitted public data supply the offline difficulty, prior, and calibration artifacts. At runtime, the Rasch-style hybrid and the support-conditioned kernel probe receive the current subject--item pair and the labels revealed so far. A budget-specific ensemble is followed by topic residual correction. The source guard is conditional on an identifier match and is inactive for this proxy. The acquisition hook supports up to 16 warm-up candidates and subsequent covariance-gain selection; in the reported 40-candidate proxy, the budget constraint instead yields 9 skipped candidates followed by 31 mandatory acquisitions.}
+  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. The source guard is inactive for anonymous proxy identifiers. Candidate pools contain half of each complete group. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
   \label{fig:method}
 \end{figure}
 
@@ -190,11 +192,14 @@ The submitted \textbf{\texttt{labeling.py}} implements \textbf{\texttt{adaptive\
 
 \subsection{Public proxy protocol}
 
-\paragraph{Evaluation sample.}
-We evaluate on \textbf{142 public binary sources}, using one eligible subject selected deterministically in each source and 40 held-out item outcomes per source, for a total of \textbf{5,680 evaluation rows}. Each selected subject--source group has at least 80 distinct items. A SHA256 ordering with seed 20261028 selects one subject with at least 80 distinct binary-response items, then selects and orders 80 items: 40 acquisition candidates and 40 evaluation items. For repeated responses to an item, the smallest trial number and then response ID select one recorded binary outcome. The dataset revision, table checksums, subject IDs, item IDs, and response IDs are fixed in the released split manifest. Evaluation items are separated from the acquisition pool. Here, ``held-out'' refers to this acquisition/evaluation separation; it does not imply independence from all offline training and calibration data. The proxy reuses public information used in calibration, so its results may be optimistic.
+\paragraph{Complete groups and repeated splits.}
+Eligible groups contain 80--1,000 distinct items before splitting. Within each eligible source, SHA256 ordering with the fixed group-selection seed 20261028 selects one subject, identically across all experiments. The actual group sizes range from \ProxyMinItems{} to \ProxyMaxItems{}. For repeated responses to an item, the smallest trial number and then response ID select one binary outcome, held fixed across policies and seeds. Splitting uses seeds \textbf{42, 43, and 44}: a seeded SHA256 ordering assigns the first $\lceil N/2\rceil$ items to acquisition and the rest to evaluation. Thus candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed scores \textbf{\ProxyTargets{} evaluation outcomes}. The dataset revision, table checksums, subject IDs, response IDs, and three splits are fixed in the released manifest.
 
-\paragraph{Matched evidence and budgets.}
-The local run uses the packaged \texttt{adaptive\_4\_warm} acquisition hook and a fixed split. With 40 acquisition candidates and a 31-label cap, its warm-up is clipped to $\min(16,40-31)=9$ skipped candidates. The remaining 31 candidates must all be acquired to meet the cap. Consequently, this proxy exercises the hook but does not measure the benefit of covariance-gain selection. The six budgets $n\in\{0,1,3,7,15,31\}$ use nested prefixes of the acquired labels, and each checkpoint scores the same 40 evaluation outcomes per source. \textbf{Both predictors receive the same acquired labels and are scored on the same outcomes.} This controls the evidence available to each predictor.
+\paragraph{Paired predictor and acquisition comparison.}
+We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Within a seed, both policies see the same candidate order and evaluation pool. Random acquisition accepts the current candidate with probability $L/R$, where $L$ is the remaining label budget and $R$ counts remaining candidates including the current one. Its random variates are deterministic hashes of the visible input and context, with seed-specific anonymous subject aliases. Adaptive acquisition executes the packaged \texttt{adaptive\_4\_warm} hook. Its warm-up is $\min(16,A-31)$ for a candidate pool of size $A$; remaining candidates are mandatory when their count equals the remaining budget. Both predictors receive identical acquired labels \emph{within each policy}, using nested prefixes at budgets $0,1,3,7,15,31$. The two policies can select different labels. Every checkpoint scores the same evaluation items within that seed.
+
+\paragraph{Scope and selection capacity.}
+We additionally report the prespecified subset of \ProxyLargeGroups{} groups with at least 160 items, hence at least 80 candidates, to examine acquisition where the pool leaves more room for selection after warm-up. Small eligible groups remain in the primary results. Evaluation outcomes are never supplied online, but this acquisition/evaluation split is not independent of all offline fitting: frozen public training and calibration use the same release. The local scores may therefore be optimistic. They are not Codabench scores; private data and formative random draws can produce different results.
 
 \subsection{Baseline and metrics}
 
@@ -206,9 +211,9 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
   \frac{1}{n}\sum_{k=1}^{n}y_k, & n>0.
  \end{cases}
 \]
-It uses neither item features nor a learned prior. In this local comparison, we execute its predictor on the same acquisition prefixes supplied to ASRP; the official standalone baseline instead uses the evaluator's default random acquisition policy.
+It uses neither item features nor a learned prior. We run this unchanged predictor on each policy's acquired evidence. Empirical Mean + Random corresponds to its default acquisition choice; Empirical Mean + Adaptive isolates the effect of giving the same predictor ASRP's selected labels. The local Random policy reproduces uniform sampling without replacement, not the private server's particular random draw.
 
-We report Brier scores at all six budgets and Brier ALC with the weights defined in Section~2. Each selected subject--source group contributes equally; because every group has 40 evaluation rows, averaging these group scores is equivalent to averaging over all 5,680 rows. \textbf{All results describe one local public-data evaluation}, without repeated-draw confidence intervals. Official formative evaluations draw random subsets from a private test pool; sampling and distribution differences can make their scores better or worse than these local values.
+For each seed and policy, we compute Brier scores within each subject--source group and average groups equally, then average the three seed-level scores equally. Groups have different numbers of evaluation items, so pooling all response rows would give different weights and is not used. Brier ALC uses the weights in Section~2. We report the individual seed ALCs and their sample standard deviation; these describe variation across the three specified splits, not a confidence interval over all possible evaluations.
 
 \section{Results and analysis}
 
@@ -219,20 +224,30 @@ We report Brier scores at all six budgets and Brier ALC with the weights defined
 \begin{table}[H]
 \centering
 \small
+\setlength{\tabcolsep}{4pt}
 \input{results_table}
 \vspace{6pt}
-\caption{Public proxy Brier scores. Lower is better. ASRP and the official Empirical Mean use the same 5,680-row proxy split (142 sources and 40 held-out items per source). Difference is ASRP minus Empirical Mean. These are local results, not Codabench hidden-test scores.}
+\caption{Public proxy Brier scores averaged equally over \ProxySources{} groups and seeds 42, 43, and 44. Lower is better. Evaluation pools are matched across policies; acquired labels are matched across predictors within each policy.}
 \label{tab:proxy}
 \end{table}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\columnwidth,height=0.24\textheight,keepaspectratio]{figures/public_proxy_curve.pdf}
-  \caption{Public proxy learning curves for ASRP and the official Empirical Mean plotted on the official $\log_2(1+n)$ budget axis. Both curves use the same 5,680 public held-out rows as Table~\ref{tab:proxy}.}
+  \caption{Mean public-proxy Brier curves for the four predictor--acquisition combinations on the official $\log_2(1+n)$ budget axis. Solid lines denote Adaptive acquisition and dashed lines Random; values match Table~\ref{tab:proxy}.}
   \label{fig:proxy_curve}
 \end{figure}
 
-\subsection{Analysis across label budgets}
+\begin{table}[H]
+\centering
+\small
+\input{results_seed_table}
+\vspace{6pt}
+\caption{Group-averaged Brier ALC for each split/acquisition seed. SD is the sample standard deviation over the three seed scores. Lower ALC is better.}
+\label{tab:seeds}
+\end{table}
+
+\subsection{Prediction and acquisition effects}
 
 \input{results_analysis}
 
@@ -243,7 +258,7 @@ Some public items lack usable topic metadata, motivating the frozen embedding-cl
 
 \section{Reproducibility and disclosure}
 
-The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The predictor entry point is \texttt{model.py}; \texttt{labeling.py} implements the streaming acquisition hook; the frozen artifacts are JSON/NPZ files and the local MiniLM encoder. The complete score reproduction pipeline is run from the repository root with:
+The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The entry points are \texttt{model.py} and \texttt{labeling.py}. From the repository root, run:
 
 \begin{verbatim}
 uv sync --locked
@@ -251,11 +266,11 @@ uv run hf auth login
 uv run --locked python tools/reproduce.py
 \end{verbatim}
 
-Users first accept the upstream measurement-db access conditions and authenticate with their own Hugging Face read token. The command downloads four public tables per source from the pinned revision, verifies their checksums, reconstructs the deterministic split, builds the ASRP submission, runs both predictors at all six budgets, and independently aggregates their per-item errors. It checks the resulting predictions against the published run with a $10^{-7}$ numerical tolerance. The released frozen weights are used directly; no fitting or parameter selection occurs during this evaluation.
+After accepting upstream access conditions and authenticating with a Hugging Face read token, this command downloads and verifies the pinned tables, reconstructs all splits, builds the submission, and evaluates all four combinations at three seeds. It checks every prediction against the published run within $10^{-7}$ and requires identical acquired labels. Frozen weights are used directly without refitting or parameter selection.
 
-\path{experiments/proxy_config.json} records the seed and protocol; \path{experiments/proxy_manifest.json} identifies every selected subject, item, and response. \path{results/proxy} contains per-item predictions, acquisition decisions, per-source scores, and the aggregate results. \path{tools/update_report_results.py} generates the table and numeric analysis from the scored output. Task text and metadata are downloaded from the original dataset repository; the released result records contain the selected binary outcomes and model predictions.
+\path{experiments/} records the protocol, checksums, and selected subject/item/response IDs. \path{results/proxy} contains predictions, acquired labels, decisions, and metrics. \path{tools/update_report_results.py} generates the reported numbers; task text is downloaded from upstream.
 
-The active kernel mixture weights are defined in \path{src/asrp/model.py}; Rasch mixture weights and runtime settings are recorded in \path{artifacts/asrp/runtime_config.json}; topic calibration settings and source guards are stored in \path{artifacts/asrp/topic_calibration.json}. Inference code, frozen artifacts, the locked CPU environment, evaluation scripts, and report source are available at \url{https://github.com/Hubert0916/arsp}. The official submission checker is distributed separately in the competition starting kit.
+Kernel weights are in \path{src/asrp/model.py}; Rasch settings and calibration are in \path{artifacts/asrp/runtime_config.json} and \path{artifacts/asrp/topic_calibration.json}. Code, frozen weights, the locked CPU environment, and report source are available at \url{https://github.com/Hubert0916/arsp}. The official checker remains in the upstream starting kit.
 
 The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
 
@@ -266,7 +281,7 @@ ASRP provides a practical, budget-aware predictor for subject--item capability e
 \appendix
 \section{Public source inventory}\label{app:sources}
 
-The following public binary source identifiers occur in the 5,680-row proxy analysis. They identify the evaluation sources; the benchmark inventory and upstream licenses remain authoritative.
+The following \ProxySources{} public binary source identifiers occur in the paired three-seed evaluation. They identify the evaluation sources; the benchmark inventory and upstream licenses remain authoritative.
 
 \begingroup
 \scriptsize

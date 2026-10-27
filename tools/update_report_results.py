@@ -1,75 +1,79 @@
-"""Generate report numbers and analysis directly from a complete scored run."""
+"""Generate all reported numbers from the scored paired acquisition experiment."""
 import argparse
 import json
 from pathlib import Path
 import shutil
-
 from prepare_proxy import ROOT
+
+ORDER=['empirical_mean_random','empirical_mean_adaptive','asrp_random','asrp_adaptive']
+LABELS={'empirical_mean_random':'Empirical Mean + Random','empirical_mean_adaptive':'Empirical Mean + Adaptive',
+        'asrp_random':'ASRP + Random','asrp_adaptive':'ASRP + Adaptive'}
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("directory", nargs="?", type=Path, default=ROOT / "results/proxy")
-    args = parser.parse_args()
-    result = json.loads((args.directory / "summary.json").read_text())
-    manifest = json.loads((ROOT / "experiments/proxy_manifest.json").read_text())
-    if result["n_groups"] != len(manifest["groups"]) or result["n_rows"] != sum(len(g["evaluation"]) for g in manifest["groups"]):
-        raise ValueError("Only the complete published split may update the report")
-    shutil.copyfile(args.directory / "summary.json", ROOT / "report/results_proxy.json")
-    a, b = result["asrp_brier"], result["empirical_mean_brier"]
-    aa, ba = result["asrp_alc"], result["empirical_mean_alc"]
-    def texrow(name, values, bold=False):
-        cells = [f"{x:.4f}" for x in values]
-        if bold:
-            cells = ["\\textbf{"+v+"}" for v in cells]
-        return name + " & " + " & ".join(cells) + "\\\\\n"
-    table = texrow(r"\textbf{ASRP}", a+[aa])
-    table += texrow("Empirical Mean", b+[ba])
-    table += texrow("Difference", [x-y for x, y in zip(a+[aa], b+[ba])])
-    table = (r"\begin{tabular}{lrrrrrrr}" + "\n" + r"\toprule" + "\n"
-             + r"Method & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\" + "\n"
-             + r"\midrule" + "\n" + table + r"\bottomrule" + "\n" + r"\end{tabular}" + "\n")
-    (ROOT / "report/results_table.tex").write_text(table)
-    gains = [y-x for x, y in zip(a, b)]
-    wins = sum(g > 0 for g in gains)
-    j = max(range(6), key=lambda i: gains[i])
-    reduction = ba-aa
-    win_text = "all six budgets" if wins == 6 else f"{wins} of the six budgets"
-    overview = (rf"Table~\ref{{tab:proxy}} compares the two predictors on identical evaluation items and acquired labels. "
-                rf"ASRP has lower aggregate Brier scores at \textbf{{{win_text}}}. "
-                rf"Its Brier ALC is ${{{aa:.4f}}}$, compared with ${{{ba:.4f}}}$ for Empirical Mean, "
-                rf"an absolute {'reduction' if reduction >= 0 else 'increase'} of ${{{abs(reduction):.4f}}}$ "
-                rf"(${{{abs(reduction/ba)*100:.1f}\%}}$ relative to the baseline). "
-                r"Differences use unrounded scores; negative values favor ASRP. These are local public-proxy results.")
-    (ROOT / "report/results_overview.tex").write_text(overview+"\n")
-    analysis = (r"\paragraph{Where the improvement occurs.}"+"\n"
-        +rf"The largest baseline-minus-ASRP gap occurs at \textbf{{budget {result['budgets'][j]}}}: "
-        +rf"ASRP scores ${a[j]:.4f}$ and Empirical Mean scores ${b[j]:.4f}$. "
-        +r"At budget one, Empirical Mean predicts either zero or one for every query in a group; a single unrepresentative label can therefore produce a large error. "
-        +r"ASRP retains its public prior and Rasch component at this budget, moderating such extreme updates. "
-        +rf"At budget zero, the content- and prior-based ASRP prediction scores ${a[0]:.4f}$, compared with the constant baseline's $0.2500$."
-        +"\n\n"+r"\paragraph{Behavior as evidence accumulates.}"+"\n"
-        +rf"ASRP moves from ${a[0]:.4f}$ at budget zero to ${a[-1]:.4f}$ at budget 31. "
-        +rf"The baseline-minus-ASRP gaps at budgets 15 and 31 are ${gains[-2]:.4f}$ and ${gains[-1]:.4f}$. "
-        +r"The budget-dependent design anchors early predictions with the Rasch hybrid and gives the kernel residual more weight as support grows. "
-        +r"Topic calibration remains active, but the source-name guard has zero weight adjustment for the anonymous aliases used in this experiment. "
-        +r"These results compare the combined predictors conditional on matched evidence; the constrained acquisition trajectory does not measure an active-selection gain."
-        +"\n")
-    (ROOT / "report/results_analysis.tex").write_text(analysis)
-    ending = (r"In the local public proxy, ASRP achieves lower aggregate Brier scores than Empirical Mean at "
-              + ("all six budgets." if wins == 6 else f"{wins} of the six budgets."))
-    (ROOT / "report/results_conclusion.tex").write_text(ending+"\n")
-    markdown = ["| Method | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |",
-                "|---|---:|---:|---:|---:|---:|---:|---:|"]
-    for name, values in [("ASRP", a+[aa]), ("Empirical Mean", b+[ba])]:
-        markdown.append("| " + name + " | " + " | ".join(f"{v:.4f}" for v in values) + " |")
-    readme = ROOT / "README.md"
-    prefix, remainder = readme.read_text().split("<!-- RESULTS_START -->", 1)
-    _, suffix = remainder.split("<!-- RESULTS_END -->", 1)
-    readme.write_text(prefix + "<!-- RESULTS_START -->\n\n" + "\n".join(markdown)
-                      + "\n\n<!-- RESULTS_END -->" + suffix)
-    print(f"Updated report inputs from {args.directory / 'summary.json'}")
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('directory',nargs='?',type=Path,default=ROOT/'results/proxy')
+    args=parser.parse_args()
+    result=json.loads((args.directory/'summary.json').read_text())
+    manifest=json.loads((ROOT/'experiments/proxy_manifest.json').read_text())
+    if result['n_groups']!=len(manifest['groups']) or result['seeds']!=manifest['config']['seeds']:
+        raise ValueError('Only a complete published run can update the report')
+    shutil.copyfile(args.directory/'summary.json',ROOT/'report/results_proxy.json')
+    root=ROOT/'report';c=result['combinations'];large=result['at_least_160_items']
+    def save(name,text): (root/name).write_text(text+'\n')
+    macros={'ProxySources':result['n_sources'],'ProxyItems':f"{result['n_items']:,}",
+            'ProxyTargets':f"{result['n_rows_per_seed']:,}",'ProxyExcluded':result['n_excluded_sources'],
+            'ProxyMinItems':result['group_items_range'][0],'ProxyMaxItems':result['group_items_range'][1],
+            'ProxyMinPool':result['acquisition_pool_range'][0],'ProxyMaxPool':result['acquisition_pool_range'][1],
+            'ProxyLargeGroups':large['n_groups']}
+    save('results_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+str(v)+'}' for k,v in macros.items()))
+    header=r'\begin{tabular}{lrrrrrrr}'+'\n'+r'\toprule'+'\n'+r'Predictor + acquisition & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\'+'\n'+r'\midrule'+'\n'
+    rows=''.join(LABELS[k]+' & '+' & '.join(f'{v:.4f}' for v in c[k]['brier']+[c[k]['alc']])+r'\\'+'\n' for k in ORDER)
+    save('results_table.tex',header+rows+r'\bottomrule'+'\n'+r'\end{tabular}')
+    seed_table=r'\begin{tabular}{lrrrr}'+'\n'+r'\toprule'+'\n'+r'Predictor + acquisition & Seed 42 & Seed 43 & Seed 44 & SD\\'+'\n'+r'\midrule'+'\n'
+    for k in ORDER:
+        seed_table+=LABELS[k]+' & '+' & '.join(f"{c[k]['per_seed_alc'][str(s)]:.4f}" for s in result['seeds'])+f" & {c[k]['alc_seed_sd']:.4f}"+r'\\'+'\n'
+    save('results_seed_table.tex',seed_table+r'\bottomrule'+'\n'+r'\end{tabular}')
+    a,b=c['asrp_adaptive'],c['empirical_mean_random']
+    wins=sum(x<y for x,y in zip(a['brier'],b['brier']));gain=b['alc']-a['alc']
+    overview=(r'Table~\ref{tab:proxy} reports the \textbf{four predictor--acquisition combinations}, averaged equally over groups and then over seeds 42, 43, and 44. '
+              +f"ASRP + Adaptive has a mean Brier ALC of ${a['alc']:.4f}$, compared with ${b['alc']:.4f}$ for Empirical Mean + Random "
+              +f"(an absolute {'reduction' if gain>=0 else 'increase'} of ${abs(gain):.4f}$). "
+              +f'Its aggregate Brier score is lower at {wins} of the six budgets. '
+              +r'The two predictors share identical labels within each acquisition policy; the Random and Adaptive policies use identical candidate orders and evaluation pools.')
+    save('results_overview.tex',overview)
+    analysis=r'\paragraph{Predictor effect with acquisition held fixed.}'+'\n'
+    for policy in ['random','adaptive']:
+        x,y=c['asrp_'+policy],c['empirical_mean_'+policy];d=y['alc']-x['alc']
+        analysis+=f"Under {policy.capitalize()} acquisition, ASRP's mean ALC is ${x['alc']:.4f}$ versus ${y['alc']:.4f}$ for Empirical Mean, "
+        analysis+=f"a {'reduction' if d>=0 else 'increase'} of ${abs(d):.4f}$. "
+    analysis+=r'At budget zero the acquisition policies have no effect. The Rasch hybrid supplies the initial prediction; the kernel branch receives increasing weight as labels become available.'+'\n\n'
+    analysis+=r'\paragraph{Acquisition effect with the predictor held fixed.}'+'\n'
+    for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
+        e=result['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
+        seed_phrase="all three seeds" if e["seeds_improved"]==3 else f"{e['seeds_improved']} of the three seeds"
+        analysis+=f"For {label}, Adaptive {'lowers' if d<0 else 'raises'} mean ALC by ${abs(d):.4f}$ relative to Random, and has lower ALC in {seed_phrase}. "
+    analysis+=r'Table~\ref{tab:seeds} shows the individual seed results and their sample standard deviation; three seeds summarize sensitivity to these draws rather than establishing universal superiority.'+'\n\n'
+    analysis+=r'\paragraph{Groups with more room for selection.}'+'\n'
+    analysis+=f"The prespecified subset of {large['n_groups']} groups with at least 160 items leaves at least 80 acquisition candidates. "
+    for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
+        e=large['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
+        analysis+=f"In this subset, Adaptive {'lowers' if d<0 else 'raises'} {label}'s mean ALC by ${abs(d):.4f}$ relative to Random. "
+    analysis+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
+    analysis+=r'Topic calibration is active; the source-name guard remains inactive because the benchmark aliases are anonymous.'
+    save('results_analysis.tex',analysis)
+    d=result['acquisition_effect']['asrp']['adaptive_minus_random_alc']
+    ending=(f"The three-seed public proxy gives ASRP + Adaptive a mean Brier ALC of ${a['alc']:.4f}$. "
+            +f"Compared with Random acquisition using the same predictor, Adaptive {'reduces' if d<0 else 'increases'} mean ALC by ${abs(d):.4f}$. "
+            +r'The paired design separates changes in prediction quality from changes in which labels are acquired.')
+    save('results_conclusion.tex',ending)
+    save('source_inventory.tex',r'\begin{verbatim}'+'\n'+'\n'.join(g['source'] for g in manifest['groups'])+'\n'+r'\end{verbatim}')
+    markdown=['| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |',
+              '|---|---:|---:|---:|---:|---:|---:|---:|']
+    for k in ORDER: markdown.append('| '+LABELS[k]+' | '+' | '.join(f'{v:.4f}' for v in c[k]['brier']+[c[k]['alc']])+' |')
+    readme=ROOT/'README.md';prefix,remainder=readme.read_text().split('<!-- RESULTS_START -->',1);_,suffix=remainder.split('<!-- RESULTS_END -->',1)
+    readme.write_text(prefix+'<!-- RESULTS_START -->\n\n'+'\n'.join(markdown)+'\n\n<!-- RESULTS_END -->'+suffix)
+    print('Updated report and README from the complete paired results.')
 
 
-if __name__ == "__main__":
-    main()
+if __name__=='__main__':main()

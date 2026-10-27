@@ -2,7 +2,6 @@
   "config": {
     "dataset": "aims-foundations/measurement-db",
     "revision": "54074453da7b9911be0f48e4c560be547bc84d21",
-    "seed": 20261028,
     "budgets": [
       0,
       1,
@@ -19,9 +18,6 @@
       0.2,
       0.1
     ],
-    "items_per_group": 80,
-    "acquisition_items": 40,
-    "evaluation_items": 40,
     "sources": [
       "abstract_reason",
       "adaptivestep",
@@ -166,24 +162,42 @@
       "workbench_revisited",
       "worldcentralbanks"
     ],
+    "version": 2,
+    "group_seed": 20261028,
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "policies": [
+      "random",
+      "adaptive"
+    ],
+    "min_group_items": 80,
+    "max_group_items": 1000,
+    "subjects_per_source": 1,
+    "large_group_min_items": 160,
     "benchmark_ids": "anonymous SHA256 aliases",
-    "subject_selection": "minimum SHA256(seed, source, subject_id) among eligible groups",
-    "item_selection": "minimum 80 SHA256(seed, source, subject_id, item_id), first 40 acquisition; last 40 evaluation",
-    "response_selection": "lowest (trial, response_id) binary response for each subject/item"
+    "subject_selection": "minimum SHA256(group_seed, source, subject_id) among complete eligible groups; fixed across seeds",
+    "item_selection": "all distinct items in the selected 80-1000-item group; no truncation",
+    "split": "seeded SHA256 item ordering; first ceil(N/2) acquisition, remaining floor(N/2) evaluation",
+    "response_selection": "lowest (trial, response_id) binary response per subject/item, fixed across policies and seeds",
+    "random_acquisition": "deterministic uniform stream: u < labels_remaining / items_remaining",
+    "adaptive_acquisition": "packaged adaptive_4_warm hook, unchanged"
   },
-  "n_groups": 142,
-  "data_sha256": "559842a222f541bb960a334d6d137e3a4b8b3e3f3406b26a761c4d1895143d94",
-  "split_manifest_sha256": "409ac4e1787ae05ad3479ca2a16738ab78e0ca0707c5ffe2baca95f190ab3dff",
+  "n_groups": 92,
+  "data_sha256": "de3bd4bcf3c3010caa41405cba0e9f4d29cc657a7bc93e884b0688c4ad43ab86",
+  "split_manifest_sha256": "754619874ca41bbfca2020777c895def90889f630acc92ec8c91d5b8f65c82fc",
   "inference_manifest_sha256": "86bbfe07f04156b8b3c5b3ebbb181a471e133ac1d4fe37adbf6ba3091d5f7434",
   "lockfile_sha256": "a9924f66312872664dcee40fa4100a78e546af49df6bcb31e7b63362679b5747",
   "python": "3.11.17",
   "files": {
-    "predictions.jsonl": "6cdbef6ea8cb4828ea27b8c4143be1b41e1ceab7d4b9bf9fcb103ea576fa2fec",
-    "acquisition.jsonl": "b7764d2add776b271da364064a27b308a7063b1c455dfeb024089e6f399e9406"
+    "predictions.jsonl": "ff21e54217ba3eb9fb879eebffa8c9064d6a7d407d2f10c9cc2421fa127b8dde",
+    "acquisition.jsonl": "b13cfe43ad51f6f71282ca55d28c020e35a5a90f2b49372f653a6387d7278555"
   },
   "scripts": {
-    "tools/prepare_proxy.py": "88926f6d13e4953600911c597c7e22361389348af8d957f3ac0c972dc21662ef",
-    "tools/evaluate_proxy.py": "30d8e3b61e0b7480a6f26a3da909f2c8b954b71f4d3cfd731ae0e6b91f35c77b",
+    "tools/prepare_proxy.py": "d4671cb1b6f26ccc2ea3bdda2827aa6bc0b668ce07d077a80b59f899e9978430",
+    "tools/evaluate_proxy.py": "5c7a7c1404d53831d851efb5cdbf7c748600f97eaa480ae21b2227c2aa8be85a",
     "baselines/empirical_mean/model.py": "1e570641dd9b981baae988779b904ae58ad610a99bd44fb861647c60c93e935e"
   }
 }

@@ -1,0 +1,3 @@
+experiments/proxy_manifest.json linguist-generated=true
+results/proxy/* linguist-generated=true
+report/results_*.tex linguist-generated=true

@@ -27,3 +27,5 @@ report/*.fdb_latexmk
 /analysis/
 /archive/
 /references/
+
+/results/*/chunks/
