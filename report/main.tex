@@ -1,0 +1,290 @@
+\documentclass{article}
+
+% Competition technical report with the public frozen-inference release linked below.
+\usepackage[preprint]{neurips_2026}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{adjustbox}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usetikzlibrary{arrows.meta,calc,fit,positioning}
+
+\title{ASRP: Adaptive Support-Based Response Prediction for Test-Time AI Capability Evaluation}
+
+\author{Yuhan Chiu\\
+National Taiwan University}
+
+\newcommand{\asrp}{\textsc{ASRP}}
+\newcommand{\brier}{\mathrm{Brier}}
+\newcommand{\alc}{\mathrm{ALC}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Predicting whether an AI system will solve a particular evaluation item is harder than estimating an aggregate benchmark score: item difficulty, subject ability, and the small number of revealed labels all matter. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A source-level guard moderates the budget-dependent ensemble, followed by conservative topic residual calibration. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We report a public-data proxy evaluation over 5,680 held-out item outcomes from 142 public binary sources and clearly separate it from the hidden Codabench evaluation.
+\end{abstract}
+
+\section{Introduction}
+
+Modern AI evaluations produce response tables with a binary outcome for each subject--item pair. A benchmark average is useful for ranking systems, but it does not provide a probability for a new item and it can be unstable when only a small subset of items is queried. The Predictive AI Evaluation Competition (PAIEC) therefore asks participants to predict the probability that a subject answers each item correctly while revealing at most 31 labels per subject--benchmark pair.
+
+Our goal is a predictor that uses item text and visible metadata at label budget zero, then adapts to revealed labels without overreacting to a small or unrepresentative support set. We implement \textbf{ASRP} as a competition submission rather than as a new psychometric theory.
+
+\paragraph{Relation to item-response modeling.}
+Lord's treatment of item response theory (IRT) models the probability of a correct response as a function of test-taker ability and item difficulty \citep{lord1980}. This is the basis for ASRP's Rasch-style probability: a public subject prior supplies the initial ability, the frozen text model supplies item difficulty, and revealed labels update ability with a penalized Newton--Raphson step.
+
+\paragraph{Content-based and adaptive evaluation.}
+Reliable and Efficient Amortized Model-based Evaluation shows that benchmark averages can be distorted by question difficulty, and proposes amortizing difficulty from question content together with adaptive item selection \citep{amortized_eval}. ASRP uses the same two ideas in the competition setting: MiniLM features predict unseen-item difficulty, while \texttt{adaptive\_4\_warm} selects informative support items. ASRP does not use that paper's question generator or evaluation model.
+
+\paragraph{Task-level capability prediction.}
+Agent Psychometrics extends IRT to predict task-level success for agentic coding benchmarks using task features and separate ability factors \citep{agent_psychometrics}. ASRP follows the same subject--item perspective, but uses the competition's visible metadata, binary outcomes, and a support-conditioned kernel residual instead of an agent/scaffold decomposition.
+
+\paragraph{Capability calibration.}
+\emph{On Calibration of Large Language Models: From Response to Capability} distinguishes confidence that one sampled response is correct from confidence that a model can solve a query overall \citep{capability_calibration}. ASRP targets the latter quantity: $p(x)$ is the probability that the subject answers the current item correctly, and Brier score evaluates this query-level probability. This motivates the conservative calibration layer applied after the Rasch--kernel ensemble.
+
+ASRP has three design choices. First, a frozen MiniLM encoder maps item text to a semantic representation, and a small feed-forward difficulty model maps that representation and text-derived numeric features to an item difficulty. Second, a Rasch-style predictor combines that difficulty with a public-data subject prior. Third, a support-conditioned kernel probe uses acquired item representations and a centered ridge fit to model local residuals. We blend these signals using fixed weights for the six official budgets and apply shrunk topic corrections only after the ensemble.
+
+The current report makes three scope commitments. The public proxy numbers below are not hidden-test results and are not used to infer a Codabench score. The official Empirical Mean is the external baseline used for comparison. Finally, all competition-specific training artifacts are derived from the permitted public measurement-db release; no private test response or benchmark lookup is used at runtime.
+
+\section{Competition setting}
+
+At runtime the platform supplies a pair of dictionaries $x=(s,i)$ describing a subject and an item, together with a list of previously acquired binary observations. The predictor returns a finite probability in $[0,1]$. Eligible subject--benchmark groups have at least 80 distinct items. The platform creates a fixed acquisition/evaluation split and evaluates the same evaluation items at the \textbf{six label budgets}
+\[
+  n \in \{0,1,3,7,15,31\}.
+\]
+Acquisition items are never scored and evaluation outcomes are never revealed. The optional acquisition hook sees the current candidate, the current prediction, the acquired labels, and the remaining-label context.
+
+For a budget $n$ and a subject--benchmark group with $N$ evaluated responses, the Brier score is the mean squared error between the predicted probability $p$ and the binary outcome $y$:
+\[
+  B_n = \frac{1}{N}\sum_{j=1}^{N}(p_j-y_j)^2.
+\]
+The group-level Brier ALC is the normalized area on the logarithmic budget axis and is equivalent to
+\[
+  \alc = 0.1B_0+0.2B_1+0.2B_3+0.2B_7+0.2B_{15}+0.1B_{31}.
+\]
+The official score averages these group-level ALC values equally across subject--benchmark groups. \textbf{Lower is better.} All reported local tables use this same weighting.
+
+\section{Data and permitted training}
+
+The predictor is trained and calibrated from the public \path{aims-foundations/measurement-db} release and its permitted benchmark inventory \citep{measurementdb}. The public proxy analysis uses the \textbf{142 binary sources} for which the local release contains an eligible group and 40 held-out item outcomes per source, giving 5,680 evaluated rows. The complete source inventory used in that analysis is included in Appendix~\ref{app:sources}; the release itself remains the authoritative source for benchmark metadata and licenses.
+
+The subject prior and metadata statistics are computed from public response aggregates. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
+
+\section{ASRP method}
+
+Figure~\ref{fig:method} gives the complete data flow. The upper lane contains offline artifacts that are fixed before evaluation. The lower lane shows one runtime prediction and the separate label-acquisition loop. Solid arrows show the prediction and acquisition paths; dashed arrows show frozen artifacts and revealed evidence supplied to these paths.
+
+\begin{figure}[H]
+  \centering
+  \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
+  \caption{ASRP overview. A pretrained MiniLM encoder is frozen, and permitted public data supply the offline difficulty, prior, and calibration artifacts. At runtime, the Rasch-style hybrid and the support-conditioned kernel probe receive the current subject--item pair and the labels revealed so far. A budget-specific ensemble with a source guard is followed by topic residual correction to produce the final probability. The optional acquisition hook uses up to 16 warm-up candidates (clipped when necessary to leave enough candidates for the label cap) and then an adaptive covariance-gain rule.}
+  \label{fig:method}
+\end{figure}
+
+\subsection{Item representation and amortized difficulty}
+
+Let $e_i\in\mathbb{R}^{384}$ be the sentence embedding of the normalized item text from MiniLM. We concatenate $e_i$ with six deterministic numeric text features $z_i\in\mathbb{R}^{6}$ (including text length, digit proportion, and code or mathematical markers). The \textbf{frozen difficulty network} standardizes this vector and applies a three-layer feed-forward map (390--128--32--1):
+\[
+  d_i=f_{\phi}([e_i;z_i]).
+\]
+The code clips the standardized input and the resulting difficulty to a bounded range. This content-based estimate is an amortized substitute for fitting a separate difficulty parameter for every unseen item.
+
+\subsection{Public prior and Rasch update}
+
+The hybrid uses two public-data priors. The subject-only prior initializes ability, while the metadata prior $p_{\mathrm{src}}$ combines the subject's public response rate with visible item-feature statistics for evidence smoothing. For public subject offset $o_s$, define
+\[
+  m_s=\operatorname{clip}(0.5+0.5o_s,0.05,0.95),\qquad
+  \theta_0=\operatorname{logit}(m_s).
+\]
+The Rasch probability is
+\[
+  p_{\mathrm{Rasch}}(i)=\sigma(\theta-d_i),
+  \quad \sigma(z)=\frac{1}{1+e^{-z}}.
+\]
+Here $d_i$ is the frozen content-based item difficulty from Section~4.1. For acquired labels $(y_k,d_k)_{k=1}^{n}$, ASRP obtains a \textbf{maximum a posteriori (MAP) estimate} by maximizing the Bernoulli log-likelihood with a Gaussian prior centered at $\theta_0$:
+\[
+ \ell(\theta)=\sum_{k=1}^{n}\log p(y_k\mid\theta,d_k)
+                 -\frac{(\theta-\theta_0)^2}{2v},
+ \qquad v=2.0.
+\]
+The implementation uses a damped Newton--Raphson step. Writing $p_k=\sigma(\theta-d_k)$,
+\[
+ g=\sum_k(y_k-p_k)-\frac{\theta-\theta_0}{v},\qquad
+ h=\sum_k p_k(1-p_k)+\frac{1}{v},\qquad
+ \theta\leftarrow\theta+\operatorname{clip}(g/h,-2,2).
+\]
+It stops after convergence or 30 steps; at budget zero, $\theta=\theta_0$.
+
+The metadata prior supplies a smoothed evidence estimate,
+\[
+ p_{\mathrm{smooth}}=\frac{s+\kappa p_{\mathrm{src}}}{n+\kappa},
+ \qquad s=\sum_k y_k,\quad \kappa=4.
+\]
+The Rasch and smoothed terms are combined as
+\[
+ p_{\mathrm{hybrid}}=(1-\lambda_n)p_{\mathrm{smooth}}+\lambda_n p_{\mathrm{Rasch}},
+\]
+with frozen $\lambda_n=(0.2875,0.3000,0.2875,0.2750,0.2250,0.2375)$ for budgets $(0,1,3,7,15,31)$.
+
+\subsection{Support-conditioned kernel probe}
+
+The \textbf{support-conditioned kernel probe} estimates a local correction from the revealed support items. The support contains revealed responses from the current benchmark, potentially spanning multiple subjects. For each support item $r$, let $u_r$ be its MiniLM vector and $v_r$ its hashed lexical vector, both derived from visible item text and metadata. Using only the support, we center and scale the semantic coordinates and apply inverse-frequency weights to lexical coordinates:
+\[
+ \tilde u_r=\operatorname{norm}((u_r-\bar u)\odot a),\qquad
+ \tilde v_r=\operatorname{norm}(v_r\odot b).
+\]
+Here $\operatorname{norm}$ denotes $L_2$ normalization, $\bar u$ is the support mean, $a$ is a regularized inverse standard-deviation scale, and $b_\ell=\log((1+m)/(1+f_\ell))+0.1$, where $m$ is the support size and $f_\ell$ counts support vectors with a nonzero lexical coordinate $\ell$. For two support items, the similarity kernel is
+\[
+ q_{rt}=\frac{\tilde u_r^\top\tilde u_t+\tilde v_r^\top\tilde v_t}{2},\qquad
+ K_{rt}=\exp\!\left(\frac{\min(q_{rt}-1,0)}{\tau}\right),
+\]
+with $\tau=4$ times the median positive off-diagonal support distance $1-q_{rt}$ (using a distance of $0.1$ when none is positive, with a numerical floor of $10^{-5}$). The query-to-support vector $k(x)$ uses the same transformation and kernel.
+
+The kernel intercept is a two-component Beta mixture. For subject $a$, let $s_a$ of $n_a$ revealed labels be successes and let $o_a$ be the public offset. Define $m_a=\operatorname{clip}(0.5+0.5o_a,0.05,0.95)$. For concentrations $c\in\{1,8\}$ and prior masses $\pi_1=0.3$, $\pi_8=0.7$,
+\[
+ \alpha_{ac}=m_ac,\quad \beta_{ac}=(1-m_a)c,\quad
+ \omega_{ac}\propto\pi_c\frac{\mathrm{B}(\alpha_{ac}+s_a,\beta_{ac}+n_a-s_a)}
+ {\mathrm{B}(\alpha_{ac},\beta_{ac})},
+\]
+\[
+ b_a=\sum_c\omega_{ac}\frac{\alpha_{ac}+s_a}{c+n_a}.
+\]
+Here $\mathrm{B}$ is the beta function and the posterior weights are normalized so that $\sum_c\omega_{ac}=1$. Thus $b_a$ is the conservative subject baseline before using local similarity.
+
+Let $M$ average rows belonging to the same subject, and let $C=I-M$. The centered ridge residual coefficients are
+\[
+ \gamma=C(CKC+\lambda I)^{-1}Cy,\qquad \lambda=0.3,
+\]
+where $y$ contains the revealed binary labels. If $d_a$ is the subject mean of the fitted kernel contribution, the query prediction is
+\[
+ p_{\mathrm{kernel}}(x,a)=\operatorname{clip}\!\left(b_a+k(x)^\top\gamma-d_a,0,1\right).
+\]
+The kernel contribution is suppressed at budgets 0 and 1 and receives weights $(0,0,0.2,0.4,1,1)$ at $(0,1,3,7,15,31)$, so a tiny support set cannot override the cold-start prediction. This creates a deliberate budget-dependent division of labor: at low budgets, the Rasch hybrid is the main predictor because its public subject prior and content-based difficulty remain stable when there are too few revealed labels to fit a local kernel residual. The kernel branch is introduced gradually at 3 and 7 labels, then becomes the nominal primary predictor at 15 and 31 labels, giving greater influence to residual corrections fitted from the larger support set. The late-budget source guard can reduce this kernel weight for sources with a regression identified in public diagnostics.
+
+\subsection{Topic calibration and source guard}
+
+The calibration artifact is generated from public binary responses. If the query has a recognized metadata field, ASRP uses the first recognized topic key in the source metadata order. A topic residual $r_{t,n}$ is shrunk toward zero using its public count $m_t$:
+\[
+  \Delta_{t,n}=\operatorname{clip}\!\left(
+    \frac{m_t}{m_t+40}r_{t,n},-0.06,0.06\right).
+\]
+For an item without a usable topic field, the first 384 MiniLM coordinates are assigned to one of eight frozen centroids. Cluster residuals use a stronger prior count of 200 and a smaller cap of $0.03$. The correction is applied after the budget-specific ensemble.
+
+Public validation identified some sources for which the kernel branch became less accurate at high budgets. The source guard reduces the kernel weight at budgets 15 and 31 for those sources. This guard is a conservative regularizer, not a lookup of hidden test outcomes; source statistics are learned offline from public data.
+
+\subsection{Adaptive acquisition}
+
+The submitted \textbf{\texttt{labeling.py}} implements \textbf{\texttt{adaptive\_4\_warm}}. The policy can skip up to 16 early candidates to establish a local feature geometry, subject to the evaluator's remaining-item constraint. It then estimates the conditional covariance reduction from each candidate using previously revealed items, previously seen candidate features, the current candidate, and the supplied context. The candidate's gain ratio is raised to power four and converted to a probability under the remaining label budget. The hook never accesses future evaluation outcomes.
+
+\section{Experimental setup}
+
+\subsection{Public proxy protocol}
+
+\paragraph{Evaluation sample.}
+We evaluate on \textbf{142 public binary sources}, using the first subject in each source's local analysis order and 40 held-out item outcomes per source, for a total of \textbf{5,680 evaluation rows}. Each selected subject--source group has at least 80 distinct items. Evaluation items are separated from the acquisition pool. Here, ``held-out'' refers to this acquisition/evaluation separation; it does not imply independence from all offline training and calibration data. The proxy reuses public information used in calibration, so its results may be optimistic.
+
+\paragraph{Matched evidence and budgets.}
+The local run uses the \texttt{adaptive\_4\_warm} acquisition policy and a fixed split and acquisition trajectory. The six budgets $n\in\{0,1,3,7,15,31\}$ use nested prefixes of the acquired labels, and each checkpoint scores the same 40 evaluation outcomes per source. \textbf{Both predictors receive the same acquired labels and are scored on the same outcomes.} This controls the evidence available to each predictor, but does not separately measure the benefit of adaptive acquisition over random acquisition.
+
+\subsection{Baseline and metrics}
+
+We use the \textbf{Empirical Mean predictor} from the official PAIEC repository \citep{paiec_baselines}. For $n$ acquired binary labels in the current subject--benchmark group, it predicts
+\[
+ p_{\mathrm{EM}}=
+ \begin{cases}
+  0.5, & n=0,\\
+  \frac{1}{n}\sum_{k=1}^{n}y_k, & n>0.
+ \end{cases}
+\]
+It uses neither item features nor a learned prior. In this local comparison, we recompute its predictions on ASRP's saved acquisition prefixes; the official standalone baseline instead uses the evaluator's default random acquisition policy.
+
+We report Brier scores at all six budgets and Brier ALC with the weights defined in Section~2. Each selected subject--source group contributes equally; because every group has 40 evaluation rows, averaging these group scores is equivalent to averaging over all 5,680 rows. \textbf{All results describe one local public-data evaluation}, without repeated-draw confidence intervals. Official formative evaluations draw random subsets from a private test pool; sampling and distribution differences can make their scores better or worse than these local values.
+
+\section{Results and analysis}
+
+\subsection{Public proxy results}
+
+Table~\ref{tab:proxy} shows that \textbf{ASRP has lower aggregate Brier scores at all six budgets}. Brier ALC decreases from $0.2422$ for Empirical Mean to $0.1973$ for ASRP, an \textbf{absolute reduction of $0.0450$} (approximately $18.6\%$ relative to the baseline). Differences are computed from the unrounded scores; negative values favor ASRP. These are descriptive improvements on the local proxy, not estimates of hidden-test performance.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+Method & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\
+\midrule
+\textbf{ASRP} & \textbf{0.2245} & \textbf{0.2084} & \textbf{0.2005} & \textbf{0.1914} & \textbf{0.1854} & \textbf{0.1766} & \textbf{0.1973}\\
+Empirical Mean & 0.2500 & 0.3391 & 0.2501 & 0.2119 & 0.1926 & 0.1850 & 0.2422\\
+Difference & -0.0255 & -0.1307 & -0.0496 & -0.0206 & -0.0071 & -0.0084 & -0.0450\\
+\bottomrule
+\end{tabular}
+\vspace{6pt}
+\caption{Public proxy Brier scores. Lower is better. ASRP and the official Empirical Mean use the same 5,680-row proxy split (142 sources and 40 held-out items per source). Difference is ASRP minus Empirical Mean. These are local results, not Codabench hidden-test scores.}
+\label{tab:proxy}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\columnwidth,height=0.24\textheight,keepaspectratio]{figures/public_proxy_curve.pdf}
+  \caption{Public proxy learning curves for ASRP and the official Empirical Mean plotted on the official $\log_2(1+n)$ budget axis. Both curves use the same 5,680 public held-out rows as Table~\ref{tab:proxy}.}
+  \label{fig:proxy_curve}
+\end{figure}
+
+\subsection{Analysis across label budgets}
+
+\paragraph{Where the improvement occurs.}
+Figure~\ref{fig:proxy_curve} highlights the largest gap at \textbf{budget 1}: ASRP scores $0.2084$, compared with $0.3391$ for Empirical Mean. With one observed label, Empirical Mean predicts either 0 or 1 for every query in the group, making its predictions sensitive to a single outcome. ASRP uses the prior-informed Rasch hybrid at this budget, consistent with the intended protection against unstable updates from very little evidence. At budget zero, its score of $0.2245$ also improves on the constant-$0.5$ baseline's $0.2500$.
+
+\paragraph{Behavior as evidence accumulates.}
+ASRP's aggregate Brier score decreases from $0.2245$ at budget zero to $0.1766$ at budget 31. Empirical Mean also improves after its one-label peak, and the gap narrows to $0.0071$ and $0.0084$ at budgets 15 and 31. This pattern is \textbf{consistent with ASRP's budget-dependent adaptation}: the prior-informed Rasch hybrid anchors predictions when evidence is scarce, while the kernel branch receives greater weight as more labels become available to estimate similarity-based residual corrections. Topic calibration adjusts systematic public-data residuals, and the source guard limits the kernel weight where public diagnostics indicate over-updating. Together, these mechanisms provide a design-based explanation for ASRP's lower aggregate error across the six budgets in this local proxy.
+
+\section{Limitations}
+
+\paragraph{Sparse metadata and local adaptation.}
+The development diagnostics found usable topic-like metadata for only \textbf{35.2\%} of analyzed rows, motivating the frozen embedding-cluster fallback. Some inspected topic groups contained only 10--15 items, so their residuals may be dominated by sampling noise. This motivates shrinking and capping topic corrections. Likewise, an unrepresentative acquired support set can cause the kernel to over-update. The source guard limits its weight where indicated by public diagnostics, but does not guarantee improvement on every source. These diagnostics explain the design choices; they are not an independent validation of the final calibration layer.
+
+\section{Reproducibility and disclosure}
+
+The submission is organized under \texttt{project/asrp}. The predictor entry point is \texttt{model.py}; \texttt{labeling.py} implements the streaming acquisition hook; the frozen artifacts are JSON/NPZ files and the local MiniLM encoder. The package is checked with:
+
+\begin{verbatim}
+python starting_kit/tools/check_submission_zip.py project/asrp.zip
+python starting_kit/tools/run_smoke_test.py project/asrp
+\end{verbatim}
+
+The runtime configuration, including all budget weights and calibration caps, is in \path{runtime_config.json}. The public-data source/topic diagnostics are in \path{analysis/source_topic_summary.md}.
+
+The frozen predictor, bundled artifacts, local submission checks, and report source are released at \url{https://github.com/Hubert0916/arsp}. The repository README documents the reproducibility scope: original training and final proxy-evaluation scripts are not included, and retained historical diagnostic predictions do not reproduce the final ASRP aggregate scores reported here.
+
+The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
+
+\section{Conclusion}
+
+ASRP provides a practical, budget-aware predictor for subject--item capability evaluation. Its main engineering principle is to use content-based and psychometric structure at cold start, use support-conditioned residuals only when evidence is available, and shrink topic corrections and late-budget updates toward conservative defaults. In the local public proxy, ASRP achieves lower Brier scores than Empirical Mean at all six budgets.
+
+\appendix
+\section{Public source inventory}\label{app:sources}
+
+The following public binary source identifiers occur in the 5,680-row proxy analysis. They are listed to make the training and analysis provenance auditable; the benchmark inventory and upstream licenses remain authoritative.
+
+\begingroup
+\scriptsize
+\input{source_inventory}
+\endgroup
+
+% unsrtnat preserves the order in which references first appear in the text.
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+
+\end{document}

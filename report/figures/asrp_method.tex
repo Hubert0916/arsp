@@ -1,0 +1,62 @@
+\begin{tikzpicture}[
+  >=Latex,
+  font=\sffamily\scriptsize,
+  node distance=5mm and 5mm,
+  box/.style={draw=black!65, rounded corners=1.5pt, align=center,
+              text width=25mm, minimum height=11mm, inner sep=2.5pt},
+  blendbox/.style={box, minimum height=22mm},
+  offline/.style={box, fill=blue!5},
+  online/.style={box, fill=orange!8},
+  output/.style={box, fill=green!8, line width=.7pt},
+  flow/.style={->, line width=.45pt, draw=black!75},
+  feedback/.style={->, dashed, line width=.45pt, draw=black!60},
+  lane/.style={font=\sffamily\bfseries\footnotesize, inner sep=1pt}
+]
+
+% Offline preparation: equal-width nodes on one baseline.
+\node[offline] (data) {Permitted public\\measurement-db};
+\node[offline, right=of data] (features) {MiniLM text\\+ metadata};
+\node[offline, right=of features] (models) {Frozen difficulty\\+ subject prior};
+\node[offline, right=of models] (cal) {Topic residuals\\+ fallback centroids};
+\draw[flow] (data.east) -- (features.west);
+\draw[flow] (features.east) -- (models.west);
+\draw[flow] (models.east) -- (cal.west);
+\node[lane, above=1.5mm of data, anchor=south west] {OFFLINE / FROZEN};
+
+% Online prediction path. Rasch and kernel are parallel branches.
+\node[online, below=14mm of data] (input) {Subject--item pair\\$[s,i]$};
+\node[online, right=of input] (encode) {Encode item\\+ visible metadata};
+\node[online, right=of encode, yshift=9mm] (rasch) {Rasch hybrid\\$p_{\rm hybrid}$};
+\node[online, right=of encode, yshift=-9mm] (kernel) {Kernel Probe\\$p_{\rm kernel}$};
+\node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble + source guard};
+\node[online, right=of blend] (adjust) {Topic calibration};
+\node[output, right=of adjust] (pred) {Final probability\\$p(\mathrm{correct})$};
+\draw[flow] (input.east) -- (encode.west);
+\draw[flow] (encode.east) -- (rasch.west);
+\draw[flow] (encode.east) -- (kernel.west);
+\coordinate (blendtop) at ($(blend.west)+(0,4mm)$);
+\coordinate (blendbottom) at ($(blend.west)+(0,-4mm)$);
+\draw[flow] (rasch.east) -- (blendtop);
+\draw[flow] (kernel.east) -- (blendbottom);
+\draw[flow] (blend.east) -- (adjust.west);
+\draw[flow] (adjust.east) -- (pred.west);
+\node[lane, above=1.5mm of input, anchor=south west] {ONLINE / ADAPTIVE};
+
+% Acquisition/update row. The three boxes share a baseline.
+\node[online, below=11mm of encode] (candidates) {Candidate\\stream};
+\node[online, right=of candidates] (acq) {\texttt{adaptive\_4\_warm}\\up to 16 warm-up,\\then gain};
+\node[online, right=of acq] (labels) {Revealed labels\\$\{(i_k,y_k)\}$};
+\draw[flow] (candidates.east) -- (acq.west);
+\draw[flow] (acq.east) -- (labels.west);
+
+% Feedback follows a dedicated outer route below the acquisition row.
+% It enters the online encoder from below, so no dashed segment crosses a box.
+\coordinate (feedbackdown) at ($(labels.south)+(0,-5mm)$);
+\coordinate (feedbackleft) at ($(candidates.west)+(-5mm,0)$);
+\coordinate (feedbackunder) at ($(encode.south)+(0,-5mm)$);
+\draw[feedback] (labels.south) -- (feedbackdown) -| (feedbackleft) |- (feedbackunder) -- (encode.south);
+
+% Frozen artifacts enter the corresponding online stages through orthogonal paths.
+\draw[feedback] (models.south) -- ++(0,-5mm) -| (rasch.north);
+\draw[feedback] (cal.south) -- ++(0,-5mm) -| (adjust.north);
+\end{tikzpicture}

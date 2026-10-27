@@ -1,0 +1,7 @@
+numpy
+torch
+transformers>=5
+onnxruntime>=1.20,<2
+tokenizers>=0.21,<1
+threadpoolctl>=3.5,<4
+scipy>=1.13,<2

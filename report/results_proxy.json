@@ -1,0 +1,33 @@
+{
+  "status": "public_proxy",
+  "source": "previously verified run of the current project/asrp artifact",
+  "n_sources": 142,
+  "n_rows": 5680,
+  "budgets": [
+    0,
+    1,
+    3,
+    7,
+    15,
+    31
+  ],
+  "asrp_brier": [
+    0.2245291714,
+    0.2084194776,
+    0.2004816452,
+    0.191355516,
+    0.185443948,
+    0.1765994844
+  ],
+  "empirical_mean_brier": [
+    0.25,
+    0.339084507,
+    0.2500782473,
+    0.2119071572,
+    0.1925586854,
+    0.1849599156
+  ],
+  "asrp_alc": 0.1972529829,
+  "empirical_mean_alc": 0.242221711,
+  "empirical_mean_scope": "same 5,680-row public proxy split as ASRP (142 sources; 40 held-out items/source)"
+}

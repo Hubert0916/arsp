@@ -1,0 +1,1 @@
+{"method":"BudgetWiseAdaptiveProbeEnsemble","probe_weights":[0.15,0.15,0.4,0.8,1.0,1.0],"acquisition":"adaptive_4_warm"}

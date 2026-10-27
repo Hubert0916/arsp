@@ -1,0 +1,27 @@
+{
+  "family": "mixture_centered",
+  "kernel": [
+    "relative_rbf",
+    4.0
+  ],
+  "ridge": 0.3,
+  "concentrations": [
+    1.0,
+    8.0
+  ],
+  "masses": [
+    0.3,
+    0.7
+  ],
+  "carry": 0.5,
+  "strength": 4.0,
+  "local_features": "whiten",
+  "implementation": "ddf29259d047b4ec9358acdc8240694e85f804ef176c2a182ef5405ab921cfec",
+  "research_files": {
+    "scripts/evaluate_new_method.py": "c6f34a602bbd2e5c40652a3c54f4a0d166b908dfecef014c968951c9a6a975f6",
+    "scripts/research_kernels.py": "a2d842674b93995a1a3580593a1e4148105290a6aae0fc5babd49e802b4f954f",
+    "scripts/research_policy.py": "49e65208208155ff99657ab0cf8d0df9fa4cc91f8650cb54da54330c5d3d35ea",
+    "scripts/screen_local_features.py": "38e17802f8e2bf19751586f4758c4bdc72150db59b4f87d0d8a2a34ab53edf36"
+  },
+  "policy": "adaptive_4_warm"
+}
