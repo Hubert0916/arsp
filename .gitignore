@@ -10,6 +10,9 @@ config.toml
 *.pem
 *.key
 /dist/
+/data/
+/results/reproduced/
+/results/check-*/
 *.zip
 report/*.aux
 report/*.bbl

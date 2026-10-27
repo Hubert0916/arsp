@@ -1,7 +1,7 @@
 {
   "status": "public_proxy",
-  "source": "previously verified run of the frozen ASRP artifact",
   "n_sources": 142,
+  "n_groups": 142,
   "n_rows": 5680,
   "budgets": [
     0,
@@ -12,22 +12,24 @@
     31
   ],
   "asrp_brier": [
-    0.2245291714,
-    0.2084194776,
-    0.2004816452,
-    0.191355516,
-    0.185443948,
-    0.1765994844
+    0.2267813539746339,
+    0.22451748680559966,
+    0.21334540084057232,
+    0.1981360211389986,
+    0.19387944826719417,
+    0.18522928299255292
   ],
+  "asrp_alc": 0.20717673510719165,
   "empirical_mean_brier": [
     0.25,
-    0.339084507,
-    0.2500782473,
-    0.2119071572,
-    0.1925586854,
-    0.1849599156
+    0.38767605633802815,
+    0.25050860719874807,
+    0.2079333141707387,
+    0.19865414710485133,
+    0.19182556316044025
   ],
-  "asrp_alc": 0.1972529829,
-  "empirical_mean_alc": 0.242221711,
-  "empirical_mean_scope": "same 5,680-row public proxy split as ASRP (142 sources; 40 held-out items/source)"
+  "empirical_mean_alc": 0.2531369812785173,
+  "seed": 20261028,
+  "dataset_revision": "54074453da7b9911be0f48e4c560be547bc84d21",
+  "split_manifest_sha256": "409ac4e1787ae05ad3479ca2a16738ab78e0ca0707c5ffe2baca95f190ab3dff"
 }

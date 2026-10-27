@@ -23,8 +23,8 @@ ax.plot(x, res['empirical_mean_brier'], marker='s', linewidth=1.45, markersize=3
 ax.set_xticks(x, [str(int(b)) for b in budgets])
 ax.set_xlabel('Label budget, $n$', labelpad=2)
 ax.set_ylabel('Brier score', labelpad=2)
-ax.set_ylim(0.17, 0.36)
-ax.set_yticks(np.arange(0.18, 0.361, 0.04))
+values = np.r_[res['asrp_brier'], res['empirical_mean_brier']]
+ax.set_ylim(float(values.min()) - .01, float(values.max()) + .015)
 ax.grid(axis='y', color='#d9d9d9', linewidth=.55)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)

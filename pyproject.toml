@@ -12,6 +12,9 @@ dependencies = [
   "threadpoolctl>=3.5,<4",
   "scipy>=1.13,<2",
   "matplotlib>=3.8,<4",
+  "pyarrow>=19,<24",
+  "duckdb>=1.2,<2",
+  "huggingface-hub>=1,<2",
 ]
 
 [tool.uv]

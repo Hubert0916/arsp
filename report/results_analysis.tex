@@ -1,0 +1,5 @@
+\paragraph{Where the improvement occurs.}
+The largest baseline-minus-ASRP gap occurs at \textbf{budget 1}: ASRP scores $0.2245$ and Empirical Mean scores $0.3877$. At budget one, Empirical Mean predicts either zero or one for every query in a group; a single unrepresentative label can therefore produce a large error. ASRP retains its public prior and Rasch component at this budget, moderating such extreme updates. At budget zero, the content- and prior-based ASRP prediction scores $0.2268$, compared with the constant baseline's $0.2500$.
+
+\paragraph{Behavior as evidence accumulates.}
+ASRP moves from $0.2268$ at budget zero to $0.1852$ at budget 31. The baseline-minus-ASRP gaps at budgets 15 and 31 are $0.0048$ and $0.0066$. The budget-dependent design anchors early predictions with the Rasch hybrid and gives the kernel residual more weight as support grows. Topic calibration remains active, but the source-name guard has zero weight adjustment for the anonymous aliases used in this experiment. These results compare the combined predictors conditional on matched evidence; the constrained acquisition trajectory does not measure an active-selection gain.

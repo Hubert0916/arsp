@@ -1,15 +1,35 @@
 # ASRP technical report
 
-`main.tex` follows the supplied NeurIPS 2026 template and includes the method figure, public-proxy table, appendix source inventory, and bibliography. The NeurIPS Paper Checklist is omitted because it is not required by the AIMS competition rules.
+`main.tex` follows the supplied NeurIPS 2026 template. The report compares ASRP
+with official Empirical Mean on the fixed public-data proxy described in
+`../experiments/proxy_config.json`.
 
-The report presents only local public-proxy results for ASRP and Empirical Mean. The numbers in `results_proxy.json` are not hidden-test results. The experimental setup explains that random formative draws and public/private distribution differences can make Codabench scores better or worse than these local values.
-
-Build locally with:
+From the repository root, reproduce the scores with:
 
 ```bash
-latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+uv sync --locked
+uv run hf auth login
+uv run --locked python tools/reproduce.py
 ```
 
-The method figure is editable TikZ in `figures/asrp_method.tex`.
+Accept the upstream measurement-db access conditions before logging in. Cached
+users can instead run `tools/reproduce.py --cache-only` without a network download.
 
-The public release is https://github.com/Hubert0916/arsp. Its README documents the available frozen inference artifacts and the missing original training/final-evaluation scripts. Historical diagnostics are not the final ASRP prediction records.
+Generate numeric report inputs and compile:
+
+```bash
+uv run --locked python tools/score_proxy.py results/proxy
+uv run --locked python tools/update_report_results.py results/proxy
+uv run --locked python report/make_proxy_plot.py
+latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
+latexmk -cd -c -bibtex report/main.tex
+```
+
+The table, analysis, and conclusion inputs are generated from the scored run.
+Edit methodological text in `main.tex` and the native TikZ method figure in
+`figures/asrp_method.tex`. Figure 2 retains the requested maximum width of
+`0.95\columnwidth` and maximum height of `0.24\textheight`, preserving aspect ratio.
+
+Per-item predictions and acquisition trajectories are released in
+[`results/proxy`](../results/proxy). These are public-proxy results, not private
+Codabench results. The NeurIPS checklist is not included in this competition report.
