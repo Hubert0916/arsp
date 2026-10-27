@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
-manifest = json.loads((root / "artifacts.sha256.json").read_text())
+manifest = json.loads((root / "artifacts/manifest.sha256.json").read_text())
 for name, expected in manifest.items():
     actual = hashlib.sha256((root / name).read_bytes()).hexdigest()
     if actual != expected:

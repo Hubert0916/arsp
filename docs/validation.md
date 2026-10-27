@@ -5,7 +5,7 @@ Checked on 2026-10-28 in the CPU environment recorded by `uv.lock`.
 | Check | Result |
 |---|---|
 | `uv sync --locked` / environment setup | Passed |
-| Frozen inference artifact hashes | All 38 files matched |
+| Frozen inference artifact hashes | All 38 files matched before and after directory reorganization |
 | ASRP submission ZIP checker | Passed |
 | ASRP official synthetic smoke test | Passed (2 predictions) |
 | Empirical Mean submission ZIP checker | Passed |
@@ -19,4 +19,11 @@ Checked on 2026-10-28 in the CPU environment recorded by `uv.lock`.
 
 The synthetic checks validate packaging and runtime behavior, not predictive
 performance. They do not reproduce the final ASRP public-proxy scores or provide
-new hidden-test results. See the reproducibility scope in README.md.
+new hidden-test results. See the reproducibility scope in ../README.md.
+
+## Directory reorganization
+
+Source and artifacts are packaged together from `src/asrp/` and `artifacts/asrp/`.
+The source and inference artifact bytes were preserved. The official starting kit
+is retained outside this repository for local validation only. The repository
+provides its own synthetic six-budget smoke test, which is not the official evaluator.

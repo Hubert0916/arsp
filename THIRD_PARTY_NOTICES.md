@@ -8,12 +8,9 @@
 - `baselines/empirical_mean/` contains the official PAIEC baseline. Its MIT
   license is retained alongside the source. Upstream:
   https://github.com/aims-foundations/paiec_baseline
-- `starting_kit/` contains local submission checks and synthetic sample data
-  from the competition starting kit. Upstream competition:
-  https://aims.stanford.edu/competition
 - `report/neurips_2026.sty` is supplied with the NeurIPS 2026 template and retains
   its original header.
-- Competition-specific artifacts and public diagnostics derive from the permitted
+- Competition-specific artifacts derive from the permitted
   `aims-foundations/measurement-db` release. No private Codabench responses are
   included. Upstream data licenses remain applicable:
   https://huggingface.co/datasets/aims-foundations/measurement-db

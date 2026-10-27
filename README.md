@@ -2,17 +2,29 @@
 
 **Yuhan Chiu — National Taiwan University**
 
-ASRP predicts whether an AI subject will answer an item correctly under six label
-budgets: **0, 1, 3, 7, 15, 31**. It combines a public-data prior and amortized Rasch
-hybrid at low budgets with a support-conditioned Kernel Probe as evidence grows.
-The final predictor includes topic residual calibration, a source guard, and the
-`adaptive_4_warm` streaming acquisition policy.
+ASRP predicts subject–item response probabilities at label budgets **0, 1, 3,
+7, 15, 31**. It combines a prior-informed Rasch hybrid, a support-conditioned
+Kernel Probe, topic calibration, and `adaptive_4_warm` label acquisition.
+The repository URL uses `arsp`; the method is **ASRP**.
 
-This repository contains the competition inference implementation, frozen
-artifacts, the official Empirical Mean comparator, local submission checks,
-and the technical report. The repository URL uses `arsp`; the method is **ASRP**.
+## Repository layout
 
-## Setup and validation
+```text
+src/asrp/                   Prediction and acquisition source code
+artifacts/asrp/             Frozen parameters, settings, and MiniLM encoders
+artifacts/manifest.sha256.json  Integrity checks for inference files
+baselines/empirical_mean/   Official Empirical Mean predictor and license
+report/                    Paper source, PDF, figures, and recorded results
+tools/                     Submission builder, smoke test, integrity check
+docs/validation.md         Release validation record
+pyproject.toml + uv.lock   Reproducible CPU environment
+dist/                      Generated submission ZIPs (not tracked)
+```
+
+The official starting kit, historical experiments, research papers, intermediate
+LaTeX files, and generated ZIPs are not included in the public source tree.
+
+## Setup and build
 
 Install [uv](https://docs.astral.sh/uv/), then run:
 
@@ -21,82 +33,64 @@ git clone https://github.com/Hubert0916/arsp.git
 cd arsp
 uv sync --locked
 uv run python tools/verify_artifacts.py
-uv run python starting_kit/tools/run_smoke_test.py project/asrp
+uv run python tools/build_submission.py asrp
+uv run python tools/smoke_test.py dist/asrp.zip
 ```
 
-The environment uses CPU PyTorch. Both MiniLM model files are bundled (about
-173 MiB combined), so inference does not download models or call external APIs.
-They are ordinary Git files, not Git LFS pointers. The small competition-specific
-JSON/NPZ artifacts are also bundled.
+The builder combines `src/asrp/` and `artifacts/asrp/` into a ZIP with `model.py`
+at its root. Run the packaged version rather than importing source files directly:
+the inference loaders expect model files alongside the source in the submission.
+Both MiniLM encoders are bundled (about 173 MiB combined); inference does not
+fetch models or call external APIs. They are ordinary Git files, not LFS pointers.
 
-## Build a Codabench submission
+Build and check the official Empirical Mean baseline:
 
 ```bash
-uv run python tools/build_submission.py asrp
-uv run python starting_kit/tools/check_submission_zip.py dist/asrp.zip
-
 uv run python tools/build_submission.py empirical_mean
-uv run python starting_kit/tools/check_submission_zip.py dist/empirical_mean.zip
-uv run python starting_kit/tools/run_smoke_test.py baselines/empirical_mean
+uv run python tools/smoke_test.py dist/empirical_mean.zip
 ```
 
-Upload the appropriate ZIP from `dist/`. Files such as `model.py` are placed at
-its root. ASRP supplies `labeling.py`; Empirical Mean omits it and uses the
-platform's default random acquisition policy. A smoke test checks the interface;
-it is not a competition performance evaluation. See [validation notes](VALIDATION.md)
-for the checks performed on this release.
+Upload the appropriate ZIP from `dist/`. ASRP includes `labeling.py`; Empirical
+Mean omits it and uses the platform's default random acquisition policy.
+The included smoke test validates synthetic predictions and acquisition, not
+competition performance. For the **official submission checker**, download the
+starting kit from [the competition page](https://aims.stanford.edu/competition)
+and follow its instructions. The kit is maintained upstream and is not vendored here.
 
 ## Report and local results
 
-See [technical report](report/main.pdf) and [LaTeX source](report/main.tex).
-The report records the following **local public proxy**, with 142 sources and
-5,680 evaluated rows:
+[Technical report](report/main.pdf) · [LaTeX source](report/main.tex)
+
+Recorded **local public-proxy** results (142 sources; 5,680 evaluated rows):
 
 | Method | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | ASRP | 0.2245 | 0.2084 | 0.2005 | 0.1914 | 0.1854 | 0.1766 | 0.1973 |
 | Empirical Mean | 0.2500 | 0.3391 | 0.2501 | 0.2119 | 0.1926 | 0.1850 | 0.2422 |
 
-These are recorded local results, not official Codabench results or a new run of
-this release. The comparison uses identical acquisition prefixes. It therefore
-differs from comparing the two standalone submissions' acquisition policies.
+These are recorded results, not a new evaluation of this release or Codabench
+scores. Both predictors used identical acquisition prefixes in this comparison.
 Public calibration and proxy evaluation are not fully independent.
-
-Regenerate the figure from recorded aggregate values:
 
 ```bash
 uv run python report/make_proxy_plot.py
-# Requires a local TeX installation with latexmk, BibTeX, and TikZ:
+# Requires latexmk, BibTeX, and TikZ installed locally:
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 ```
 
 ## Reproducibility scope
 
-- **Inference and packaging:** source, frozen parameters, encoders, environment
-  lockfile, checksums, ZIP builder, and interface checks are included.
-- **Empirical Mean reconstruction:**
-  `uv run python report/recompute_proxy_baselines.py` recovers acquired success
-  counts from saved public diagnostic rows and recomputes the baseline curve.
-- **Historical diagnostics:** `analysis/analysis_source_topic.json` and
-  `analysis/source_topic_summary.md` belong to an earlier ASRP version. Their
-  ASRP predictions do **not** reproduce the final aggregate ASRP curve in the
-  report. They are included for provenance and Empirical Mean reconstruction.
-- **Not included:** the original complete training, calibration-fitting, and
-  final proxy-evaluation scripts were no longer present in the retained workspace
-  at release time. This release supports running the frozen predictor; it does
-  not claim to reproduce training from scratch or independently verify the
-  report's final ASRP scores. Replotting aggregates is not re-evaluation.
+Source, frozen artifacts, environment lockfile, integrity manifest, packaging,
+and smoke checks support **running the frozen predictor**. The original complete
+training, calibration-fitting, and final proxy-evaluation scripts were no longer
+present in the retained workspace at release time. This repository does not
+claim to reproduce training from scratch or independently verify the final
+ASRP scores. Replotting `report/results_proxy.json` is not re-evaluation.
+Historical diagnostic rows are retained locally and excluded from this release
+because their ASRP predictions belong to an earlier version.
 
-## Layout
-
-- `project/asrp/`: inference, acquisition, encoder files, and frozen parameters.
-- `baselines/empirical_mean/`: official baseline and its license.
-- `starting_kit/`: official local checks and synthetic example data.
-- `tools/`: packaging and artifact verification.
-- `analysis/`: historical public-data diagnostics, as qualified above.
-- `report/`: report source, PDF, figures, and recorded result aggregates.
-
-Training data provenance is the permitted public
+See [validation notes](docs/validation.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+Competition-specific artifacts derive from the permitted public
 [measurement-db](https://huggingface.co/datasets/aims-foundations/measurement-db)
-release. See [third-party notices](THIRD_PARTY_NOTICES.md). Codex assisted with
-implementation and report preparation; it is not an online predictor.
+release. Codex assisted with development and report preparation; it is not an
+online predictor.

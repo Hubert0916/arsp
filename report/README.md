@@ -10,6 +10,6 @@ Build locally with:
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-The method figure is editable TikZ in `figures/asrp_method.tex`. The pre-generation semantic/visual/text audit required by `paper-framework-figure-studio-pro` is recorded in `figure_audit.md`.
+The method figure is editable TikZ in `figures/asrp_method.tex`.
 
 The public release is https://github.com/Hubert0916/arsp. Its README documents the available frozen inference artifacts and the missing original training/final-evaluation scripts. Historical diagnostics are not the final ASRP prediction records.

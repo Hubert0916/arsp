@@ -1,6 +1,6 @@
 {
   "status": "public_proxy",
-  "source": "previously verified run of the current project/asrp artifact",
+  "source": "previously verified run of the frozen ASRP artifact",
   "n_sources": 142,
   "n_rows": 5680,
   "budgets": [

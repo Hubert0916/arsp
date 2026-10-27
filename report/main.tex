@@ -255,16 +255,16 @@ The development diagnostics found usable topic-like metadata for only \textbf{35
 
 \section{Reproducibility and disclosure}
 
-The submission is organized under \texttt{project/asrp}. The predictor entry point is \texttt{model.py}; \texttt{labeling.py} implements the streaming acquisition hook; the frozen artifacts are JSON/NPZ files and the local MiniLM encoder. The package is checked with:
+The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The predictor entry point is \texttt{model.py}; \texttt{labeling.py} implements the streaming acquisition hook; the frozen artifacts are JSON/NPZ files and the local MiniLM encoder. The submission ZIP is built and checked with:
 
 \begin{verbatim}
-python starting_kit/tools/check_submission_zip.py project/asrp.zip
-python starting_kit/tools/run_smoke_test.py project/asrp
+uv run python tools/build_submission.py asrp
+uv run python tools/smoke_test.py dist/asrp.zip
 \end{verbatim}
 
-The runtime configuration, including all budget weights and calibration caps, is in \path{runtime_config.json}. The public-data source/topic diagnostics are in \path{analysis/source_topic_summary.md}.
+Budget weights are recorded in \path{artifacts/asrp/runtime_config.json}; topic calibration settings and source guards are stored in \path{artifacts/asrp/topic_calibration.json}. The official submission checker is distributed separately in the competition starting kit.
 
-The frozen predictor, bundled artifacts, local submission checks, and report source are released at \url{https://github.com/Hubert0916/arsp}. The repository README documents the reproducibility scope: original training and final proxy-evaluation scripts are not included, and retained historical diagnostic predictions do not reproduce the final ASRP aggregate scores reported here.
+The frozen predictor, bundled artifacts, local smoke checks, and report source are released at \url{https://github.com/Hubert0916/arsp}. The repository README documents the reproducibility scope: original training and final proxy-evaluation scripts are not included, and historical diagnostic predictions are excluded because they belong to an earlier version.
 
 The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
 
