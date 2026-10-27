@@ -60,8 +60,9 @@ uv run --locked python tools/reproduce.py --prepared
   the lowest `(trial, response_id)` among binary outcomes.
 - Model inputs contain only the official visible subject/item fields, with nulls
   converted to empty strings. Benchmark IDs are anonymous SHA256 aliases.
-  Grading criteria, reference answers, traces, and target outcomes are not passed
-  to the predictor or acquisition hook.
+  Separate grading/reference-answer columns, traces, and target outcomes are not
+  passed to the predictor or acquisition hook. Item content is retained as
+  provided upstream, including any examples already embedded in that content.
 - The packaged acquisition hook is called sequentially. With 40 candidates and
   a cap of 31, warm-up is clipped to 9 skipped items, followed by 31 mandatory
   acquisitions. This setup **does not measure an active-selection gain**.

@@ -28,7 +28,7 @@
 \node[online, right=of input] (encode) {Encode item\\+ visible metadata};
 \node[online, right=of encode, yshift=9mm] (rasch) {Rasch hybrid\\$p_{\rm hybrid}$};
 \node[online, right=of encode, yshift=-9mm] (kernel) {Kernel Probe\\$p_{\rm kernel}$};
-\node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble + source guard};
+\node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble\\conditional source guard};
 \node[online, right=of blend] (adjust) {Topic calibration};
 \node[output, right=of adjust] (pred) {Final probability\\$p(\mathrm{correct})$};
 \draw[flow] (input.east) -- (encode.west);
@@ -43,8 +43,8 @@
 \node[lane, above=1.5mm of input, anchor=south west] {ONLINE / ADAPTIVE};
 
 % Acquisition/update row. The three boxes share a baseline.
-\node[online, below=11mm of encode] (candidates) {Candidate\\stream};
-\node[online, right=of candidates] (acq) {\texttt{adaptive\_4\_warm}\\up to 16 warm-up,\\then gain};
+\node[online, below=11mm of encode] (candidates) {Candidate stream\\40 in this proxy};
+\node[online, right=of candidates] (acq) {\texttt{adaptive\_4\_warm}\\Proxy: skip 9,\\reveal next 31};
 \node[online, right=of acq] (labels) {Revealed labels\\$\{(i_k,y_k)\}$};
 \draw[flow] (candidates.east) -- (acq.west);
 \draw[flow] (acq.east) -- (labels.west);
