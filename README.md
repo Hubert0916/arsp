@@ -43,7 +43,8 @@ uv run python starting_kit/tools/run_smoke_test.py baselines/empirical_mean
 Upload the appropriate ZIP from `dist/`. Files such as `model.py` are placed at
 its root. ASRP supplies `labeling.py`; Empirical Mean omits it and uses the
 platform's default random acquisition policy. A smoke test checks the interface;
-it is not a competition performance evaluation.
+it is not a competition performance evaluation. See [validation notes](VALIDATION.md)
+for the checks performed on this release.
 
 ## Report and local results
 
