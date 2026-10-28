@@ -1,0 +1,43 @@
+{
+  "input_sha256": "1dfce567646df712778fcdde2e4a4e8d5a69519e35b0a7b3e9c8625af1a77304",
+  "input_bytes": 66451,
+  "n_formative_headers": 9,
+  "n_complete_blocks": 7,
+  "issues": [
+    {
+      "block": 7,
+      "type": "unassigned_rows",
+      "preceding_budget_header": 31,
+      "line_start": 696,
+      "line_end": 703,
+      "n_rows": 8,
+      "note": "Group keys absent from this ALC summary; no run/budget inferred."
+    },
+    {
+      "block": 7,
+      "type": "unassigned_rows",
+      "preceding_budget_header": 31,
+      "line_start": 709,
+      "line_end": 716,
+      "n_rows": 8,
+      "note": "Group keys absent from this ALC summary; no run/budget inferred."
+    },
+    {
+      "block": 7,
+      "type": "duplicate_feedback",
+      "duplicate_of": 6,
+      "note": "Identical group identities, counts, ALC, ECE, and all available budget scores; counted once."
+    },
+    {
+      "block": 9,
+      "type": "incomplete_budget",
+      "budget": 31,
+      "expected_groups": 9,
+      "observed_groups": 0
+    }
+  ],
+  "duplicate_blocks": 1,
+  "group_alc_and_ece_rounding_tolerance": 1.00001e-06,
+  "submission_ids_present": false,
+  "archive_hash_present": false
+}

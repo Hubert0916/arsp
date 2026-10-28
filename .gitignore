@@ -29,3 +29,6 @@ report/*.fdb_latexmk
 /references/
 
 /results/*/chunks/
+
+# Preserve original private platform feedback locally.
+/results/official/raw/

@@ -28,12 +28,13 @@ National Taiwan University}
 \newcommand{\alc}{\mathrm{ALC}}
 
 \input{results_metadata}
+\input{official_metadata}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Predicting whether an AI system will solve a particular evaluation item requires accounting for item difficulty, subject ability, and the small number of revealed labels. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A budget-dependent ensemble combines these branches, followed by conservative topic residual calibration; source-keyed guards are available when a public-source identifier matches. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We evaluate \ProxySources{} public-source groups over three fixed seeds, with \ProxyTargets{} evaluation outcomes per seed. A paired comparison of ASRP and Empirical Mean under both Random and Adaptive acquisition separates predictor quality from acquisition effects. \input{results_abstract}
+Predicting whether an AI system will solve a particular evaluation item requires accounting for item difficulty, subject ability, and the small number of revealed labels. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A budget-dependent ensemble combines these branches, followed by conservative topic residual calibration; source-keyed guards are available when a public-source identifier matches. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We evaluate \ProxySources{} public-source groups over three fixed seeds, with \ProxyTargets{} evaluation outcomes per seed. A paired comparison of ASRP and Empirical Mean under both Random and Adaptive acquisition separates predictor quality from acquisition effects. \input{results_abstract} \input{official_abstract}
 \end{abstract}
 
 \section{Introduction}
@@ -78,7 +79,7 @@ The official score averages these group-level ALC values equally across subject-
 
 \section{Data and permitted training}
 
-The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. The evaluation starts from a fixed inventory of 142 binary sources and retains sources containing a complete subject group with 80--1,000 distinct binary-response items. This yields \textbf{\ProxySources{} sources}; \ProxyExcluded{} sources have no qualifying group. One eligible subject is fixed per source, and all items in that group are retained without truncation. The selected groups contain \ProxyItems{} items in total. Appendix~\ref{app:sources} lists the evaluated sources; the manifest records both inclusions and exclusions. Upstream metadata and licenses remain authoritative.
+The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. The public-proxy evaluation starts from a fixed inventory of 142 binary sources and retains sources containing a complete subject group with 80--1,000 distinct binary-response items. This yields \textbf{\ProxySources{} sources}; \ProxyExcluded{} sources have no qualifying group. One eligible subject is fixed per source, and all items in that group are retained without truncation. The selected groups contain \ProxyItems{} items in total. Appendix~\ref{app:sources} lists the evaluated sources; the manifest records both inclusions and exclusions. Upstream metadata and licenses remain authoritative.
 
 The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
@@ -187,6 +188,10 @@ It uses neither item features nor a learned prior. We run this unchanged predict
 
 For each seed and policy, we compute Brier scores within each subject--source group and average groups equally, then average the three seed-level scores equally. Groups have different numbers of evaluation items, so pooling all response rows would give different weights and is not used. Brier ALC uses the weights in Section~2. We report the individual seed ALCs and their sample standard deviation; these describe variation across the three specified splits, not a confidence interval over all possible evaluations.
 
+\subsection{Official formative feedback}
+
+Separately, we summarize copied Codabench formative feedback supplied for ASRP with adaptive acquisition. Each formative evaluation samples a private subset; its composition differs from the fixed public proxy. We average the platform's group-level scores equally within each record, then average records equally. The six-budget table uses the same \OfficialRuns{} complete, distinct records for every metric; SD is the sample standard deviation across these records. Group ALC and weighted ECE are checked against the six budget tables, allowing for six-decimal rounding. Duplicate feedback is counted once, and incomplete or unassigned tables are not imputed. Appendix~\ref{app:official} documents the transcription audit. These records contain no paired official baseline or Random-acquisition results.
+
 \section{Results and analysis}
 
 \subsection{Public proxy results}
@@ -223,6 +228,20 @@ For each seed and policy, we compute Brier scores within each subject--source gr
 
 \input{results_analysis}
 
+\subsection{Official formative results}
+
+\input{official_overview}
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\input{official_table}
+\vspace{6pt}
+\caption{Official formative feedback for ASRP with adaptive acquisition: mean and sample SD across \OfficialRuns{} complete, distinct records. Each record first averages subject--benchmark groups equally. Lower Brier scores and ALC are better. These samples are separate from the public-proxy comparisons.}
+\label{tab:official}
+\end{table}
+
 \section{Limitations}
 
 \paragraph{Sparse metadata and local adaptation.}
@@ -242,13 +261,15 @@ After accepting upstream access conditions and authenticating with a Hugging Fac
 
 \path{experiments/} records the protocol, checksums, and selected subject/item/response IDs. \path{results/proxy} contains predictions, acquired labels, decisions, and metrics. \path{tools/update_report_results.py} generates the reported numbers; task text is downloaded from upstream.
 
+Official evaluation-level aggregates are in \path{results/official}. Running \path{tools/update_official_report.py} verifies their summary and regenerates the official report inputs. The local transcription parser is \path{tools/parse_official_results.py}; private platform evaluation itself cannot be reproduced from public data.
+
 Kernel weights are in \path{src/asrp/model.py}; Rasch settings and calibration are in \path{artifacts/asrp/runtime_config.json} and \path{artifacts/asrp/topic_calibration.json}. Code, frozen weights, the locked CPU environment, and report source are available at \url{https://github.com/Hubert0916/arsp}. The official checker remains in the upstream starting kit.
 
 The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
 
 \section{Conclusion}
 
-ASRP provides a practical, budget-aware predictor for subject--item capability evaluation. Its main engineering principle is to use content-based and psychometric structure at cold start, use support-conditioned residuals only when evidence is available, and shrink topic corrections and late-budget updates toward conservative defaults. \input{results_conclusion}
+ASRP provides a practical, budget-aware predictor for subject--item capability evaluation. Its main engineering principle is to use content-based and psychometric structure at cold start, use support-conditioned residuals only when evidence is available, and shrink topic corrections and late-budget updates toward conservative defaults. \input{results_conclusion} \input{official_conclusion}
 
 \appendix
 
@@ -432,6 +453,19 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \scriptsize
 \input{source_inventory}
 \endgroup
+
+\section{Official feedback provenance}\label{app:official}
+
+\input{official_audit}
+
+\begin{table}[H]
+\centering
+\small
+\input{official_runs_table}
+\vspace{6pt}
+\caption{Audit of transcribed formative feedback. Block numbers refer to order in the supplied text. Evaluation-item counts sum the groups within each block; they do not determine group weights.}
+\label{tab:official_records}
+\end{table}
 
 % unsrtnat preserves the order in which references first appear in the text.
 \bibliographystyle{unsrtnat}

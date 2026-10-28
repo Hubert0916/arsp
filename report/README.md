@@ -22,6 +22,7 @@ Generate numeric report inputs and compile:
 uv run --locked python tools/score_proxy.py results/proxy
 uv run --locked python tools/update_report_results.py results/proxy
 uv run --locked python report/make_proxy_plot.py
+uv run --locked python tools/update_official_report.py
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
@@ -42,3 +43,28 @@ uses the same notation and follows Sections 4.1–4.5 in order: feature construc
 priors and MAP updates, kernel/Beta calculations, mixing/calibration, and acquisition.
 Rasch mixing weights (eta), kernel ridge penalty (lambda_K), and acquisition
 gain/utility (G/V) have separate symbols and explicit code mappings.
+
+## Official formative feedback
+
+The report separately summarizes seven complete, distinct records of ASRP with
+adaptive acquisition. The supplied text contains nine feedback headers: one
+exact duplicate and one record missing budget 31, plus sixteen unassigned rows.
+Eight distinct ALC summaries are available; their secondary aggregate is recorded
+in the appendix. No paired official baseline results were supplied.
+
+`../results/official/runs.json` contains evaluation-level aggregates, and
+`summary.json` contains equal-record means and sample standard deviations.
+The report generator recomputes and verifies these statistics before generating
+its tables. It needs no private feedback file.
+
+The original transcription is retained locally at
+`../results/official/raw/official_result.log` and is not tracked. To re-import it:
+
+```bash
+uv run --locked python tools/parse_official_results.py
+uv run --locked python tools/update_official_report.py
+```
+
+The parser checks group joins, counts, all six budgets, ALC and ECE consistency,
+and duplicate feedback. Anonymous platform group IDs are not exported. These
+commands reproduce aggregation, not the platform's private evaluation draws.
