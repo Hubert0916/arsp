@@ -20,11 +20,10 @@ def main():
     for key,label in [('mean','Mean'),('sample_sd','SD')]:
         table.append(label+' & '+' & '.join(f'{m[key]:.4f}' for m in metrics['brier']+[alc])+r'\\')
     save('official_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    text=(r'Table~\ref{tab:official} summarizes \textbf{'+str(n)+' complete, distinct formative-feedback records} supplied for ASRP with adaptive acquisition. '
-          +f"Their mean Brier ALC is ${alc['mean']:.4f}$ with sample SD ${alc['sample_sd']:.4f}$ and range ${alc['min']:.4f}$--${alc['max']:.4f}$. "
-          +f"The mean Brier score falls from ${metrics['brier'][0]['mean']:.4f}$ at budget zero to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
-          +r'These scores describe official formative samples, whereas the paired predictor/acquisition comparisons above use a fixed public proxy. No matched official Empirical Mean or Random-acquisition feedback is supplied, so these records do not establish an official advantage over either comparator. '
-          +r'Cross-record SD describes variation in the supplied samples; it is not a confidence interval or a significance test.')
+    text=(f"Across {n} official formative evaluations of the same ASRP submission with adaptive acquisition, "
+          +r"\textbf{mean Brier ALC is $"+f"{alc['mean']:.4f}"+r"$} (sample SD $"+f"{alc['sample_sd']:.4f}"+r"$; Table~\ref{tab:official}). "
+          +f"Mean Brier score decreases from ${metrics['brier'][0]['mean']:.4f}$ at budget zero to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
+          +"These official samples are separate from the local public-proxy comparisons.")
     save('official_overview.tex',text)
     save('official_abstract.tex',f"Separately, {n} complete, distinct official formative-feedback records for ASRP with adaptive acquisition have mean Brier ALC ${alc['mean']:.4f}$ (SD ${alc['sample_sd']:.4f}$).")
     save('official_conclusion.tex',f"The supplied official formative feedback gives ASRP with adaptive acquisition a mean Brier ALC of ${alc['mean']:.4f}$ across {n} complete, distinct records.")
