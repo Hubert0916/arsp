@@ -246,9 +246,6 @@ Separately, we summarize copied Codabench formative feedback for ASRP with adapt
 
 \input{official_limitation}
 
-\paragraph{Sparse metadata and local adaptation.}
-Missing topic metadata requires an embedding-cluster fallback, and small topic groups produce noisy residual estimates. An unrepresentative acquired support set can also cause the kernel to over-update. Shrinking and capping corrections reduce these risks, but do not ensure improvement on every source. The source guard applies only when a public-source key matches and cannot protect anonymous or unseen sources.
-
 \section{Reproducibility and disclosure}
 
 The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The entry points are \texttt{model.py} and \texttt{labeling.py}. From the repository root, run:
