@@ -19,13 +19,12 @@ def main():
     if result['n_groups']!=len(manifest['groups']) or result['seeds']!=manifest['config']['seeds']:
         raise ValueError('Only a complete published run can update the report')
     shutil.copyfile(args.directory/'summary.json',ROOT/'report/results_proxy.json')
-    root=ROOT/'report';c=result['combinations'];large=result['at_least_160_items']
+    root=ROOT/'report';c=result['combinations']
     def save(name,text): (root/name).write_text(text+'\n')
     macros={'ProxySources':result['n_sources'],'ProxyItems':f"{result['n_items']:,}",
             'ProxyTargets':f"{result['n_rows_per_seed']:,}",'ProxyExcluded':result['n_excluded_sources'],
             'ProxyMinItems':result['group_items_range'][0],'ProxyMaxItems':result['group_items_range'][1],
-            'ProxyMinPool':result['acquisition_pool_range'][0],'ProxyMaxPool':result['acquisition_pool_range'][1],
-            'ProxyLargeGroups':large['n_groups']}
+            'ProxyMinPool':result['acquisition_pool_range'][0],'ProxyMaxPool':result['acquisition_pool_range'][1]}
     save('results_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+str(v)+'}' for k,v in macros.items()))
     header=r'\begin{tabular}{lrrrrrrr}'+'\n'+r'\toprule'+'\n'+r'Predictor + acquisition & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\'+'\n'+r'\midrule'+'\n'
     rows=''.join(LABELS[k]+' & '+' & '.join(f'{v:.4f}' for v in c[k]['brier']+[c[k]['alc']])+r'\\'+'\n' for k in ORDER)
@@ -34,8 +33,6 @@ def main():
     for k in ORDER:
         seed_table+=LABELS[k]+' & '+' & '.join(f"{c[k]['per_seed_alc'][str(s)]:.4f}" for s in result['seeds'])+f" & {c[k]['alc_seed_sd']:.4f}"+r'\\'+'\n'
     save('results_seed_table.tex',seed_table+r'\bottomrule'+'\n'+r'\end{tabular}')
-    large_rows=''.join(LABELS[k]+' & '+' & '.join(f'{v:.4f}' for v in large['combinations'][k]['brier']+[large['combinations'][k]['alc']])+r'\\'+'\n' for k in ORDER)
-    save('results_large_table.tex',header+large_rows+r'\bottomrule'+'\n'+r'\end{tabular}')
     a,b=c['asrp_adaptive'],c['empirical_mean_random']
     save('results_abstract.tex',f"ASRP + Adaptive achieves a mean Brier ALC of ${a['alc']:.4f}$, compared with ${c['asrp_random']['alc']:.4f}$ for ASRP + Random and ${b['alc']:.4f}$ for Empirical Mean + Random (lower is better).")
     wins=sum(x<y for x,y in zip(a['brier'],b['brier']));gain=b['alc']-a['alc']
@@ -61,11 +58,7 @@ def main():
     smallest_diff=result['acquisition_effect']['asrp']['per_seed'][smallest_seed]
     analysis+=f"The closest ASRP pair differs by only ${smallest_diff:+.5f}$ (Adaptive minus Random, seed {smallest_seed}). "
     analysis+=r'Table~\ref{tab:seeds} shows the individual seed results and their sample standard deviation; three seeds summarize sensitivity to these draws rather than establishing universal superiority.'+'\n\n'
-    analysis+=r'\paragraph{Groups with more room for selection.}'+'\n'
-    analysis+=f"The prespecified subset of {large['n_groups']} groups with at least 160 items leaves at least 80 acquisition candidates "+r'(Table~\ref{tab:large}). '
-    for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
-        e=large['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
-        analysis+=f"In this subset, Adaptive {'lowers' if d<0 else 'raises'} {label}'s mean ALC by ${abs(d):.4f}$ relative to Random. "
+    analysis+=r'\paragraph{Selection capacity.}'+'\n'
     analysis+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
     max_budget=max(result['budgets'])
     forced_groups=[g for g in manifest['groups'] if (g['n_items']+1)//2-min(16,max(0,(g['n_items']+1)//2-max_budget))<=max_budget]

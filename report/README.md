@@ -26,7 +26,7 @@ latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
 
-The abstract scores, primary and larger-pool score tables, per-seed table,
+The abstract scores, primary score table, per-seed table,
 dataset-count macros, source inventory, analysis, and conclusion inputs are generated from the scored run. Complete 80–1,000-item
 groups are split in half; the comparison uses seeds 42, 43, and 44.
 Edit methodological text in `main.tex` and the native TikZ method figure in

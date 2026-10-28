@@ -180,7 +180,7 @@ The correction is zero if neither a topic nor a fallback cluster has stored stat
 
 Public validation identified some sources for which the kernel branch became less accurate at high budgets. At budgets 15 and 31, a matching public-source key supplies a guard $g\in[0,0.35]$ that multiplies the nominal kernel weight by $1-g$; the remaining weight goes to the Rasch hybrid. Unmatched identifiers receive zero adjustment. The anonymous aliases in the reproducible proxy do not match these source-name keys, so this guard is inactive in the reported experiment. This guard is a conservative regularizer, not a lookup of hidden test outcomes; source statistics are learned offline from public data.
 
-\subsection{Adaptive acquisition}
+\subsection{Adaptive acquisition}\label{sec:acquisition}
 
 The submitted \textbf{\texttt{labeling.py}} implements \textbf{\texttt{adaptive\_4\_warm}}. It skips up to 16 candidates to establish feature geometry; skipping reveals no label and consumes no label budget. A rolling reference set $P$ deduplicates the last 64 seen candidates by their visible text/metadata key. Conditional covariance gain $a_j$ measures how much observing candidate $j$ could reduce uncertainty on $P$ (Appendix~\ref{app:acquisition}). Define
 \[
@@ -200,8 +200,8 @@ The local protocol retains complete groups with $80\le N\le1{,}000$ distinct ite
 \paragraph{Paired predictor and acquisition comparison.}
 We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Within a seed, both policies see the same candidate order and evaluation pool. Random acquisition accepts the current candidate with probability $L/R$, where $L$ is the remaining label budget and $R$ counts remaining candidates including the current one. Its random variates are deterministic hashes of the visible input and context, with seed-specific anonymous subject aliases. Adaptive acquisition executes the packaged \texttt{adaptive\_4\_warm} hook. Its warm-up is $\min(16,A-31)$ for a candidate pool of size $A$; remaining candidates are mandatory when their count equals the remaining budget. Both predictors receive identical acquired labels \emph{within each policy}, using nested prefixes at budgets $0,1,3,7,15,31$. The two policies can select different labels. The acquisition context targets 31 labels throughout; checkpoints do not restart selection. Every checkpoint scores the same evaluation items within that seed.
 
-\paragraph{Scope and selection capacity.}
-We additionally report the prespecified subset of \ProxyLargeGroups{} groups with at least 160 items, hence at least 80 candidates, to examine acquisition where the pool leaves more room for selection after warm-up. Small eligible groups remain in the primary results. Evaluation outcomes are never supplied online, but this acquisition/evaluation split is not independent of all offline fitting: frozen public training and calibration use the same release. The local scores may therefore be optimistic. They are not Codabench scores; private data and formative random draws can produce different results.
+\paragraph{Evaluation scope.}
+Evaluation outcomes are never supplied online, but this acquisition/evaluation split is not independent of all offline fitting: frozen public training and calibration use the same release. The local scores may therefore be optimistic. They are not Codabench scores; private data and formative random draws can produce different results.
 
 \subsection{Baseline and metrics}
 
@@ -332,7 +332,9 @@ For the Beta mixture, $\alpha_{ac}=m_ac$, $\beta_{ac}=(1-m_a)c$, and
 \]
 The implementation normalizes these weights in log space. At zero labels the mixture mean is $m_a$, although its ensemble weight is zero. In Section~4.3, $M_{rt}=1/n_a$ when rows $r,t$ belong to subject $a$ and zero otherwise; $\bar f_a$ is the mean of $(K\gamma)_r$ over that subject's support rows.
 
-\subsection{Conditional covariance used for acquisition}\label{app:acquisition}
+\subsection{Covariance calculation for Section~\ref{sec:acquisition}}\label{app:acquisition}
+
+The gain $a_j$ used in Section~\ref{sec:acquisition} is computed as follows.
 
 Let $S$ be the acquired support and $U$ the concatenation of the rolling reference set $P$ and current candidate $c$. Unlike prediction geometry, acquisition geometry uses features of $S$, $P$, and $c$, all already visible. Its RBF bandwidth is computed from pairs in $P$ only, using the same median-distance rule as Section~4.3. Let $K$ be the resulting kernel. For the current subject $s$, define
 \[
@@ -349,19 +351,6 @@ A unit observation-noise term gives
                          {1+\max(\Sigma_{jj},0)},10^{-12}\right).
 \]
 Without support, $\Sigma=A_{UU}$. Utility-average denominators are floored at $10^{-12}$; without past candidates the policy falls back to $L/R$. The same SHA256 construction supplies the Random and Adaptive policies' uniform variates from the current input/context. No answer is supplied for a skipped candidate. The main experiment has $2\times3\times\ProxySources=552$ policy trajectories, each acquiring 31 labels; each evaluated item receives predictions from both models at all six checkpoints.
-
-\section{Larger-pool comparison}\label{app:large}
-
-The subset below uses the same seeds, frozen models, policy trajectories, and equal-group weighting as the primary experiment, retaining only the \ProxyLargeGroups{} groups with at least 160 items. This is a subset analysis, not an additional independent test.
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\input{results_large_table}
-\vspace{6pt}
-\caption{Six-budget scores on the prespecified subset with at least 80 acquisition candidates and 80 evaluation items per group, averaged over three seeds. Lower is better.}
-\label{tab:large}
-\end{table}
 
 \section{Public source inventory}\label{app:sources}
 
