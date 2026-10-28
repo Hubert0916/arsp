@@ -190,7 +190,7 @@ For each seed and policy, we compute Brier scores within each subject--source gr
 
 \subsection{Official formative feedback}
 
-Separately, we summarize copied Codabench formative feedback supplied for ASRP with adaptive acquisition. Each formative evaluation samples a private subset; its composition differs from the fixed public proxy. We average the platform's group-level scores equally within each record, then average records equally. The six-budget table uses the same \OfficialRuns{} complete, distinct records for every metric; SD is the sample standard deviation across these records. Group ALC and weighted ECE are checked against the six budget tables, allowing for six-decimal rounding. Duplicate feedback is counted once, and incomplete or unassigned tables are not imputed. Appendix~\ref{app:official} documents the transcription audit. These records contain no paired official baseline or Random-acquisition results.
+Separately, we summarize copied Codabench formative feedback for ASRP with adaptive acquisition. The submitter confirmed that all evaluations used the same submission ZIP with \texttt{adaptive\_4\_warm}. Each formative evaluation samples a private subset; its composition differs from the fixed public proxy. We average the platform's group-level scores equally within each record, then average records equally. The six-budget table uses the same \OfficialRuns{} complete, distinct records for every metric; SD is the sample standard deviation across these records. Group ALC and weighted ECE are checked against the six budget tables, allowing for six-decimal rounding. Duplicate feedback is counted once, and incomplete or unassigned tables are not imputed. Appendix~\ref{app:official} documents the transcription audit. These records contain no paired official baseline or Random-acquisition results.
 
 \section{Results and analysis}
 
@@ -251,11 +251,13 @@ Some public items lack usable topic metadata, motivating the frozen embedding-cl
 
 The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The entry points are \texttt{model.py} and \texttt{labeling.py}. From the repository root, run:
 
+\begin{samepage}
 \begin{verbatim}
 uv sync --locked
 uv run hf auth login
 uv run --locked python tools/reproduce.py
 \end{verbatim}
+\end{samepage}
 
 After accepting upstream access conditions and authenticating with a Hugging Face read token, this command downloads and verifies the pinned tables, reconstructs all splits, builds the submission, and evaluates all four combinations at three seeds. It checks every prediction against the published run within $10^{-7}$ and requires identical acquired labels. Frozen weights are used directly without refitting or parameter selection. The CPU evaluator uses four workers and caches only deterministic item features. Two independent complete executions produced identical predictions and acquisition records.
 

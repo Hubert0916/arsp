@@ -10,6 +10,8 @@ def main():
     summary=json.loads((directory/'summary.json').read_text())
     if summarize(runs)!=summary:
         raise ValueError('Official summary differs from released per-evaluation aggregates')
+    provenance=json.loads((directory/'provenance.json').read_text())
+    same_zip=provenance.get('same_submission_zip_confirmed_by_submitter',False)
     metrics=summary['complete_six_budget'];n=summary['n_complete_blocks'];alc=metrics['brier_alc']
     def save(name,text): (report/name).write_text(text+'\n')
     save('official_metadata.tex',r'\newcommand{\OfficialRuns}{'+str(n)+'}')
@@ -31,7 +33,12 @@ def main():
     duplicates=[r for r in runs if r['duplicate_of'] is not None]
     partial=[r for r in runs if not r['complete_six_budget'] and r['duplicate_of'] is None]
     note=(f"The supplied transcription contains {len(runs)} feedback headers and ALC summaries. "
-          +f"Of these, {len(duplicates)} repeats earlier feedback and {len(partial)} lacks at least one complete budget table, leaving {n} complete, distinct records for Table~"+r'\ref{tab:official}. ')
+          +f"After counting duplicate content once and excluding any incomplete records, {n} complete, distinct records remain for Table~"+r'\ref{tab:official}. ')
+    if not partial:
+        note+='All supplied records now contain all six budget tables. '
+    if same_zip:
+        note+=r'The submitter confirmed that all evaluations used the same ASRP + \texttt{adaptive\_4\_warm} ZIP. '
+    note+='Missing sections of the initial copy were supplied in a follow-up transcription; no scores were imputed. '
     for r in duplicates:
         note+=f"Block {r['block']} reproduces block {r['duplicate_of']}'s group identities, counts, ALC, ECE, and all six budget scores, so it is counted once. "
     for r in partial:

@@ -127,18 +127,19 @@ uv run --locked python tools/score_proxy.py results/proxy
 
 ## Official formative feedback
 
-Separately, seven complete, distinct feedback records supplied for ASRP with
-adaptive acquisition have **mean Brier ALC 0.19126 (sample SD 0.00979)**.
-These are private-platform formative samples, not the matched public-proxy
-comparison above; no paired official baseline feedback was supplied.
+Nine complete, distinct feedback records supplied for ASRP with adaptive
+acquisition have **mean Brier ALC 0.19307 (sample SD 0.00963)**. The submitter
+confirmed that every evaluation used the same ASRP + `adaptive_4_warm` ZIP.
+These private-platform formative samples are separate from the matched
+public-proxy comparison above; no paired official baseline feedback was supplied.
 
-The copied log has nine feedback headers, including one exact duplicate and one
-record missing budget 31. Sixteen additional rows lack a matching ALC summary.
-The main six-budget summary uses the same seven complete records throughout.
-All eight distinct available ALC summaries give mean 0.19157 (SD 0.00911).
+The completed transcription has ten feedback blocks. Blocks 6 and 7 are identical
+and counted once. All six budgets are now available, following the submitter's
+supplement; all metrics use the same nine distinct records.
 See [aggregate results](results/official/summary.json),
-[per-record aggregates](results/official/runs.json), and the report's provenance
-appendix. The original feedback remains local in `results/official/raw/`.
+[per-record aggregates](results/official/runs.json), and
+[provenance](results/official/provenance.json). The original copy and restored
+feedback remain local in `results/official/raw/`.
 
 ```bash
 uv run --locked python tools/update_official_report.py

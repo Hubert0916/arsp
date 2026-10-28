@@ -46,19 +46,20 @@ gain/utility (G/V) have separate symbols and explicit code mappings.
 
 ## Official formative feedback
 
-The report separately summarizes seven complete, distinct records of ASRP with
-adaptive acquisition. The supplied text contains nine feedback headers: one
-exact duplicate and one record missing budget 31, plus sixteen unassigned rows.
-Eight distinct ALC summaries are available; their secondary aggregate is recorded
-in the appendix. No paired official baseline results were supplied.
+The report separately summarizes nine complete, distinct records of ASRP with
+adaptive acquisition, using the same ZIP as confirmed by the submitter. The
+completed transcription contains ten feedback blocks, including one exact
+duplicate. Missing sections were supplied in a follow-up; all six budgets are
+now available. No paired official baseline results were supplied.
 
 `../results/official/runs.json` contains evaluation-level aggregates, and
 `summary.json` contains equal-record means and sample standard deviations.
 The report generator recomputes and verifies these statistics before generating
 its tables. It needs no private feedback file.
 
-The original transcription is retained locally at
-`../results/official/raw/official_result.log` and is not tracked. To re-import it:
+The restored transcription is retained locally at
+`../results/official/raw/official_result.log` and is not tracked. The original incomplete copy is preserved alongside it.
+To re-import it:
 
 ```bash
 uv run --locked python tools/parse_official_results.py
