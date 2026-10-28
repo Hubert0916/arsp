@@ -11,6 +11,41 @@ from prepare_proxy import ROOT, sha, write_json
 METHODS = ('asrp', 'empirical_mean')
 
 
+def source_comparisons(by_group, seeds):
+    """Compare paired source means, counting each source once across seeds."""
+    cells = defaultdict(dict)
+    for row in by_group:
+        key = (row['source'], row['subject_id'])
+        identity = (row['method'], row['policy'], row['seed'])
+        if identity in cells[key]:
+            raise ValueError('Duplicate group metric')
+        cells[key][identity] = row['alc']
+    pairs = {
+        'predictor_random': (('asrp', 'random'), ('empirical_mean', 'random')),
+        'predictor_adaptive': (('asrp', 'adaptive'), ('empirical_mean', 'adaptive')),
+        'acquisition_asrp': (('asrp', 'adaptive'), ('asrp', 'random')),
+    }
+    result = {}
+    for name, (left, right) in pairs.items():
+        differences = []
+        for (source, subject), values in sorted(cells.items()):
+            try:
+                delta = statistics.mean(values[(*left, seed)] - values[(*right, seed)] for seed in seeds)
+            except KeyError as error:
+                raise ValueError('Missing paired source/seed metric') from error
+            differences.append({'source': source, 'subject_id': subject, 'delta_alc': delta})
+        result[name] = {
+            'left': '_'.join(left), 'right': '_'.join(right),
+            'difference': 'left minus right; mean of paired seed differences',
+            'tie_tolerance': 1e-12,
+            'improved': sum(r['delta_alc'] < -1e-12 for r in differences),
+            'tied': sum(abs(r['delta_alc']) <= 1e-12 for r in differences),
+            'worsened': sum(r['delta_alc'] > 1e-12 for r in differences),
+            'mean_delta_alc': statistics.mean(r['delta_alc'] for r in differences),
+        }
+    return result
+
+
 def aggregate(records, config):
     cells = defaultdict(list)
     seen = set()
@@ -60,7 +95,8 @@ def aggregate(records, config):
         diffs = {str(seed): combinations[f'{method}_adaptive']['per_seed_alc'][str(seed)] - combinations[f'{method}_random']['per_seed_alc'][str(seed)] for seed in config['seeds']}
         effects[method] = {'adaptive_minus_random_alc': statistics.mean(diffs.values()),
                            'per_seed': diffs, 'seeds_improved': sum(v<0 for v in diffs.values())}
-    return {'combinations': combinations, 'per_seed': per_seed, 'acquisition_effect': effects}, by_group
+    return {'combinations': combinations, 'per_seed': per_seed, 'acquisition_effect': effects,
+            'source_comparisons': source_comparisons(by_group, config['seeds'])}, by_group
 
 
 def audit(records, acquisitions, manifest):

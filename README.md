@@ -27,6 +27,9 @@ Scores average groups and seeds equally; lower is better.
 Prediction methods share acquired labels within each policy. Public training and
 proxy evaluation use the same data release, so this is not a source-held-out test.
 See [protocol](experiments/proxy_config.json) and [full results](results/proxy).
+The release provides reusable source selections, disjoint splits, per-item
+predictions, and acquisition traces, with source-level comparisons in the
+[scored summary](results/proxy/summary.json).
 
 **Official formative evaluation:** ASRP + Adaptive achieved mean Brier ALC
 **0.19107 ± 0.01105** (sample SD) over 10 evaluations of the same ZIP.
@@ -47,7 +50,8 @@ uv run --locked python tools/reproduce.py
 ```
 
 This downloads pinned data, uses bundled frozen weights, evaluates all four
-combinations, and checks predictions against the published results. Outputs go
+combinations, and checks predictions against the published results. It reproduces
+inference and scoring; original offline fitting scripts are not included. Outputs go
 to `results/reproduced/`. Inference runs on CPU without external API calls.
 Allow about 6 GB of disk plus the Python environment. Use `--workers 1` for fewer
 workers, `--cache-only` for cached data, or `--prepared` to reuse prepared inputs.
@@ -73,7 +77,7 @@ packaging and execution; it does not measure benchmark performance.
 ## Files
 
 - [`src/asrp/`](src/asrp): prediction and acquisition code.
-- [`artifacts/`](artifacts): frozen models, settings, and checksums.
+- [`artifacts/`](artifacts/README.md): frozen models, settings, and reproduction scope.
 - [`baselines/empirical_mean/`](baselines/empirical_mean): official baseline.
 - [`experiments/`](experiments): protocol and pinned data/split manifest.
 - [`results/`](results): public-proxy predictions and official aggregates.

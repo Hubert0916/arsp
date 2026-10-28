@@ -38,7 +38,7 @@ def main():
     overview=(r'Table~\ref{tab:proxy} reports the \textbf{four predictor--acquisition combinations}, averaged equally over groups and then over seeds 42, 43, and 44. '
               +f"ASRP + Adaptive has a mean Brier ALC of ${a['alc']:.4f}$, compared with ${b['alc']:.4f}$ for Empirical Mean + Random "
               +f"(an absolute {'reduction' if gain>=0 else 'increase'} of ${abs(gain):.4f}$). "
-              +f'Its aggregate Brier score is lower at {wins} of the six budgets. '
+              +(f'Its aggregate Brier score is lower at all six budgets. ' if wins==6 else f'Its aggregate Brier score is lower at {wins} of the six budgets. ')
               +r'The two predictors share identical labels within each acquisition policy; the Random and Adaptive policies use identical candidate orders and evaluation pools.')
     save('results_overview.tex',overview)
     analysis=r'\paragraph{Predictor effect with acquisition held fixed.}'+'\n'
@@ -47,7 +47,7 @@ def main():
         analysis+=f"Under {policy.capitalize()} acquisition, ASRP's mean ALC is ${x['alc']:.4f}$ versus ${y['alc']:.4f}$ for Empirical Mean, "
         analysis+=f"a {'reduction' if d>=0 else 'increase'} of ${abs(d):.4f}$. "
     analysis+=f"Empirical Mean + Random rises from ${b['brier'][0]:.4f}$ at zero labels to ${b['brier'][1]:.4f}$ at one label: a single outcome makes its prediction either zero or one. ASRP smooths early evidence using public priors. "
-    analysis+=r'At budget zero the acquisition policies have no effect. The Rasch hybrid followed by topic correction supplies the initial prediction; the kernel branch receives increasing weight as labels become available.'+'\n\n'
+    analysis+=r'This comparison measures the complete predictor, including its frozen public-data information. At budget zero, the hybrid combines metadata smoothing and Rasch predictions before topic correction; the kernel weight is zero. At budgets 15 and 31, the kernel weight is one.'+'\n\n'
     analysis+=r'\paragraph{Acquisition effect with the predictor held fixed.}'+'\n'
     for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
         e=result['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
@@ -57,6 +57,12 @@ def main():
     smallest_diff=result['acquisition_effect']['asrp']['per_seed'][smallest_seed]
     analysis+=f"The closest ASRP pair differs by only ${smallest_diff:+.5f}$ (Adaptive minus Random, seed {smallest_seed}). "
     analysis+=r'Table~\ref{tab:seeds} shows the individual seed results and their sample standard deviation; three seeds summarize sensitivity to these draws rather than establishing universal superiority.'+'\n\n'
+    source_effects=result['source_comparisons']
+    predictor=source_effects['predictor_adaptive'];acquisition=source_effects['acquisition_asrp']
+    analysis+=r'\paragraph{Variation across sources.}'+'\n'
+    analysis+=f"Averaging the paired ALC differences over seeds within each source, ASRP beats Empirical Mean on {predictor['improved']} of {result['n_sources']} sources under Adaptive acquisition and loses on {predictor['worsened']}. "
+    analysis+=f"For ASRP, Adaptive improves on Random in {acquisition['improved']} sources, worsens in {acquisition['worsened']}, and ties in {acquisition['tied']} (tolerance $10^{{-12}}$). "
+    analysis+=r'These counts describe the selected subject per source; the aggregate gain does not imply a gain on every source.'+'\n\n'
     analysis+=r'\paragraph{Selection capacity.}'+'\n'
     analysis+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
     max_budget=max(result['budgets'])
@@ -64,8 +70,7 @@ def main():
     if len(forced_groups)==1:
         size=forced_groups[0]['n_items'];warmup=(size+1)//2-max_budget
         analysis+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
-    analysis+=r'Topic calibration is active.'
-    save('results_analysis.tex',analysis)
+    save('results_analysis.tex',analysis.rstrip())
     save('source_inventory.tex',r'\begin{verbatim}'+'\n'+'\n'.join(g['source'] for g in manifest['groups'])+'\n'+r'\end{verbatim}')
     markdown=['| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |',
               '|---|---:|---:|---:|---:|---:|---:|---:|']

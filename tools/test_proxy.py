@@ -4,7 +4,7 @@ import math
 import unittest
 from prepare_proxy import split_group
 from evaluate_proxy import random_choose
-from score_proxy import aggregate, audit
+from score_proxy import aggregate, audit, source_comparisons
 
 CONFIG={'budgets':[0,1,3,7,15,31],'alc_weights':[.1,.2,.2,.2,.2,.1],
         'seeds':[42,43,44],'policies':['random','adaptive']}
@@ -49,6 +49,24 @@ class ProtocolTests(unittest.TestCase):
         b=[.25,.3,.22,.20,.18,.17];x=[math.log2(1+n) for n in CONFIG['budgets']]
         integral=sum((x[i+1]-x[i])*(b[i]+b[i+1])/2 for i in range(5))/(x[-1]-x[0])
         self.assertAlmostEqual(integral,sum(w*p for w,p in zip(CONFIG['alc_weights'],b)))
+
+    def test_source_comparison_pairs_seeds_before_counting_wins(self):
+        # One source wins two seeds but loses on its mean: do not count seed wins
+        # or give its larger evaluation pool extra weight in the source tally.
+        metrics=[]
+        for source,deltas,size in [('a',[-.01,-.01,.05],100),
+                                   ('b',[-.02,-.02,-.02],1),('c',[0.,0.,0.],5)]:
+            for seed,delta in zip(CONFIG['seeds'],deltas):
+                for method in ['asrp','empirical_mean']:
+                    for policy in CONFIG['policies']:
+                        alc=.2+(delta if method=='asrp' and policy=='adaptive' else 0)
+                        metrics.append(dict(source=source,subject_id='s',seed=seed,
+                                            method=method,policy=policy,alc=alc,n_rows=size))
+        effect=source_comparisons(metrics,CONFIG['seeds'])['acquisition_asrp']
+        self.assertEqual((effect['improved'],effect['tied'],effect['worsened']),(1,1,1))
+        self.assertAlmostEqual(effect['mean_delta_alc'],(.01-.02)/3)
+        with self.assertRaises(ValueError):source_comparisons(metrics[:-1],CONFIG['seeds'])
+        with self.assertRaises(ValueError):source_comparisons(metrics+[metrics[0]],CONFIG['seeds'])
 
     def test_adaptive_policy_has_real_discretion_at_80_candidates(self):
         import sys

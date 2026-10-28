@@ -16,6 +16,9 @@
 \usepackage{adjustbox}
 \usepackage{tikz}
 \usepackage{hyperref}
+\hypersetup{hidelinks,
+  pdftitle={ASRP: Adaptive Support-Based Response Prediction for Test-Time AI Capability Evaluation},
+  pdfauthor={Yuhan Chiu}}
 \usetikzlibrary{arrows.meta,calc,fit,positioning}
 
 \title{ASRP: Adaptive Support-Based Response Prediction for Test-Time AI Capability Evaluation}
@@ -23,8 +26,8 @@
 \author{%
   Yuhan Chiu \\
   National Taiwan University \\
-  \textit{Address placeholder} \\
-  \texttt{your.email@example.com} % TODO: replace with your email.
+  \textit{Taipei, Taiwan} \\
+  \texttt{yhn.chiu@gmail.com}
   \And
   \textit{Coauthor name} \\
   \textit{Affiliation placeholder} \\
@@ -63,7 +66,7 @@ Lord's treatment of item response theory (IRT) relates response probabilities to
 A scalar ability estimate cannot express every subject's relative strengths across item types. ASRP therefore combines its Rasch prediction with a metadata-informed smoothed success estimate and a separate \textbf{support-conditioned kernel probe}. The kernel branch uses a Beta-mixture posterior for the subject baseline and subject-centered kernel ridge regression to learn item-dependent residuals from revealed labels. Posterior smoothing and ridge regularization limit sensitivity to sparse evidence. Fixed budget-dependent weights emphasize the Rasch hybrid at low budgets and the kernel branch as support grows. Shrunk, capped topic residuals adjust systematic errors observed in public development data, with embedding clusters as a fallback for missing topic matches.
 
 \paragraph{Selection and evaluation.}
-Our streaming acquisition rule combines covariance gain with the remaining label allowance to favor informative candidates after a bounded warm-up. ASRP's contribution is this budget-aware integration of established modeling tools and its reproducible evaluation. We compare ASRP and the official Empirical Mean under both Random and Adaptive acquisition on three paired public-data splits, and separately report ten official formative evaluations of the same submission. Section~\ref{sec:method} specifies the prediction and acquisition components.
+Our streaming acquisition rule combines covariance gain with the remaining label allowance after a bounded warm-up. ASRP contributes a budget-aware integration of established models and a reusable paired evaluation protocol. We compare ASRP and the official Empirical Mean under Random and Adaptive acquisition on three public-data splits, and separately report ten official formative evaluations. Released source-selection manifests, predictions, and acquisition traces let others audit the comparison and reuse its splits. Section~\ref{sec:method} specifies the method.
 
 \section{Competition setting}
 
@@ -156,7 +159,7 @@ Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
 
 \subsection{Adaptive acquisition}\label{sec:acquisition}
 
-The \textbf{\texttt{adaptive\_4\_warm}} hook skips up to 16 early candidates to establish feature geometry, without revealing their labels. A reference set $\mathcal P$ deduplicates the last 64 seen candidates by visible text, metadata, and interactor features. For the current candidate $*$, a conditional covariance gain $G_*$ measures its potential reduction of uncertainty over $\mathcal P$. Normalizing and capping this gain, then raising it to power four, gives utility $V_*$.
+The \textbf{\texttt{adaptive\_4\_warm}} hook skips up to 16 early candidates to establish feature geometry, without revealing their labels. A reference set $\mathcal P$ deduplicates the last 64 seen candidates by visible text, metadata, and interactor features. For the current candidate $*$, a conditional covariance gain $G_*$ is a feature-based uncertainty-reduction surrogate over $\mathcal P$. It depends on acquired-item features, but not on their outcome values, and does not directly estimate a change in Brier score. Normalizing and capping this gain, then raising it to power four, gives utility $V_*$.
 
 For $L$ labels and $R$ candidates remaining, including the current candidate, the acquisition probability is
 \[
@@ -171,7 +174,7 @@ A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every r
 \subsection{Public proxy protocol}
 
 \paragraph{Data and repeated splits.}
-We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all of which are retained, yielding \textbf{\ProxySources{} source groups}. One binary outcome per item is selected and held fixed when repeated responses exist. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The released manifest records the exact data version, selected records, and splits.
+We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all retained, yielding \textbf{\ProxySources{} source groups}. The upper limit bounds local evaluation cost. We fix one binary outcome per item when repeated responses exist; official evaluation instead retains all recorded evaluation responses. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The manifest records the data version, selected records, and splits.
 
 \paragraph{Paired comparison.}
 We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Random samples uniformly without replacement; Adaptive uses \texttt{adaptive\_4\_warm} from Section~\ref{sec:acquisition}. Within each seed, both policies receive the same candidate order and evaluation pool. Both predictors receive identical acquired labels \emph{within each policy}, while different policies may select different labels. A single acquisition trajectory targets 31 labels and supplies nested evidence at all six budgets; selection does not restart at each checkpoint. Every checkpoint evaluates the same held-out items.
@@ -191,7 +194,7 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
 \]
 It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Random is its default acquisition policy; the Adaptive variant uses ASRP's selected labels.
 
-We use the metrics and equal-group weighting in Section~2, then average the three seed-level scores equally. We also report each seed's ALC and their sample standard deviation (SD), which describes variation across these splits.
+We use the metrics and equal-group weighting in Section~2, then average the three seed-level scores equally. We report each seed's ALC and their sample standard deviation (SD), describing split variation. Source-level comparisons average paired ALC differences over the three seeds before counting improvements, with each selected source counted once.
 
 \subsection{Official formative feedback}
 
@@ -265,11 +268,11 @@ uv run --locked python tools/reproduce.py
 
 After accepting upstream access conditions and authenticating with a Hugging Face read token, this command downloads and verifies the pinned tables, reconstructs all splits, builds the submission, and evaluates all four combinations at three seeds. It checks every prediction against the published run within $10^{-7}$ and requires identical acquired labels. Frozen weights are used directly without refitting or parameter selection. The CPU evaluator uses four workers and caches only deterministic item features. Two independent complete executions produced identical predictions and acquisition records.
 
-\path{experiments/} records the protocol, checksums, and selected subject/item/response IDs. \path{results/proxy} contains predictions, acquired labels, decisions, and metrics. \path{tools/update_report_results.py} generates the reported numbers; task text is downloaded from upstream.
+\path{experiments/} records the protocol, checksums, inclusion/exclusion decisions, and selected subject/item/response IDs. \path{results/proxy} contains predictions, acquired labels, decisions, and source-level metrics. These reusable evaluation records constitute our data-curation contribution; task text remains upstream. \path{tools/update_report_results.py} generates the reported numbers.
 
-Official evaluation-level aggregates are in \path{results/official}. Running \path{tools/update_official_report.py} verifies their summary and regenerates the official report inputs. The local transcription parser is \path{tools/parse_official_results.py}; private platform evaluation itself cannot be reproduced from public data.
+Public aggregates in \path{results/official} regenerate the official tables via \path{tools/update_official_report.py}, which verifies their summary. The local transcription parser is \path{tools/parse_official_results.py}; private platform evaluations cannot be rerun from public data.
 
-Kernel weights are in \path{src/asrp/model.py}; Rasch settings and calibration are in \path{artifacts/asrp/runtime_config.json} and \path{artifacts/asrp/topic_calibration.json}. Code, frozen weights, the locked CPU environment, and report source are available at \url{https://github.com/Hubert0916/arsp}. The official checker remains in the upstream starting kit.
+Kernel weights are in \path{src/asrp/model.py}; Rasch settings and calibration are in \path{artifacts/asrp/runtime_config.json} and \path{artifacts/asrp/topic_calibration.json}. Code, frozen weights, the locked CPU environment, and report source are available at \url{https://github.com/Hubert0916/arsp}. The release reproduces inference and evaluation; original offline fitting scripts are not included. The official checker remains in the upstream starting kit.
 
 The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
 

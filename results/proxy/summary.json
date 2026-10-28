@@ -279,6 +279,38 @@
       "seeds_improved": 2
     }
   },
+  "source_comparisons": {
+    "predictor_random": {
+      "left": "asrp_random",
+      "right": "empirical_mean_random",
+      "difference": "left minus right; mean of paired seed differences",
+      "tie_tolerance": 1e-12,
+      "improved": 81,
+      "tied": 0,
+      "worsened": 11,
+      "mean_delta_alc": -0.04264734433592008
+    },
+    "predictor_adaptive": {
+      "left": "asrp_adaptive",
+      "right": "empirical_mean_adaptive",
+      "difference": "left minus right; mean of paired seed differences",
+      "tie_tolerance": 1e-12,
+      "improved": 82,
+      "tied": 0,
+      "worsened": 10,
+      "mean_delta_alc": -0.041600694305745665
+    },
+    "acquisition_asrp": {
+      "left": "asrp_adaptive",
+      "right": "asrp_random",
+      "difference": "left minus right; mean of paired seed differences",
+      "tie_tolerance": 1e-12,
+      "improved": 60,
+      "tied": 1,
+      "worsened": 31,
+      "mean_delta_alc": -0.0020995635824300396
+    }
+  },
   "at_least_160_items": {
     "combinations": {
       "asrp_random": {
@@ -558,6 +590,38 @@
           "44": -0.0021228268086236346
         },
         "seeds_improved": 2
+      }
+    },
+    "source_comparisons": {
+      "predictor_random": {
+        "left": "asrp_random",
+        "right": "empirical_mean_random",
+        "difference": "left minus right; mean of paired seed differences",
+        "tie_tolerance": 1e-12,
+        "improved": 71,
+        "tied": 0,
+        "worsened": 7,
+        "mean_delta_alc": -0.04518139921871386
+      },
+      "predictor_adaptive": {
+        "left": "asrp_adaptive",
+        "right": "empirical_mean_adaptive",
+        "difference": "left minus right; mean of paired seed differences",
+        "tie_tolerance": 1e-12,
+        "improved": 72,
+        "tied": 0,
+        "worsened": 6,
+        "mean_delta_alc": -0.045499693914026015
+      },
+      "acquisition_asrp": {
+        "left": "asrp_adaptive",
+        "right": "asrp_random",
+        "difference": "left minus right; mean of paired seed differences",
+        "tie_tolerance": 1e-12,
+        "improved": 53,
+        "tied": 1,
+        "worsened": 24,
+        "mean_delta_alc": -0.0026390390732039743
       }
     },
     "n_groups": 78

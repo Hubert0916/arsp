@@ -46,19 +46,17 @@ gain/utility (G/V) have separate symbols and explicit code mappings.
 
 ## Official formative feedback
 
-The report separately summarizes ten complete, distinct records of ASRP with
-adaptive acquisition, using the same ZIP as confirmed by the submitter. The
-final attachment replaces earlier copies and contains ten distinct feedback
-blocks with all six budgets. No paired official baseline results were supplied.
+The report separately summarizes ten complete formative evaluations of the same
+ASRP + `adaptive_4_warm` ZIP, identified by Codabench submission IDs in Appendix C.
 
 `../results/official/runs.json` contains evaluation-level aggregates, and
 `summary.json` contains equal-record means and sample standard deviations.
 The report generator recomputes and verifies these statistics before generating
 its tables. It needs no private feedback file.
 
-The restored transcription is retained locally at
-`../results/official/raw/official_result.log` and is not tracked. The original incomplete copy is preserved alongside it.
-To re-import it:
+The original feedback is retained locally at
+`../results/official/raw/official_result.log` and is not tracked. When that private
+file is available, re-import it with:
 
 ```bash
 uv run --locked python tools/parse_official_results.py
@@ -68,3 +66,8 @@ uv run --locked python tools/update_official_report.py
 The parser checks group joins, counts, all six budgets, ALC and ECE consistency,
 and duplicate feedback. Anonymous platform group IDs are not exported. These
 commands reproduce aggregation, not the platform's private evaluation draws.
+
+The public reproduction pipeline uses frozen artifacts. It does not retrain the
+original priors, difficulty network, or calibration; see
+[`artifacts/README.md`](../artifacts/README.md). Keep the generated numeric inputs
+in sync by running the commands above after changing the scored results.
