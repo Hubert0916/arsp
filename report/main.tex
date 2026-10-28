@@ -170,18 +170,18 @@ A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every r
 
 \subsection{Public proxy protocol}
 
-\paragraph{Complete groups and repeated splits.}
-The local protocol retains complete groups with $80\le N\le1{,}000$ distinct items; the upper bound is a local eligibility filter, not truncation. Within each eligible source, SHA256 ordering with the fixed group-selection seed 20261028 selects one subject, identically across all experiments. The actual group sizes range from \ProxyMinItems{} to \ProxyMaxItems{}. For repeated responses to an item, the smallest trial number and then response ID select one binary outcome, held fixed across policies and seeds. Splitting uses seeds \textbf{42, 43, and 44}: a seeded SHA256 ordering assigns the first $\lceil N/2\rceil$ items to acquisition and the rest to evaluation. Thus candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed scores \textbf{\ProxyTargets{} evaluation outcomes}. The dataset revision, table checksums, subject IDs, response IDs, and three splits are fixed in the released manifest.
+\paragraph{Data and repeated splits.}
+We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all of which are retained, yielding \textbf{\ProxySources{} source groups}. One binary outcome per item is selected and held fixed when repeated responses exist. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The released manifest records the exact data version, selected records, and splits.
 
-\paragraph{Paired predictor and acquisition comparison.}
-We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Within a seed, both policies see the same candidate order and evaluation pool. Random acquisition accepts the current candidate with probability $L/R$, where $L$ is the remaining label budget and $R$ counts remaining candidates including the current one. Its random variates are deterministic hashes of the visible input and context, with seed-specific anonymous subject aliases. Adaptive acquisition executes the packaged \texttt{adaptive\_4\_warm} hook. Its warm-up is $\min(16,A-31)$ for a candidate pool of size $A$; remaining candidates are mandatory when their count equals the remaining budget. Both predictors receive identical acquired labels \emph{within each policy}, using nested prefixes at budgets $0,1,3,7,15,31$. The two policies can select different labels. The acquisition context targets 31 labels throughout; checkpoints do not restart selection. Every checkpoint scores the same evaluation items within that seed.
+\paragraph{Paired comparison.}
+We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Random samples uniformly without replacement; Adaptive uses \texttt{adaptive\_4\_warm} from Section~\ref{sec:acquisition}. Within each seed, both policies receive the same candidate order and evaluation pool. Both predictors receive identical acquired labels \emph{within each policy}, while different policies may select different labels. A single acquisition trajectory targets 31 labels and supplies nested evidence at all six budgets; selection does not restart at each checkpoint. Every checkpoint evaluates the same held-out items.
 
 \paragraph{Evaluation scope.}
-Evaluation outcomes are never supplied online, but this acquisition/evaluation split is not independent of all offline fitting: frozen public training and calibration use the same release. The local scores may therefore be optimistic. They are not Codabench scores; private data and formative random draws can produce different results.
+Evaluation outcomes are never revealed online. However, public training, calibration, and proxy evaluation use the same data release, so this is not an independent test of all fitted components and local scores may be optimistic.
 
 \subsection{Baseline and score aggregation}
 
-We use the \textbf{Empirical Mean predictor} from the official PAIEC repository \citep{paiec_baselines}. For $n$ acquired binary labels in the current subject--benchmark group, it predicts
+We use the \textbf{Empirical Mean predictor} from the official PAIEC repository \citep{paiec_baselines}:
 \[
  p_{\mathrm{EM}}=
  \begin{cases}
@@ -189,13 +189,13 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
   \frac{1}{n}\sum_{k=1}^{n}y_k, & n>0.
  \end{cases}
 \]
-It uses neither item features nor a learned prior. We run this unchanged predictor on each policy's acquired evidence. Empirical Mean + Random corresponds to its default acquisition choice; Empirical Mean + Adaptive isolates the effect of giving the same predictor ASRP's selected labels. The local Random policy reproduces uniform sampling without replacement, not the private server's particular random draw.
+It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Random is its default acquisition policy; the Adaptive variant uses ASRP's selected labels.
 
-We use the metrics and equal-group weighting defined in Section~2. For each predictor--acquisition combination, we average the three seed-level scores equally and report the individual seed ALCs and their sample standard deviation. This SD describes variation across the three specified splits, not a confidence interval over all possible evaluations.
+We use the metrics and equal-group weighting in Section~2, then average the three seed-level scores equally. We also report each seed's ALC and their sample standard deviation (SD), which describes variation across these splits.
 
 \subsection{Official formative feedback}
 
-Separately, we summarize copied Codabench formative feedback for ASRP with adaptive acquisition. We used the same submission ZIP with \texttt{adaptive\_4\_warm} for all ten evaluations. Each formative evaluation samples a private subset; its composition differs from the fixed public proxy. We average the platform's group-level scores equally within each record, then average records equally. The six-budget table uses the same \OfficialRuns{} complete, distinct records for every metric; SD is the sample standard deviation across these records. Group ALC and weighted ECE are checked against the six budget tables, allowing for six-decimal rounding. All ten records pass completeness, duplicate, and score-consistency checks; no scores are imputed. Appendix~\ref{app:official} documents the transcription audit. These records contain no paired official baseline or Random-acquisition results.
+We separately evaluate the same ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset, distinct from the public proxy. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} lists the submission IDs and per-run results.
 
 \section{Results and analysis}
 
