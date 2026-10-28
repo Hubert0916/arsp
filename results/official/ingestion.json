@@ -1,17 +1,10 @@
 {
-  "input_sha256": "1fdd6a6b9dac3191b2995324c2b8c0bddbb9fa18a4b622be83552fbd06d85ad8",
-  "input_bytes": 69173,
+  "input_sha256": "df6fab5fd68652ba051b6e4120914ec4aafbd4af84ab01dd520fb58ae0f4b40c",
+  "input_bytes": 72513,
   "n_formative_headers": 10,
-  "n_complete_blocks": 9,
-  "issues": [
-    {
-      "block": 7,
-      "type": "duplicate_feedback",
-      "duplicate_of": 6,
-      "note": "Identical group identities, counts, ALC, ECE, and all available budget scores; counted once."
-    }
-  ],
-  "duplicate_blocks": 1,
+  "n_complete_blocks": 10,
+  "issues": [],
+  "duplicate_blocks": 0,
   "group_alc_and_ece_rounding_tolerance": 1.00001e-06,
   "submission_ids_present": false,
   "archive_hash_present": false

@@ -127,15 +127,15 @@ uv run --locked python tools/score_proxy.py results/proxy
 
 ## Official formative feedback
 
-Nine complete, distinct feedback records supplied for ASRP with adaptive
-acquisition have **mean Brier ALC 0.19307 (sample SD 0.00963)**. The submitter
+Ten complete, distinct feedback records supplied for ASRP with adaptive
+acquisition have **mean Brier ALC 0.19107 (sample SD 0.01105)**. The submitter
 confirmed that every evaluation used the same ASRP + `adaptive_4_warm` ZIP.
 These private-platform formative samples are separate from the matched
 public-proxy comparison above; no paired official baseline feedback was supplied.
 
-The completed transcription has ten feedback blocks. Blocks 6 and 7 are identical
-and counted once. All six budgets are now available, following the submitter's
-supplement; all metrics use the same nine distinct records.
+The final attachment contains ten complete, distinct feedback blocks and replaces
+the earlier incomplete copies. All six budgets are available; all metrics use
+the same ten records.
 See [aggregate results](results/official/summary.json),
 [per-record aggregates](results/official/runs.json), and
 [provenance](results/official/provenance.json). The original copy and restored

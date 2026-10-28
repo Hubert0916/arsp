@@ -46,11 +46,10 @@ gain/utility (G/V) have separate symbols and explicit code mappings.
 
 ## Official formative feedback
 
-The report separately summarizes nine complete, distinct records of ASRP with
+The report separately summarizes ten complete, distinct records of ASRP with
 adaptive acquisition, using the same ZIP as confirmed by the submitter. The
-completed transcription contains ten feedback blocks, including one exact
-duplicate. Missing sections were supplied in a follow-up; all six budgets are
-now available. No paired official baseline results were supplied.
+final attachment replaces earlier copies and contains ten distinct feedback
+blocks with all six budgets. No paired official baseline results were supplied.
 
 `../results/official/runs.json` contains evaluation-level aggregates, and
 `summary.json` contains equal-record means and sample standard deviations.

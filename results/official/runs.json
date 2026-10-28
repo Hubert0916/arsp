@@ -171,29 +171,29 @@
     "block": 7,
     "line_start": 596,
     "n_groups": 9,
-    "n_evaluation_items": 497,
+    "n_evaluation_items": 493,
     "complete_six_budget": true,
-    "duplicate_of": 6,
+    "duplicate_of": null,
     "brier": [
-      0.33232144444444445,
-      0.28290255555555555,
-      0.1770112222222222,
-      0.135405,
-      0.13105055555555556,
-      0.12243644444444444
+      0.20442355555555555,
+      0.19422155555555556,
+      0.168316,
+      0.1683611111111111,
+      0.15530633333333332,
+      0.15446122222222222
     ],
     "ece": [
-      0.40322922222222224,
-      0.3501908888888889,
-      0.2252328888888889,
-      0.13289022222222222,
-      0.09606811111111112,
-      0.07777944444444444
+      0.2046582222222222,
+      0.171766,
+      0.09995288888888888,
+      0.10872722222222223,
+      0.08838188888888888,
+      0.07760688888888889
     ],
-    "brier_alc": 0.19074966666666668,
-    "weighted_ece": 0.20897722222222223,
-    "max_group_alc_rounding_difference": 4.0000000001150227e-07,
-    "max_group_ece_rounding_difference": 5.000000000143778e-07
+    "brier_alc": 0.17312955555555556,
+    "weighted_ece": 0.12199222222222222,
+    "max_group_alc_rounding_difference": 5.000000000074389e-07,
+    "max_group_ece_rounding_difference": 6.999999999923734e-07
   },
   {
     "block": 8,
@@ -225,7 +225,7 @@
   },
   {
     "block": 9,
-    "line_start": 777,
+    "line_start": 789,
     "n_groups": 9,
     "n_evaluation_items": 491,
     "complete_six_budget": true,
@@ -253,7 +253,7 @@
   },
   {
     "block": 10,
-    "line_start": 877,
+    "line_start": 889,
     "n_groups": 9,
     "n_evaluation_items": 494,
     "complete_six_budget": true,

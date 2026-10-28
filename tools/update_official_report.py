@@ -33,12 +33,12 @@ def main():
     duplicates=[r for r in runs if r['duplicate_of'] is not None]
     partial=[r for r in runs if not r['complete_six_budget'] and r['duplicate_of'] is None]
     note=(f"The supplied transcription contains {len(runs)} feedback headers and ALC summaries. "
-          +f"After counting duplicate content once and excluding any incomplete records, {n} complete, distinct records remain for Table~"+r'\ref{tab:official}. ')
+          +f"The analysis includes {n} complete, distinct records for Table~"+r'\ref{tab:official}. ')
     if not partial:
         note+='All supplied records now contain all six budget tables. '
     if same_zip:
         note+=r'The submitter confirmed that all evaluations used the same ASRP + \texttt{adaptive\_4\_warm} ZIP. '
-    note+='Missing sections of the initial copy were supplied in a follow-up transcription; no scores were imputed. '
+    note+='The final user-supplied attachment supersedes earlier copies and corrects their missing and repeated sections; no scores were imputed. '
     for r in duplicates:
         note+=f"Block {r['block']} reproduces block {r['duplicate_of']}'s group identities, counts, ALC, ECE, and all six budget scores, so it is counted once. "
     for r in partial:
