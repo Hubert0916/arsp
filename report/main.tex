@@ -174,7 +174,7 @@ We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acqui
 \paragraph{Evaluation scope.}
 Evaluation outcomes are never supplied online, but this acquisition/evaluation split is not independent of all offline fitting: frozen public training and calibration use the same release. The local scores may therefore be optimistic. They are not Codabench scores; private data and formative random draws can produce different results.
 
-\subsection{Baseline and metrics}
+\subsection{Baseline and score aggregation}
 
 We use the \textbf{Empirical Mean predictor} from the official PAIEC repository \citep{paiec_baselines}. For $n$ acquired binary labels in the current subject--benchmark group, it predicts
 \[
@@ -186,7 +186,7 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
 \]
 It uses neither item features nor a learned prior. We run this unchanged predictor on each policy's acquired evidence. Empirical Mean + Random corresponds to its default acquisition choice; Empirical Mean + Adaptive isolates the effect of giving the same predictor ASRP's selected labels. The local Random policy reproduces uniform sampling without replacement, not the private server's particular random draw.
 
-For each seed and policy, we compute Brier scores within each subject--source group and average groups equally, then average the three seed-level scores equally. Groups have different numbers of evaluation items, so pooling all response rows would give different weights and is not used. Brier ALC uses the weights in Section~2. We report the individual seed ALCs and their sample standard deviation; these describe variation across the three specified splits, not a confidence interval over all possible evaluations.
+We use the metrics and equal-group weighting defined in Section~2. For each predictor--acquisition combination, we average the three seed-level scores equally and report the individual seed ALCs and their sample standard deviation. This SD describes variation across the three specified splits, not a confidence interval over all possible evaluations.
 
 \subsection{Official formative feedback}
 
