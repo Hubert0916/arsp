@@ -43,7 +43,7 @@
 \maketitle
 
 \begin{abstract}
-...
+Benchmark scores depend on the sampled items and evaluation protocol, motivating predictions that account for individual subjects, item characteristics, and available evidence. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)} for predicting an AI system's probability of success on an item under a limited label budget. ASRP combines public-data priors and text-based Rasch modeling with a support-conditioned kernel probe. Budget-dependent mixing and conservative topic calibration adapt predictions as labels accumulate, while streaming acquisition selects informative candidates using covariance gain. Paired public-data experiments and repeated official evaluations examine this approach, with an emphasis on reproducible prediction and explicit evaluation conditions.
 \end{abstract}
 
 \section{Introduction}
@@ -275,7 +275,7 @@ The competition-specific artifacts were produced from the permitted public measu
 
 \section{Conclusion}
 
-ASRP provides a practical, budget-aware predictor for subject--item capability evaluation. Its main engineering principle is to use content-based and psychometric structure at cold start, use support-conditioned residuals only when evidence is available, and shrink topic corrections and late-budget updates toward conservative defaults. \input{results_conclusion} \input{official_conclusion}
+ASRP treats predictive evaluation as an explicit relationship between an AI system, an item, and the evidence available at a given label budget. It integrates prior-based ability and difficulty estimates with local residual adaptation and active label acquisition. The paired experimental design distinguishes predictor effects from acquisition effects, while repeated evaluations characterize variation across sampled test groups. This approach supports more informative evaluation than a benchmark average alone, without treating a score as a context-free measure of capability. Improving the transfer of initial predictions to unfamiliar benchmarks remains a priority.
 
 \appendix
 

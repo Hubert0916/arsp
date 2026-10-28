@@ -66,11 +66,6 @@ def main():
         analysis+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
     analysis+=r'Topic calibration is active.'
     save('results_analysis.tex',analysis)
-    d=result['acquisition_effect']['asrp']['adaptive_minus_random_alc']
-    ending=(f"The three-seed public proxy gives ASRP + Adaptive a mean Brier ALC of ${a['alc']:.4f}$. "
-            +f"Compared with Random acquisition using the same predictor, Adaptive {'reduces' if d<0 else 'increases'} mean ALC by ${abs(d):.4f}$. "
-            +r'The paired design separates changes in prediction quality from changes in which labels are acquired.')
-    save('results_conclusion.tex',ending)
     save('source_inventory.tex',r'\begin{verbatim}'+'\n'+'\n'.join(g['source'] for g in manifest['groups'])+'\n'+r'\end{verbatim}')
     markdown=['| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |',
               '|---|---:|---:|---:|---:|---:|---:|---:|']

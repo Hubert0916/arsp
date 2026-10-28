@@ -28,7 +28,7 @@ latexmk -cd -c -bibtex report/main.tex
 ```
 
 The primary score table, per-seed table,
-dataset-count macros, source inventory, analysis, and conclusion inputs are generated from the scored run. Complete 80–1,000-item
+dataset-count macros, source inventory, and analysis inputs are generated from the scored run. Complete 80–1,000-item
 groups are split in half; the comparison uses seeds 42, 43, and 44.
 Edit methodological text in `main.tex` and the native TikZ method figure in
 `figures/asrp_method.tex`. Figure 2 retains the requested maximum width of
