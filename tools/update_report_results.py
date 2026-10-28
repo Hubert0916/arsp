@@ -34,7 +34,6 @@ def main():
         seed_table+=LABELS[k]+' & '+' & '.join(f"{c[k]['per_seed_alc'][str(s)]:.4f}" for s in result['seeds'])+f" & {c[k]['alc_seed_sd']:.4f}"+r'\\'+'\n'
     save('results_seed_table.tex',seed_table+r'\bottomrule'+'\n'+r'\end{tabular}')
     a,b=c['asrp_adaptive'],c['empirical_mean_random']
-    save('results_abstract.tex',f"ASRP + Adaptive achieves a mean Brier ALC of ${a['alc']:.4f}$, compared with ${c['asrp_random']['alc']:.4f}$ for ASRP + Random and ${b['alc']:.4f}$ for Empirical Mean + Random (lower is better).")
     wins=sum(x<y for x,y in zip(a['brier'],b['brier']));gain=b['alc']-a['alc']
     overview=(r'Table~\ref{tab:proxy} reports the \textbf{four predictor--acquisition combinations}, averaged equally over groups and then over seeds 42, 43, and 44. '
               +f"ASRP + Adaptive has a mean Brier ALC of ${a['alc']:.4f}$, compared with ${b['alc']:.4f}$ for Empirical Mean + Random "

@@ -39,7 +39,6 @@ def main():
          +r'compared with $0.2500$ for a constant prediction of $0.5$ on any binary outcome. '
          +r'This identifies a weakness in the combined initialization on the sampled private data; the aggregate scores do not identify which component is responsible. '
          +f"Revealed evidence reduces mean Brier to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31, but accurate prediction before acquiring labels remains a limitation.")
-    save('official_abstract.tex',f"Separately, {n} complete, distinct official formative-feedback records for ASRP with adaptive acquisition have mean Brier ALC ${alc['mean']:.4f}$ (SD ${alc['sample_sd']:.4f}$).")
     save('official_conclusion.tex',f"The supplied official formative feedback gives ASRP with adaptive acquisition a mean Brier ALC of ${alc['mean']:.4f}$ across {n} complete, distinct records.")
     note=(f"We evaluated the same ASRP + "
           +r"\texttt{adaptive\_4\_warm} ZIP in "

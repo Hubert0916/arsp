@@ -34,7 +34,7 @@ National Taiwan University}
 \maketitle
 
 \begin{abstract}
-Predicting whether an AI system will solve a particular evaluation item requires accounting for item difficulty, subject ability, and the small number of revealed labels. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting subject--item response probabilities in the Predictive AI Evaluation Competition. ASRP combines a public-data subject and metadata prior, a MiniLM-based amortized Rasch predictor, and a support-conditioned kernel probe. A budget-dependent ensemble combines these branches, followed by conservative topic residual calibration; source-keyed guards are available when a public-source identifier matches. Its streaming acquisition policy uses an adaptive covariance-gain rule with a bounded warm-up phase. We evaluate \ProxySources{} public-source groups over three fixed seeds, with \ProxyTargets{} evaluation outcomes per seed. A paired comparison of ASRP and Empirical Mean under both Random and Adaptive acquisition separates predictor quality from acquisition effects. \input{results_abstract} \input{official_abstract}
+We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting an AI system's probability of success on an evaluation item from its content, visible metadata, and a small number of revealed labels. ASRP combines public-data priors and a text-based Rasch predictor with a support-conditioned kernel probe. Budget-dependent weights shift emphasis from prior-based prediction to local evidence as labels accumulate, followed by conservative topic calibration. A streaming acquisition policy selects informative labels using covariance gain under a fixed budget.
 \end{abstract}
 
 \section{Introduction}
@@ -48,9 +48,6 @@ Lord's treatment of item response theory (IRT) models the probability of a corre
 
 \paragraph{Content-based and adaptive evaluation.}
 Reliable and Efficient Amortized Model-based Evaluation shows that benchmark averages can be distorted by question difficulty, and proposes amortizing difficulty from question content together with adaptive item selection \citep{amortized_eval}. ASRP uses the same two ideas in the competition setting: MiniLM features predict unseen-item difficulty, while \texttt{adaptive\_4\_warm} implements support selection when the remaining budget permits discretionary choices. ASRP does not use that paper's question generator or evaluation model.
-
-\paragraph{Task-level capability prediction.}
-Agent Psychometrics extends IRT to predict task-level success for agentic coding benchmarks using task features and separate ability factors \citep{agent_psychometrics}. ASRP follows the same subject--item perspective, but uses the competition's visible metadata, binary outcomes, and a support-conditioned kernel residual instead of an agent/scaffold decomposition.
 
 \paragraph{Capability calibration.}
 \emph{On Calibration of Large Language Models: From Response to Capability} distinguishes confidence that one sampled response is correct from confidence that a model can solve a query overall \citep{capability_calibration}. ASRP targets the latter quantity: $p(x)$ is the probability that the subject answers the current item correctly, and Brier score evaluates this query-level probability. This motivates our query-level prediction target; ASRP uses its own topic residual correction rather than reproducing that paper's confidence estimators.
