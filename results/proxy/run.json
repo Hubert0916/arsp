@@ -188,7 +188,7 @@
   "n_groups": 92,
   "data_sha256": "de3bd4bcf3c3010caa41405cba0e9f4d29cc657a7bc93e884b0688c4ad43ab86",
   "split_manifest_sha256": "754619874ca41bbfca2020777c895def90889f630acc92ec8c91d5b8f65c82fc",
-  "inference_manifest_sha256": "86bbfe07f04156b8b3c5b3ebbb181a471e133ac1d4fe37adbf6ba3091d5f7434",
+  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
   "lockfile_sha256": "a9924f66312872664dcee40fa4100a78e546af49df6bcb31e7b63362679b5747",
   "python": "3.11.17",
   "files": {
