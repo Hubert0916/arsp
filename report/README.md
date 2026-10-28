@@ -37,5 +37,8 @@ Per-item predictions and acquisition trajectories are released in
 [`results/proxy`](../results/proxy). These are public-proxy results, not private
 Codabench results. The NeurIPS checklist is not included in this competition report.
 
-The runtime appendix specifies metadata-prior fallbacks, kernel preprocessing,
-Beta mixture weights, and the conditional covariance acquisition rule.
+Section 4 presents the core prediction and acquisition equations. Appendix A
+uses the same notation and follows Sections 4.1–4.5 in order: feature construction,
+priors and MAP updates, kernel/Beta calculations, mixing/calibration, and acquisition.
+Rasch mixing weights (eta), kernel ridge penalty (lambda_K), and acquisition
+gain/utility (G/V) have separate symbols and explicit code mappings.

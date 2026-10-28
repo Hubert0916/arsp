@@ -82,113 +82,83 @@ The predictor uses frozen artifacts trained and calibrated from the public \path
 
 The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
-\section{ASRP method}
+\section{ASRP method}\label{sec:method}
 
-Figure~\ref{fig:method} gives the complete data flow. The upper lane contains offline artifacts that are fixed before evaluation. The lower lane shows one runtime prediction and the separate label-acquisition loop. Solid arrows show the prediction and acquisition paths; dashed arrows show frozen artifacts and revealed evidence supplied to these paths.
+For a query subject $s$ and item $i$ in benchmark $b$, let $\mathcal D_b$ be the revealed support and $\mathcal D_s$ its rows for the current subject. Write $n=|\mathcal D_s|$ and $S_s=\sum_{r\in\mathcal D_s}y_r$. All predictions below concern this query; their arguments are suppressed when unambiguous. Figure~\ref{fig:method} shows the computation. Appendix~\ref{app:implementation} gives the shared notation, numerical details, and corresponding code functions.
 
 \begin{figure}[H]
   \centering
   \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
-  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. The source guard is inactive for anonymous proxy identifiers. Candidate pools contain half of each complete group. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
+  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. The source guard is inactive for anonymous proxy identifiers. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
   \label{fig:method}
 \end{figure}
 
-\subsection{Item representation and amortized difficulty}
+\subsection{Item representation and amortized difficulty}\label{sec:difficulty}
 
-Let $e_i\in\mathbb{R}^{384}$ be the sentence embedding of the normalized item text from MiniLM. We concatenate $e_i$ with six deterministic numeric text features $z_i\in\mathbb{R}^{6}$ (including text length, digit proportion, and code or mathematical markers). The \textbf{frozen difficulty network} standardizes this vector and applies a three-layer feed-forward map (390--128--32--1):
+MiniLM encodes the normalized item text as $e_i\in\mathbb R^{384}$. Six deterministic numeric text features form $z_i\in\mathbb R^6$. A frozen feed-forward network standardizes their concatenation and predicts a clipped difficulty:
 \[
-  d_i=f_{\phi}([e_i;z_i]).
+ d_i=\operatorname{clip}\!\left(f_\phi([e_i;z_i]),-2,2\right).
 \]
-To compute $e_i$, the whitespace-normalized text is restricted to its first 6,000 characters and tokenized to at most 256 tokens. Mean pooling and $L_2$ normalization yield $e_i$. The hidden layers use ReLU activations; standardized inputs are clipped to $[-10,10]$ and the resulting difficulty to $[-2,2]$. This content-based estimate is an amortized substitute for fitting a separate difficulty parameter for every unseen item.
+The network has dimensions 390--128--32--1 and ReLU hidden layers. This amortized estimate supplies a difficulty for an unseen item without fitting an item-specific parameter online. Appendix~\ref{app:features} specifies text limits, pooling, and standardization.
 
-\subsection{Public prior and Rasch update}
+\subsection{Public prior and Rasch update}\label{sec:rasch}
 
-The hybrid uses two public-data priors. The subject-only prior initializes ability, while the metadata prior $p_{\mathrm{src}}$ combines the subject's public response rate with visible item-feature statistics for evidence smoothing. For the frozen public subject offset $o_s$ keyed by normalized model name (zero for an unknown name), define
+A frozen subject offset $o_s$, looked up by normalized model name, defines a prior mean and initial ability:
 \[
-  m_s=\operatorname{clip}(0.5+0.5o_s,0.05,0.95),\qquad
-  \theta_0=\operatorname{logit}(m_s).
+ \mu_s=\operatorname{clip}(0.5+0.5o_s,0.05,0.95),\qquad
+ \theta_{0,s}=\operatorname{logit}(\mu_s).
 \]
-The Rasch probability is
+An unknown name has $o_s=0$. With revealed labels, clipped Newton--Raphson iterations approximate the \textbf{maximum a posteriori (MAP) estimate} under a Bernoulli Rasch likelihood and Gaussian ability prior $\mathcal N(\theta_{0,s},v_\theta)$, with $v_\theta=2$. The resulting ability $\hat\theta_s$ gives
 \[
-  p_{\mathrm{Rasch}}(i)=\sigma(\theta-d_i),
-  \quad \sigma(z)=\frac{1}{1+e^{-z}}.
+ p_{\mathrm{Rasch}}=\sigma(\hat\theta_s-d_i),\qquad
+ \sigma(t)=(1+e^{-t})^{-1}.
 \]
-Here $d_i$ is the frozen content-based item difficulty from Section~4.1. For acquired labels $(y_k,d_k)_{k=1}^{n}$, ASRP obtains a \textbf{maximum a posteriori (MAP) estimate} by maximizing the Bernoulli log-likelihood with a Gaussian prior centered at $\theta_0$:
+At $n=0$, $\hat\theta_s=\theta_{0,s}$. Separately, a query-specific metadata prior $p_{\mathrm{meta}}(s,i)$ combines frozen subject and visible-feature counts. The hybrid smooths observed successes toward this prior and blends the result with the Rasch probability:
 \[
- \ell(\theta)=\sum_{k=1}^{n}\log p(y_k\mid\theta,d_k)
-                 -\frac{(\theta-\theta_0)^2}{2v},
- \qquad v=2.0.
+ p_{\mathrm{smooth}}=\frac{S_s+\kappa p_{\mathrm{meta}}(s,i)}{n+\kappa},\qquad
+ p_{\mathrm{hybrid}}=(1-\eta_n)p_{\mathrm{smooth}}+\eta_n p_{\mathrm{Rasch}},\qquad \kappa=4.
 \]
-The implementation uses Newton--Raphson iteration with clipped steps. Writing $p_k=\sigma(\theta-d_k)$,
-\[
- g=\sum_k(y_k-p_k)-\frac{\theta-\theta_0}{v},\qquad
- h=\sum_k p_k(1-p_k)+\frac{1}{v},\qquad
- \theta\leftarrow\theta+\operatorname{clip}(g/h,-2,2).
-\]
-It stops when the step magnitude is below $10^{-7}$ or after 30 iterations, and clips the final ability to $[-12,12]$. At budget zero, $\theta=\theta_0$.
+Here $\eta_n$ is the frozen Rasch mixing weight. Appendix~\ref{app:priors} gives the prior lookup and Newton updates; Appendix~\ref{app:ensemble} lists the six mixing weights.
 
-The metadata prior supplies a smoothed evidence estimate,
-\[
- p_{\mathrm{smooth}}=\frac{S_n+\kappa p_{\mathrm{src}}}{n+\kappa},
- \qquad S_n=\sum_k y_k,\quad \kappa=4.
-\]
-The Rasch and smoothed terms are combined as
-\[
- p_{\mathrm{hybrid}}=(1-\lambda_n)p_{\mathrm{smooth}}+\lambda_n p_{\mathrm{Rasch}}.
-\]
-The metadata prior uses the count-weighted lookup in Appendix~\ref{app:implementation}. In the released configuration, metadata-match adaptation is disabled and the prior shift is zero. The frozen weights are $\lambda_n=(0.2875,0.3000,0.2875,0.2750,0.2250,0.2375)$ for budgets $(0,1,3,7,15,31)$.
+\subsection{Support-conditioned kernel probe}\label{sec:kernel}
 
-\subsection{Support-conditioned kernel probe}
+The kernel branch adds an item-dependent correction to a conservative subject baseline. It encodes visible text, metadata, and interactor descriptions into semantic vectors $\mathbf h_i$ and lexical vectors $\boldsymbol\ell_i$. A locally normalized similarity kernel $K$ is fitted using only the support features in $\mathcal D_b$; the query does not change this geometry.
 
-The \textbf{support-conditioned kernel probe} estimates a local correction from the revealed support items. The implementation supports revealed responses from multiple subjects in the current benchmark; this proxy supplies only the current subject's labels. For each support item $r$, let $u_r$ be its MiniLM vector and $v_r$ its hashed lexical vector, both derived from visible item text, metadata, and interactor descriptions. Unlike the Rasch text encoder, the kernel encoder pools up to four evenly spaced 254-token windows, normalizes each window vector, and normalizes their sum. The lexical vector has 8,192 hashed coordinates. Support-only centering, variance scaling, and lexical inverse-frequency weighting give normalized vectors $\tilde u_r,\tilde v_r$; the query uses the same fitted transformation (Appendix~\ref{app:implementation}). For any pair of support items $r,t$, the similarity kernel is
+For each supported subject $s$, let $n_s$ and $S_s$ be its revealed-label and success counts. A two-component Beta mixture has concentrations $(c_1,c_2)=(1,8)$, prior masses $(\pi_1,\pi_2)=(0.3,0.7)$, and posterior weights $\omega_{sk}$. Its mean is
 \[
- q_{rt}=\frac{\tilde u_r^\top\tilde u_t+\tilde v_r^\top\tilde v_t}{2},\qquad
- K_{rt}=\exp\!\left(\frac{\min(q_{rt}-1,0)}{\tau}\right),
+ b_s=\sum_{k=1}^{2}\omega_{sk}\frac{c_k\mu_s+S_s}{c_k+n_s}.
 \]
-with $\tau=4\max(d_{\mathrm{med}},10^{-5})$, where $d_{\mathrm{med}}$ is the median off-diagonal distance $1-q_{rt}$ above $10^{-8}$, or $0.1$ if none qualifies. The query-to-support vector $k(x)$ uses the same transformation and kernel.
+Subject-centered kernel ridge regression, with penalty $\lambda_K=0.3$, fits residual coefficients $\gamma$ from the revealed labels. With query-to-support similarities $\mathbf k_i$ and subject mean fitted contribution $\bar f_s$, the prediction is
+\[
+ p_{\mathrm{kernel}}=\operatorname{clip}\!\left(b_s+\mathbf k_i^\top\gamma-\bar f_s,0,1\right).
+\]
+Appendix~\ref{app:kernel} defines $K$, the Beta weight update, and the centered linear solve. If the current subject has no revealed labels, this branch returns $\mu_s$. The implementation supports multiple subjects within a benchmark; this proxy uses one subject per group.
 
-The kernel intercept is a two-component Beta mixture. For subject $a$, let $s_a$ of $n_a$ revealed labels be successes and $m_a=\operatorname{clip}(0.5+0.5o_a,0.05,0.95)$. Concentrations $c\in\{1,8\}$ have prior masses $(0.3,0.7)$, updated by the Beta--Bernoulli marginal likelihood to normalized weights $\omega_{ac}$:
-\[
- b_a=\sum_c\omega_{ac}\frac{m_ac+s_a}{c+n_a}.
-\]
-Appendix~\ref{app:implementation} gives the weight update. This subject baseline is combined with a local residual fitted to the revealed labels.
+The ensemble gives the kernel weights $w_n=(0,0,0.2,0.4,1,1)$ at budgets $(0,1,3,7,15,31)$. Thus the Rasch hybrid supplies the cold-start prediction, while a larger support set allows the local residual to receive more weight. These are design choices encoded in the released configuration.
 
-Let $M$ average rows belonging to the same subject, and let $C=I-M$. The centered ridge residual coefficients are
-\[
- \gamma=C(CKC+\lambda I)^{-1}Cy,\qquad \lambda=0.3,
-\]
-where $y$ contains the revealed binary labels. If $\bar f_a$ is the subject mean of the fitted kernel contribution, the query prediction is
-\[
- p_{\mathrm{kernel}}(x,a)=\operatorname{clip}\!\left(b_a+k(x)^\top\gamma-\bar f_a,0,1\right).
-\]
-The kernel contribution is suppressed at budgets 0 and 1 and receives weights $(0,0,0.2,0.4,1,1)$ at $(0,1,3,7,15,31)$, so a tiny support set cannot override the cold-start prediction. This creates a deliberate budget-dependent division of labor: at low budgets, the Rasch hybrid is the main predictor because its public subject prior and content-based difficulty remain stable when there are too few revealed labels to fit a local kernel residual. The kernel branch is introduced gradually at 3 and 7 labels, then becomes the nominal primary predictor at 15 and 31 labels, giving greater influence to residual corrections fitted from the larger support set. The late-budget source guard can reduce this kernel weight for sources with a regression identified in public diagnostics.
+\subsection{Topic calibration and source guard}\label{sec:calibration}
 
-\subsection{Topic calibration and source guard}
+A frozen topic correction $\Delta_n(i)$ adjusts the ensemble using the first matching topic entry in visible metadata. Without a match, the model uses the closest of eight frozen embedding centroids. Count-based shrinkage and caps limit the adjustment to $0.06$ for explicit topics or $0.03$ for clusters. Missing statistics give zero correction.
 
-The calibration artifact is generated from public binary responses. ASRP scans the visible metadata in its original order and uses the first topic key--value pair present in the frozen topic-residual table. A topic residual $r_{t,n}$ is shrunk toward zero using its public count $m_t$:
+A benchmark-keyed guard $g_n(b)\in[0,0.35]$ reduces kernel weight at $n\ge15$ when a stored source key matches; it is zero otherwise. The final prediction is
 \[
-  \Delta_{t,n}=\operatorname{clip}\!\left(
-    \frac{m_t}{m_t+40}r_{t,n},-0.06,0.06\right).
-\]
-If no topic key--value pair matches the table, the Rasch encoder's 384-dimensional vector is assigned to the closest of eight frozen centroids by cosine similarity. Cluster residuals use a stronger prior count of 200 and a smaller cap of $0.03$. Writing $w_n$ for the kernel weights in Section~4.3 and $g_{\mathrm{src},n}$ for the source guard below (zero for $n<15$), the complete prediction is
-\[
- \tilde w_n=w_n(1-g_{\mathrm{src},n}),\qquad
+ \widetilde w_n(b)=w_n[1-g_n(b)],\qquad
  p_{\mathrm{final}}=\operatorname{clip}\!\left(
- (1-\tilde w_n)p_{\mathrm{hybrid}}+\tilde w_n p_{\mathrm{kernel}}+\Delta_{t,n},0,1\right).
+ [1-\widetilde w_n(b)]p_{\mathrm{hybrid}}+\widetilde w_n(b)p_{\mathrm{kernel}}+\Delta_n(i),0,1\right).
 \]
-The correction is zero if neither a topic nor a fallback cluster has stored statistics.
-
-Public validation identified some sources for which the kernel branch became less accurate at high budgets. At budgets 15 and 31, a matching public-source key supplies a guard $g\in[0,0.35]$ that multiplies the nominal kernel weight by $1-g$; the remaining weight goes to the Rasch hybrid. Unmatched identifiers receive zero adjustment. The anonymous aliases in the reproducible proxy do not match these source-name keys, so this guard is inactive in the reported experiment. This guard is a conservative regularizer, not a lookup of hidden test outcomes; source statistics are learned offline from public data.
+The guard is inactive for the anonymous identifiers in this proxy; topic correction remains active. Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
 
 \subsection{Adaptive acquisition}\label{sec:acquisition}
 
-The submitted \textbf{\texttt{labeling.py}} implements \textbf{\texttt{adaptive\_4\_warm}}. It skips up to 16 candidates to establish feature geometry; skipping reveals no label and consumes no label budget. A rolling reference set $P$ deduplicates the last 64 seen candidates by their visible text/metadata key. Conditional covariance gain $a_j$ measures how much observing candidate $j$ could reduce uncertainty on $P$ (Appendix~\ref{app:acquisition}). Define
+The \textbf{\texttt{adaptive\_4\_warm}} hook skips up to 16 early candidates to establish feature geometry, without revealing their labels. A reference set $\mathcal P$ deduplicates the last 64 seen candidates by visible text, metadata, and interactor features. For the current candidate $*$, a conditional covariance gain $G_*$ measures its potential reduction of uncertainty over $\mathcal P$. Normalizing and capping this gain, then raising it to power four, gives utility $V_*$.
+
+For $L$ labels and $R$ candidates remaining, including the current candidate, the acquisition probability is
 \[
- u_j=\min\!\left(\frac{a_j}{|P|^{-1}\sum_{r\in P}a_r},20\right)^4,\qquad
- \pi_c=\min\!\left(1,\frac{L}{R}\operatorname{clip}\!\left(
- \frac{u_c}{|P|^{-1}\sum_{r\in P}u_r},0.05,20\right)\right),
+ \pi_*^{\mathrm{acq}}=\min\!\left(1,\frac{L}{R}\operatorname{clip}\!\left(
+ \frac{V_*}{\max(\overline V_{\mathcal P},10^{-12})},0.05,20\right)\right),\qquad
+ \overline V_{\mathcal P}=\frac{1}{|\mathcal P|}\sum_{j\in\mathcal P}V_j.
 \]
-where $c$ is the current candidate, $L$ the remaining label budget, and $R$ the remaining candidates including $c$. The hook acquires $c$ when its deterministic uniform hash is below $\pi_c$. It acquires every remaining candidate when $R\le L$, overriding warm-up. Gain depends on supplied item features and the acquired support, not on unseen outcomes or future candidates. The exponent four sharpens the preference for high-gain candidates; it does not denote four warm-up items.
+A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every remaining candidate is acquired, overriding warm-up. Appendix~\ref{app:acquisition} defines $G_j$, $V_j$, and the boundary cases. The rule uses only acquired support and already-seen/current features; it never accesses future candidates or unseen outcomes.
 
 \section{Experimental setup}
 
@@ -284,73 +254,175 @@ ASRP provides a practical, budget-aware predictor for subject--item capability e
 
 \section{Runtime details}\label{app:implementation}
 
-These equations specify inference from the released artifacts. The reproduction command evaluates those frozen artifacts; it does not repeat their original offline fitting. Subject offsets are stored in \path{binary_subject_prior.json}, count tables in \path{feature_prior.json}, difficulty weights and standardization in \path{difficulty_model.npz}, and residual tables and centroids in \path{topic_calibration.json}.
+These equations specify inference with the released frozen artifacts at the six competition budgets. They use the same symbols as Section~\ref{sec:method}. The reproduction command evaluates these artifacts without repeating their original offline fitting. Throughout, $\operatorname{clip}(x,l,u)=\min(u,\max(l,x))$, applied coordinatewise to vectors, and $\operatorname{norm}(x)=x/\max(\|x\|_2,10^{-12})$.
 
-\subsection{Metadata prior and unknown inputs}
+\paragraph{Shared notation.}
+A support row $r$ contains a subject $s_r$, item $i_r$, and binary outcome $y_r$. The row collection $\mathcal D_b$ contains all revealed responses for benchmark $b$ and has size $M$. Its subject-specific subset $\mathcal D_s$ has $n_s$ rows and $S_s$ successes. For the current query subject, the budget is $n=n_s\le31$. In this proxy $M=n$; the formulas below also describe the implementation's multi-subject kernel. Runtime subject identity uses the complete subject dictionary, whereas frozen subject-prior lookup uses \texttt{normalized\_name}.
 
-Let $(S_\star,N_\star)$ be global public successes and counts, and $(S_s,N_s)$ the corresponding subject totals keyed by \texttt{normalized\_name}. Define
+We distinguish $\eta_n$ (Rasch mixing weight), $w_n$ (kernel mixing weight), and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Acquisition uses gain $G_j$, utility $V_j$, probability $\pi_*^{\mathrm{acq}}$, and uniform variate $\xi$; none denotes an embedding coordinate.
+
+\subsection{Feature construction for Section~\ref{sec:difficulty}}\label{app:features}
+
+The Rasch encoder normalizes whitespace, takes the first 6,000 characters of item content, and tokenizes to at most 256 tokens. Masked mean pooling followed by $L_2$ normalization gives $e_i\in\mathbb R^{384}$. The six coordinates of $z_i$ are $\log(1+\text{text length})/10$, digit fraction, non-ASCII fraction, and indicators for code, mathematical notation, and a question mark. Fractions and the question-mark indicator use the first 2,000 characters; code/math markers use the first 6,000. Text length is measured before these truncations.
+
+For stored feature mean $\bar{\mathbf x}$ and scale $\boldsymbol\sigma_x$, the difficulty network receives $\operatorname{clip}(([e_i;z_i]-\bar{\mathbf x})\oslash\boldsymbol\sigma_x,-10,10)$, where $\oslash$ denotes coordinatewise division. Frozen weights in \path{difficulty_model.npz} implement the 390--128--32--1 map; the final scalar is clipped to $[-2,2]$ by \texttt{\_predict\_hybrid}, after \texttt{\_difficulty} evaluates the network.
+
+The kernel encoder uses a separate text construction containing item content, metadata, and interactor descriptions. It pools up to four evenly spaced windows of 254 content tokens, each with special tokens, normalizes each pooled vector, and normalizes their sum to obtain $\mathbf h_i\in\mathbb R^{384}$. The lexical vector $\boldsymbol\ell_i\in\mathbb R^{8192}$ uses signed CRC32 hashing of lowercased tokens and adjacent token bigrams, weights $1+\log(\text{count})$, and $L_2$ normalization. Only these semantic and lexical coordinates enter the kernel. See \path{ml_features.py}, \path{window_features.py}, and \path{evidence_features.py} under \path{src/asrp/}.
+
+\subsection{Priors and ability update for Section~\ref{sec:rasch}}\label{app:priors}
+
+\paragraph{Two distinct frozen priors.}
+The scalar $o_s$ comes from \path{binary_subject_prior.json}. It defines $\mu_s$ and $\theta_{0,s}$ exactly as in Section~\ref{sec:rasch}. The metadata prior $p_{\mathrm{meta}}(s,i)$ instead uses the success/count tables in \path{feature_prior.json}; it corresponds to \texttt{\_feature\_prior} and the runtime variable \texttt{p\_source} in \path{src/asrp/model.py}. The released source-prior weight is one, prior shift is zero, and metadata-match adaptation weight is zero.
+
+Let $(A_0,N_0)$ be global public successes and counts, and $(A_s,N_s)$ the subject totals. The frozen rates are
 \[
- q_\star=S_\star/N_\star,\qquad q_s=(S_s+8q_\star)/(N_s+8).
+ q_0=\frac{A_0}{\max(N_0,1)},\qquad q_s=\frac{A_s+8q_0}{N_s+8}.
 \]
-An unknown subject uses global totals, giving $q_s=q_\star$. Separately, its ability offset is zero, so the Rasch ability prior is zero; the metadata prior need not be $0.5$.
+Unknown subjects use global totals. Their offset $o_s$ is separately zero, so $\theta_{0,s}=0$, but $p_{\mathrm{meta}}(s,i)$ need not equal $0.5$. All released global totals have positive counts.
 
-Visible metadata are parsed into normalized key--value tokens and selected key--word tokens by \texttt{\_feature\_tokens}. For each matching token $t$, let $q_t=S_t/N_t$. When subject--token counts exist, set
+For each token $t$ in the query metadata with stored global counts, let $q_t=A_t/\max(N_t,1)$. When subject--token counts exist,
 \[
- q_{st}=\frac{S_{st}+8q_t}{N_{st}+8},\qquad
+ q_{st}=\frac{A_{st}+8q_t}{N_{st}+8},\qquad
  \rho_{st}=\frac{\min(N_{st},80)}{\min(N_{st},80)+12}.
 \]
-Otherwise set $q_{st}=q_t$ and $\rho_{st}=\min(N_t,300)/(\min(N_t,300)+100)$. Tokens without global statistics are ignored. The query-specific prior is
+Otherwise $q_{st}=q_t$ and $\rho_{st}=\min(N_t,300)/[\min(N_t,300)+100]$. For the set $\mathcal T(i)$ of matching tokens,
 \[
- p_{\mathrm{src}}=\operatorname{clip}\!\left(
- \frac{2q_s+\sum_t\rho_{st}q_{st}}{2+\sum_t\rho_{st}},0.03,0.97\right).
+ p_{\mathrm{meta}}(s,i)=\operatorname{clip}\!\left(
+ \frac{2q_s+\sum_{t\in\mathcal T(i)}\rho_{st}q_{st}}
+      {2+\sum_{t\in\mathcal T(i)}\rho_{st}},0.03,0.97\right).
 \]
-With no matching tokens it reduces to clipped $q_s$. Exact token normalization and stop words are specified in \path{src/asrp/model.py}.
+An empty token set gives clipped $q_s$. Token parsing, deduplication, and stop words follow \texttt{\_feature\_tokens}. The packaged artifact is present; if it were absent, the runtime fallback would be $\mu_s$.
 
-\subsection{Feature geometry and Beta weights}
-
-The six Rasch numeric features are $\log(1+\text{text length})/10$, digit fraction, non-ASCII fraction, and indicators for code, mathematical notation, and a question mark. Fractions and the question-mark indicator use the first 2,000 characters; code/math markers use the first 6,000. The kernel lexical vector uses signed CRC32 hashing of tokens and adjacent token bigrams into 8,192 bins, log-count weighting, and $L_2$ normalization.
-
-For $m>1$ support vectors, the semantic scale and lexical weights are
+\paragraph{MAP objective and numerical update.}
+Using only $\mathcal D_s$, the penalized Bernoulli log-likelihood is
 \[
- a_j=\left(\operatorname{Var}_r(u_{rj})+
- \max(\operatorname{median}_j\operatorname{Var}_r(u_{rj}),10^{-7})\right)^{-1/2},\qquad
- b_\ell=\log\frac{1+m}{1+f_\ell}+0.1,
+ \mathcal L_s(\theta)=\sum_{r\in\mathcal D_s}
+ \left[y_r\log\sigma(\theta-d_{i_r})+(1-y_r)\log(1-\sigma(\theta-d_{i_r}))\right]
+ -\frac{(\theta-\theta_{0,s})^2}{2v_\theta},\qquad v_\theta=2.
 \]
-where $f_\ell$ counts lexical coordinates with magnitude above $10^{-10}$. Thus
+Starting at $\theta_{0,s}$, \texttt{update\_ability} computes
 \[
- \tilde u_r=\operatorname{norm}((u_r-\bar u)\odot a),\qquad
- \tilde v_r=\operatorname{norm}(v_r\odot b).
+ \begin{aligned}
+ p_r(\theta)&=\sigma(\operatorname{clip}(\theta-d_{i_r},-40,40)),\\
+ J_s(\theta)&=\sum_{r\in\mathcal D_s}(y_r-p_r(\theta))-(\theta-\theta_{0,s})/v_\theta,\\
+ \mathcal I_s(\theta)&=\sum_{r\in\mathcal D_s}p_r(\theta)(1-p_r(\theta))+1/v_\theta,\\
+ \delta_\theta&=\operatorname{clip}\!\left(J_s(\theta)/\max(\mathcal I_s(\theta),10^{-6}),-2,2\right),\qquad
+ \theta\leftarrow\theta+\delta_\theta.
+ \end{aligned}
 \]
-For $m=1$, centering and coordinate reweighting are bypassed. Normalization denominators are floored at $10^{-12}$. Query items do not alter this support-fitted geometry.
+Here $J_s$ is the gradient and $\mathcal I_s$ the positive negative-Hessian magnitude, not the Hessian itself. The routine stops after 30 iterations or when $|\delta_\theta|<10^{-7}$, then clips $\hat\theta_s$ to $[-12,12]$. With no labels it returns $\theta_{0,s}$ directly. The runtime sigmoid also clips its logit to $[-40,40]$ when computing $p_{\mathrm{Rasch}}$. The hybrid uses at most the first 31 matching labels in acquisition order.
 
-For the Beta mixture, $\alpha_{ac}=m_ac$, $\beta_{ac}=(1-m_a)c$, and
+\subsection{Kernel calculations for Section~\ref{sec:kernel}}\label{app:kernel}
+
+\paragraph{Support-only geometry and bandwidth.}
+For $M>1$ rows in $\mathcal D_b$, let $\bar{\mathbf h}$ and $v_j^{\mathrm{feat}}$ be the coordinatewise semantic mean and population variance (divisor $M$). Define semantic scales $t_j$ and lexical weights $\nu_\ell$ by
 \[
- \omega_{ac}\propto\pi_c
- \frac{\mathrm{B}(\alpha_{ac}+s_a,\beta_{ac}+n_a-s_a)}
-      {\mathrm{B}(\alpha_{ac},\beta_{ac})},\qquad
- (\pi_1,\pi_8)=(0.3,0.7),\qquad \sum_c\omega_{ac}=1.
+ t_j=\left[v_j^{\mathrm{feat}}+\max(\operatorname{median}_j v_j^{\mathrm{feat}},10^{-7})\right]^{-1/2},\qquad
+ \nu_\ell=\log\frac{1+M}{1+f_\ell}+0.1,
 \]
-The implementation normalizes these weights in log space. At zero labels the mixture mean is $m_a$, although its ensemble weight is zero. In Section~4.3, $M_{rt}=1/n_a$ when rows $r,t$ belong to subject $a$ and zero otherwise; $\bar f_a$ is the mean of $(K\gamma)_r$ over that subject's support rows.
+where $f_\ell=\sum_{r\in\mathcal D_b}\mathbf1[|\ell_{i_r,\ell}|>10^{-10}]$. Both support and query use
+\[
+ \widetilde{\mathbf h}_i=\operatorname{norm}((\mathbf h_i-\bar{\mathbf h})\odot\mathbf t),\qquad
+ \widetilde{\boldsymbol\ell}_i=\operatorname{norm}(\boldsymbol\ell_i\odot\boldsymbol\nu).
+\]
+For $M=1$, the mean is zero and both weight vectors are all ones. No query feature enters these fitted statistics.
+
+For support rows $r,t$, define
+\[
+ Q_{rt}=\tfrac12\left(\widetilde{\mathbf h}_{i_r}^{\top}\widetilde{\mathbf h}_{i_t}
+ +\widetilde{\boldsymbol\ell}_{i_r}^{\top}\widetilde{\boldsymbol\ell}_{i_t}\right),\qquad
+ K_{rt}=\exp\!\left(\frac{\min(Q_{rt}-1,0)}{h_K}\right).
+\]
+Take distances $\max(1-Q_{rt},0)$ over unordered off-diagonal pairs, retain those above $10^{-8}$, and let $d_{\mathrm{med}}$ be their median (or $0.1$ if none remain). The bandwidth is $h_K=4\max(d_{\mathrm{med}},10^{-5})$. The vector $\mathbf k_i\in\mathbb R^M$ uses this same transformation and bandwidth between query $i$ and each support row. These operations correspond to \texttt{fit\_geometry}, \texttt{fit\_evidence}, and \texttt{predict\_fitted} in \path{src/asrp/project_core.py}.
+
+\paragraph{Beta mixture.}
+For component $k\in\{1,2\}$, let $\alpha_{sk}=\mu_sc_k$ and $\beta_{sk}=(1-\mu_s)c_k$, with $(c_1,c_2)=(1,8)$. The normalized posterior masses are
+\[
+ \widetilde\omega_{sk}=\pi_k
+ \frac{\mathrm B(\alpha_{sk}+S_s,\beta_{sk}+n_s-S_s)}{\mathrm B(\alpha_{sk},\beta_{sk})},\qquad
+ \omega_{sk}=\frac{\widetilde\omega_{sk}}{\sum_{k'=1}^{2}\widetilde\omega_{sk'}},\qquad
+ (\pi_1,\pi_2)=(0.3,0.7).
+\]
+Here $\mathrm B$ is the beta function. The implementation evaluates log-beta functions and normalizes by log-sum-exp. These weights give $b_s$ in Section~\ref{sec:kernel}. If the current subject is absent from the support, \path{kernel_probe.py} returns $\mu_s$ without fitting a residual for that subject.
+
+\paragraph{Centered ridge fit.}
+Let $Z\in\{0,1\}^{M\times J}$ be the membership matrix for the $J$ subjects present in the support, and $D=\operatorname{diag}(n_1,\ldots,n_J)$. Every diagonal count is positive. Let $I_M$ be the $M\times M$ identity and $\mathbf y=(y_r)_{r\in\mathcal D_b}\in\mathbb R^M$. Define
+\[
+ H=I_M-ZD^{-1}Z^\top,\qquad K_c=HKH.
+\]
+\[
+ \gamma=H\left[\tfrac12(K_c+K_c^\top)+\lambda_K I_M\right]^{-1}H\mathbf y,
+ \qquad\lambda_K=0.3.
+\]
+The target $H\mathbf y$ subtracts each subject's empirical mean; the Beta mean $b_s$ enters the final prediction separately. The code evaluates the inverse expression with a linear solve. Symmetrization matches the floating-point implementation; in exact arithmetic $K_c$ is symmetric. The fitted subject contribution is
+\[
+ \bar f_s=\frac{1}{n_s}\sum_{r\in\mathcal D_s}(K\gamma)_r.
+\]
+Substituting $b_s$, $\gamma$, $\mathbf k_i$, and $\bar f_s$ into Section~\ref{sec:kernel} gives the implemented kernel prediction. At $n_s=0$ this residual expression is bypassed; at $n=0,1$ the final ensemble weight $w_n$ is zero.
+
+\subsection{Mixing and calibration for Section~\ref{sec:calibration}}\label{app:ensemble}
+
+The six released mixing weights are
+\[
+\begin{array}{c|rrrrrr}
+ n &0&1&3&7&15&31\\\hline
+ \eta_n&0.2875&0.3000&0.2875&0.2750&0.2250&0.2375\\
+ w_n&0&0&0.2&0.4&1&1
+\end{array}
+\]
+Here $\eta_n$ maps to \texttt{runtime\_config.json:lambdas}; $w_n$ is the active \texttt{PROBE\_WEIGHTS} in \path{src/asrp/model.py}; and $\lambda_K$ maps to \texttt{probe\_config.json:ridge}. They are distinct parameters. The formulas in this report concern the official checkpoint counts; defensive interpolation/fallback behavior at other counts is not used in the experiment.
+
+Let $t=t(i)$ be the first explicit topic key--value entry, in visible metadata order, present in the frozen topic table. If none matches, assign the Rasch embedding $e_i$ to the closest of eight frozen centroids by cosine similarity and use its cluster entry. Write $C_t^{\mathrm{cal}}$ for that entry's frozen count and $r_{t,n}$ for its signed correction at budget $n$. Then
+\[
+ \Delta_n(i)=\operatorname{clip}\!\left(
+ \frac{C_t^{\mathrm{cal}}}{C_t^{\mathrm{cal}}+a_t^{\mathrm{cal}}}\,r_{t,n},
+ -d_t^{\mathrm{cal}},d_t^{\mathrm{cal}}\right),\qquad
+ (a_t^{\mathrm{cal}},d_t^{\mathrm{cal}})=
+ \begin{cases}(40,0.06),&\text{explicit topic},\\(200,0.03),&\text{cluster}.
+ \end{cases}
+\]
+If no entry exists, $\Delta_n(i)=0$. Cluster cosine normalization floors norms at $10^{-8}$ and resolves ties by the first maximum. At the six checkpoints, the residual array index is the corresponding budget index.
+
+Let $g^{\mathrm{stored}}(b)$ be the guard stored under the exact runtime benchmark identifier in the calibration artifact. The implemented guard is
+\[
+ g_n(b)=\begin{cases}
+ \operatorname{clip}(g^{\mathrm{stored}}(b),0,0.35),&n\ge15\text{ and a key matches},\\
+ 0,&\text{otherwise}.
+ \end{cases}
+\]
+It modifies $w_n$ before mixing, while $\Delta_n(i)$ is added after mixing. A final clip to $[0,1]$ completes \texttt{predict}. The proxy's anonymous identifiers have no matching source keys.
 
 \subsection{Covariance calculation for Section~\ref{sec:acquisition}}\label{app:acquisition}
 
-The gain $a_j$ used in Section~\ref{sec:acquisition} is computed as follows.
+The acquisition kernel is denoted $K^{\mathrm{acq}}$ to distinguish it from the prediction kernel $K$. Its geometry is fitted to the concatenation of acquired support $\mathcal D_b$, the reference list $\mathcal P$, and the current candidate $*$. The same visible item may appear in both support and reference positions; these occurrences remain in the concatenation. Only $\mathcal P$ itself is deduplicated. Thus acquisition may use seen but unlabeled features, whereas prediction geometry uses only acquired support features.
 
-Let $S$ be the acquired support and $U$ the concatenation of the rolling reference set $P$ and current candidate $c$. Unlike prediction geometry, acquisition geometry uses features of $S$, $P$, and $c$, all already visible. Its RBF bandwidth is computed from pairs in $P$ only, using the same median-distance rule as Section~4.3. Let $K$ be the resulting kernel. For the current subject $s$, define
+Use the feature normalization and RBF rule in Appendix~\ref{app:kernel}, but compute the median-distance bandwidth from pairs in $\mathcal P$ only. Let $\mathcal U$ concatenate $\mathcal P$ and $*$. For the current subject $s$, augment the kernel blocks as
 \[
  \begin{aligned}
- A_{SS}[r,t]&=K_{SS}[r,t]+0.25\,\mathbf{1}[s_r=s_t],\\
- A_{US}[j,r]&=K_{US}[j,r]+0.25\,\mathbf{1}[s_r=s],\\
- A_{UU}&=K_{UU}+0.25\mathbf{1}\mathbf{1}^{\top}.
+ A_{\mathcal D\mathcal D}[r,t]&=K^{\mathrm{acq}}_{\mathcal D\mathcal D}[r,t]+0.25\,\mathbf1[s_r=s_t],\\
+ A_{\mathcal U\mathcal D}[j,r]&=K^{\mathrm{acq}}_{\mathcal U\mathcal D}[j,r]+0.25\,\mathbf1[s_r=s],\\
+ A_{\mathcal U\mathcal U}&=K^{\mathrm{acq}}_{\mathcal U\mathcal U}+0.25\mathbf1\mathbf1^\top,
  \end{aligned}
 \]
-A unit observation-noise term gives
+where block subscript $\mathcal D$ abbreviates $\mathcal D_b$. Conditional covariance and gain are
 \[
- \Sigma=A_{UU}-A_{US}(A_{SS}+I)^{-1}A_{US}^{\top},\qquad
- a_j=\max\!\left(\frac{|P|^{-1}\sum_{r\in P}\Sigma_{rj}^{2}}
-                         {1+\max(\Sigma_{jj},0)},10^{-12}\right).
+ \Sigma=A_{\mathcal U\mathcal U}-A_{\mathcal U\mathcal D}
+ (A_{\mathcal D\mathcal D}+I_M)^{-1}A_{\mathcal U\mathcal D}^\top,\qquad
+ G_j=\max\!\left(
+ \frac{|\mathcal P|^{-1}\sum_{r\in\mathcal P}\Sigma_{rj}^{2}}
+      {1+\max(\Sigma_{jj},0)},10^{-12}\right).
 \]
-Without support, $\Sigma=A_{UU}$. Utility-average denominators are floored at $10^{-12}$; without past candidates the policy falls back to $L/R$. The same SHA256 construction supplies the Random and Adaptive policies' uniform variates from the current input/context. No answer is supplied for a skipped candidate. The main experiment has $2\times3\times\ProxySources=552$ policy trajectories, each acquiring 31 labels; each evaluated item receives predictions from both models at all six checkpoints.
+The identity term implements unit observation noise; without support, the subtraction is omitted. Define
+\[
+ \overline G_{\mathcal P}=|\mathcal P|^{-1}\sum_{r\in\mathcal P}G_r,\qquad
+ V_j=\left[\min\!\left(\frac{G_j}{\max(\overline G_{\mathcal P},10^{-12})},20\right)\right]^4.
+\]
+These utilities enter $\pi_*^{\mathrm{acq}}$ in Section~\ref{sec:acquisition}. The power four is applied before dividing by mean reference utility. Gain depends on support membership and features; the numerical values of the revealed outcomes do not enter this covariance calculation.
+
+\paragraph{Streaming boundaries and deterministic draw.}
+Let $A$ be the initial candidate count and $B_{\max}=31$ the total label allowance in this experiment. Warm-up skips the first $W=\min(16,\max(0,A-B_{\max}))$ candidates. Checks occur in this order: reject if $L\le0$; acquire if $R\le L$; otherwise skip during warm-up. After warm-up, an empty reference list falls back to probability $L/R$; otherwise use $\pi_*^{\mathrm{acq}}$.
+
+The code serializes \texttt{[context,input]} as sorted-key compact JSON with ASCII escaping, takes the first eight bytes of its SHA256 digest as an unsigned big-endian integer $\zeta$, and sets $\xi=\zeta/2^{64}$. It acquires when $\xi<\pi_*^{\mathrm{acq}}$ (or $\xi<L/R$ in the fallback). This is a deterministic pseudorandom variate, not a new API call. The reference list uses the last 64 candidates before the current one, deduplicated by the hash of visible item text/metadata/interactor content. Skipped outcomes are never supplied. See \texttt{AdaptiveGainPolicy.choose} in \path{src/asrp/adaptive_gain_policy.py}.
 
 \section{Public source inventory}\label{app:sources}
 
