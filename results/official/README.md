@@ -4,6 +4,7 @@
 - `summary.json`: equal-record statistics over ten complete, distinct records.
 - `ingestion.json`: restored-input checksum and duplicate audit.
 - `provenance.json`: same-ZIP confirmation and transcription restoration steps.
+- `submissions.json`: Codabench submission IDs and displayed scores from the supplied screenshot, matched uniquely to feedback records.
 - `raw/official_result.log`: restored feedback; retained locally and ignored by Git.
 - `raw/official_result_original_incomplete.log`: byte-preserved original copy.
 - `raw/user_supplement_2026-10-28.log`: added material transcribed from the reply.
@@ -12,8 +13,10 @@ The submitter confirmed on 2026-10-28 that every evaluation used the same ASRP +
 `adaptive_4_warm` ZIP. The final attachment contains ten complete, distinct feedback blocks,
 including the corrected record at block 7. It supersedes the earlier pasted
 copies. All ten records and all six budgets are included, with no imputed scores.
-Submission IDs and archive hashes are absent from the text; same-ZIP identity is
-submitter-confirmed. The attachment is preserved byte-for-byte locally as
+Submission IDs are supplied separately in the Codabench screenshot and mapped in
+`submissions.json`; archive hashes are absent, and same-ZIP identity is
+submitter-confirmed. Screenshot status is retained as displayed, including one
+Running entry with a score; all ten records have complete scoring feedback. The attachment is preserved byte-for-byte locally as
 `raw/user_full_feedback_2026-10-28.txt`; only a single header typo was normalized
 in the parser input. The prior restored copy is retained as
 `raw/official_result_previous_restored.log`.

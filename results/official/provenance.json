@@ -9,8 +9,9 @@
     "Normalized the single header typo ormative feedback to Formative feedback; retained every supplied score.",
     "Replaced the previous transcription with all ten complete, distinct feedback blocks from the attachment."
   ],
-  "submission_ids_present": false,
+  "submission_ids_present": true,
   "archive_hash_present": false,
   "duplicate_policy": "All ten replacement records are distinct; all are included with equal record weight.",
-  "attachment_sha256": "e47e8611bb4c4f7722577f0a38802516ab4f2bc56f1cade95cd5daf28b798fbc"
+  "attachment_sha256": "e47e8611bb4c4f7722577f0a38802516ab4f2bc56f1cade95cd5daf28b798fbc",
+  "submission_ids_source": "User-supplied Codabench screenshot; see submissions.json. IDs are absent from the raw feedback text."
 }

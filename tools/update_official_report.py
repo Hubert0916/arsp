@@ -11,6 +11,13 @@ def main():
     if summarize(runs)!=summary:
         raise ValueError('Official summary differs from released per-evaluation aggregates')
     provenance=json.loads((directory/'provenance.json').read_text())
+    submissions=json.loads((directory/'submissions.json').read_text())['submissions']
+    by_block={s['feedback_block']:s for s in submissions}
+    if set(by_block)!={r['block'] for r in runs} or len({s['submission_id'] for s in submissions})!=len(runs):
+        raise ValueError('Submission IDs must map one-to-one to feedback records')
+    for run in runs:
+        if abs(run['brier_alc']-by_block[run['block']]['displayed_brier_alc'])>1.00001e-6:
+            raise ValueError('Submission screenshot score disagrees with reconstructed ALC')
     same_zip=provenance.get('same_submission_zip_confirmed_by_submitter',False)
     metrics=summary['complete_six_budget'];n=summary['n_complete_blocks'];alc=metrics['brier_alc']
     def save(name,text): (report/name).write_text(text+'\n')
@@ -44,7 +51,7 @@ def main():
         note+='All supplied records now contain all six budget tables. '
     if same_zip:
         note+=r'The submitter confirmed that all evaluations used the same ASRP + \texttt{adaptive\_4\_warm} ZIP. '
-    note+='The final user-supplied attachment supersedes earlier copies and corrects their missing and repeated sections; no scores were imputed. '
+    note+='No scores were imputed. '
     for r in duplicates:
         note+=f"Block {r['block']} reproduces block {r['duplicate_of']}'s group identities, counts, ALC, ECE, and all six budget scores, so it is counted once. "
     for r in partial:
@@ -54,12 +61,11 @@ def main():
     if extras: note+=f"Another {extras} rows cannot be assigned to an ALC summary and are excluded without reconstructing missing scores. "
     if unique_alc['n']!=n:
         note+=f"Using all {unique_alc['n']} distinct available ALC summaries, including the incomplete record, gives mean ALC ${unique_alc['mean']:.4f}$ (SD ${unique_alc['sample_sd']:.4f}$); the main six-budget table uses the same {n} complete records in every column. "
-    note+=r'Block numbers indicate text order, not Codabench submission IDs. The transcription contains neither submission IDs nor archive hashes. The original feedback is retained locally; released aggregates omit anonymous group IDs.'
+    note+=r'Table~\ref{tab:official_records} lists the Codabench submission IDs supplied in the platform screenshot, matched uniquely to the feedback using Brier ALC within rounding precision. The original feedback is retained locally; released aggregates omit anonymous group IDs.'
     save('official_audit.tex',note)
-    table=[r'\begin{tabular}{lrrrl}',r'\toprule',r'Block & Groups & Eval. items & Brier ALC & Use in main table\\',r'\midrule']
-    for r in runs:
-        status=(f"Duplicate of {r['duplicate_of']}" if r['duplicate_of'] is not None else 'Included' if r['complete_six_budget'] else 'Missing budget(s) '+', '.join(str(b) for b,v in zip(summary['budgets'],r['brier']) if v is None))
-        table.append(f"{r['block']} & {r['n_groups']} & {r['n_evaluation_items']} & {r['brier_alc']:.6f} & {status}"+r'\\')
+    table=[r'\begin{tabular}{lrrr}',r'\toprule',r'Submission ID & Groups & Eval. items & Brier ALC\\',r'\midrule']
+    for r in sorted(runs,key=lambda r:by_block[r['block']]['submission_id']):
+        table.append(f"{by_block[r['block']]['submission_id']} & {r['n_groups']} & {r['n_evaluation_items']} & {r['brier_alc']:.6f}"+r'\\')
     save('official_runs_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
     print(f'Updated official report inputs from {n} complete, distinct records.')
 
