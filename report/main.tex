@@ -278,7 +278,7 @@ ASRP treats predictive evaluation as an explicit relationship between an AI syst
 
 \appendix
 
-\section{Runtime details}\label{app:implementation}
+\section{Mathematical and Implementation Details}\label{app:implementation}
 
 These equations specify inference with the released frozen artifacts at the six competition budgets. They use the same symbols as Section~\ref{sec:method}. The reproduction command evaluates these artifacts without repeating their original offline fitting. Throughout, $\operatorname{clip}(x,l,u)=\min(u,\max(l,x))$, applied coordinatewise to vectors, and $\operatorname{norm}(x)=x/\max(\|x\|_2,10^{-12})$.
 
@@ -438,7 +438,7 @@ The identity term implements unit observation noise; without support, the subtra
 \]
 These utilities enter $\pi_*^{\mathrm{acq}}$ in Section~\ref{sec:acquisition}. The power four is applied before dividing by mean reference utility. Gain depends on support membership and features; the numerical values of the revealed outcomes do not enter this covariance calculation.
 
-\paragraph{Streaming boundaries and deterministic draw.}
+\paragraph{Acquisition rules and reproducibility.}
 Let $A$ be the initial candidate count and $B_{\max}=31$ the total label allowance in this experiment. Warm-up skips the first $W=\min(16,\max(0,A-B_{\max}))$ candidates. Checks occur in this order: reject if $L\le0$; acquire if $R\le L$; otherwise skip during warm-up. After warm-up, an empty reference list falls back to probability $L/R$; otherwise use $\pi_*^{\mathrm{acq}}$.
 
 The code serializes \texttt{[context,input]} as sorted-key compact JSON with ASCII escaping, takes the first eight bytes of its SHA256 digest as an unsigned big-endian integer $\zeta$, and sets $\xi=\zeta/2^{64}$. It acquires when $\xi<\pi_*^{\mathrm{acq}}$ (or $\xi<L/R$ in the fallback). This is a deterministic pseudorandom variate, not a new API call. The reference list uses the last 64 candidates before the current one, deduplicated by the hash of visible item text/metadata/interactor content. Skipped outcomes are never supplied. See \texttt{AdaptiveGainPolicy.choose} in \path{src/asrp/adaptive_gain_policy.py}.
