@@ -34,27 +34,27 @@ National Taiwan University}
 \maketitle
 
 \begin{abstract}
-We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, a method for predicting an AI system's probability of success on an evaluation item from its content, visible metadata, and a small number of revealed labels. ASRP combines public-data priors and a text-based Rasch predictor with a support-conditioned kernel probe. Budget-dependent weights shift emphasis from prior-based prediction to local evidence as labels accumulate, followed by conservative topic calibration. A streaming acquisition policy selects informative labels using covariance gain under a fixed budget.
+...
 \end{abstract}
 
 \section{Introduction}
 
-Modern AI evaluations produce response tables with a binary outcome for each subject--item pair. A benchmark average is useful for ranking systems, but it does not provide a probability for a new item and it can be unstable when only a small subset of items is queried. The Predictive AI Evaluation Competition (PAIEC) therefore asks participants to predict the probability that a subject answers each item correctly while revealing at most 31 labels per subject--benchmark pair.
+A benchmark average summarizes an AI system's observed performance, but does not specify its probability of success on a new item. With few observed responses, the estimate also depends on which items were selected. The Predictive AI Evaluation Competition (PAIEC) asks for subject--item success probabilities with at most 31 revealed labels per subject--benchmark pair. This motivates \textbf{ASRP}: a predictor that uses content and public priors before labels are available, then adapts as evidence accumulates.
 
-Our goal is a predictor that uses item text and visible metadata at label budget zero, then adapts to revealed labels without overreacting to a small or unrepresentative support set. We implement \textbf{ASRP} as a competition submission rather than as a new psychometric theory.
+\paragraph{Ability and difficulty as a modeling foundation.}
+Lord's treatment of item response theory (IRT) relates response probabilities to test-taker ability and item parameters \citep{lord1980}. ASRP adopts a Rasch-style model in which success depends on ability minus difficulty. Public subject statistics initialize ability; revealed responses update it through maximum a posteriori estimation. This supplies a structured prediction when little subject-specific evidence is available.
 
-\paragraph{Relation to item-response modeling.}
-Lord's treatment of item response theory (IRT) models the probability of a correct response as a function of test-taker ability and item difficulty \citep{lord1980}. This is the basis for ASRP's Rasch-style probability: a public subject prior supplies the initial ability, the frozen text model supplies item difficulty, and revealed labels update ability with a penalized Newton--Raphson step.
+\paragraph{Learning difficulty from content.}
+\emph{Reliable and Efficient Amortized Model-based Evaluation} predicts question difficulty from content, reducing the need to estimate a separate parameter from responses to every new question. It also introduces difficulty-conditioned question generation for adaptive evaluation \citep{amortized_eval}. ASRP adopts content-based difficulty estimation through frozen MiniLM embeddings \citep{wang2020minilm} and a small feed-forward network. We also pursue informative item selection, but operate on the competition's existing candidate stream using covariance gain; we do not generate questions or reproduce that paper's selection procedure.
 
-\paragraph{Content-based and adaptive evaluation.}
-Reliable and Efficient Amortized Model-based Evaluation shows that benchmark averages can be distorted by question difficulty, and proposes amortizing difficulty from question content together with adaptive item selection \citep{amortized_eval}. ASRP uses the same two ideas in the competition setting: MiniLM features predict unseen-item difficulty, while \texttt{adaptive\_4\_warm} implements support selection when the remaining budget permits discretionary choices. ASRP does not use that paper's question generator or evaluation model.
+\paragraph{Defining the prediction target.}
+\emph{On Calibration of Large Language Models: From Response to Capability} distinguishes the correctness of a particular generated answer from a model's expected success on a query \citep{capability_calibration}. ASRP targets the latter: it estimates success from subject and item attributes without inspecting a generated answer to the evaluation item. This connection motivates our prediction target, rather than providing the topic-correction algorithm used below.
 
-\paragraph{Capability calibration.}
-\emph{On Calibration of Large Language Models: From Response to Capability} distinguishes confidence that one sampled response is correct from confidence that a model can solve a query overall \citep{capability_calibration}. ASRP targets the latter quantity: $p(x)$ is the probability that the subject answers the current item correctly, and Brier score evaluates this query-level probability. This motivates our query-level prediction target; ASRP uses its own topic residual correction rather than reproducing that paper's confidence estimators.
+\paragraph{Adapting beyond a single ability estimate.}
+A scalar ability estimate cannot express every subject's relative strengths across item types. ASRP therefore combines its Rasch prediction with a metadata-informed smoothed success estimate and a separate \textbf{support-conditioned kernel probe}. The kernel branch uses a Beta-mixture posterior for the subject baseline and subject-centered kernel ridge regression to learn item-dependent residuals from revealed labels. Posterior smoothing and ridge regularization limit sensitivity to sparse evidence. Fixed budget-dependent weights emphasize the Rasch hybrid at low budgets and the kernel branch as support grows. Shrunk, capped topic residuals adjust systematic errors observed in public development data, with embedding clusters as a fallback for missing topic matches. Source guards can reduce late-budget kernel weight when a stored source key matches.
 
-ASRP combines frozen text-based difficulty and public subject priors with a kernel residual fitted to acquired labels. Fixed budget-specific weights blend these signals, followed by shrunk topic corrections.
-
-We compare against the official Empirical Mean on a local public proxy. Competition-specific artifacts use permitted public measurement-db data; runtime inference never queries hidden responses.
+\paragraph{Selection and evaluation.}
+Our streaming acquisition rule combines covariance gain with the remaining label allowance to favor informative candidates after a bounded warm-up. ASRP's contribution is this budget-aware integration of established modeling tools and its reproducible evaluation. We compare ASRP and the official Empirical Mean under both Random and Adaptive acquisition on three paired public-data splits, and separately report ten official formative evaluations of the same submission. Section~\ref{sec:method} specifies the prediction and acquisition components.
 
 \section{Competition setting}
 
