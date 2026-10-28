@@ -256,7 +256,7 @@ We separately evaluate the same ASRP + \texttt{adaptive\_4\_warm} ZIP in \Offici
 
 \section{Reproducibility and disclosure}
 
-The release separates inference code in \path{src/asrp} from frozen artifacts in \path{artifacts/asrp}. The entry points are \texttt{model.py} and \texttt{labeling.py}. From the repository root, run:
+Code, frozen weights, evaluation manifests, predictions, acquisition traces, and report source are available at \url{https://github.com/Hubert0916/arsp}. After accepting the measurement-db access conditions, run from the repository root:
 
 \begin{samepage}
 \begin{verbatim}
@@ -266,15 +266,11 @@ uv run --locked python tools/reproduce.py
 \end{verbatim}
 \end{samepage}
 
-After accepting upstream access conditions and authenticating with a Hugging Face read token, this command downloads and verifies the pinned tables, reconstructs all splits, builds the submission, and evaluates all four combinations at three seeds. It checks every prediction against the published run within $10^{-7}$ and requires identical acquired labels. Frozen weights are used directly without refitting or parameter selection. The CPU evaluator uses four workers and caches only deterministic item features. Two independent complete executions produced identical predictions and acquisition records.
+The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. A clean-checkout rerun reproduced both outputs exactly. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
 
-\path{experiments/} records the protocol, checksums, inclusion/exclusion decisions, and selected subject/item/response IDs. \path{results/proxy} contains predictions, acquired labels, decisions, and source-level metrics. These reusable evaluation records constitute our data-curation contribution; task text remains upstream. \path{tools/update_report_results.py} generates the reported numbers.
+Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
-Public aggregates in \path{results/official} regenerate the official tables via \path{tools/update_official_report.py}, which verifies their summary. The local transcription parser is \path{tools/parse_official_results.py}; private platform evaluations cannot be rerun from public data.
-
-Kernel weights are in \path{src/asrp/model.py}; Rasch settings and calibration are in \path{artifacts/asrp/runtime_config.json} and \path{artifacts/asrp/topic_calibration.json}. Code, frozen weights, the locked CPU environment, and report source are available at \url{https://github.com/Hubert0916/arsp}. The release reproduces inference and evaluation; original offline fitting scripts are not included. The official checker remains in the upstream starting kit.
-
-The competition-specific artifacts were produced from the permitted public measurement-db inventory. We use the pretrained MiniLM encoder and cite its model family. Codex was used as a coding assistant during development; it is not used as an online predictor in the current submission. No API key is included in the codebase or report.
+Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 
 \section{Conclusion}
 
