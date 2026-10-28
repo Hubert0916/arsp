@@ -51,7 +51,7 @@ Lord's treatment of item response theory (IRT) relates response probabilities to
 \emph{On Calibration of Large Language Models: From Response to Capability} distinguishes the correctness of a particular generated answer from a model's expected success on a query \citep{capability_calibration}. ASRP targets the latter: it estimates success from subject and item attributes without inspecting a generated answer to the evaluation item. This connection motivates our prediction target, rather than providing the topic-correction algorithm used below.
 
 \paragraph{Adapting beyond a single ability estimate.}
-A scalar ability estimate cannot express every subject's relative strengths across item types. ASRP therefore combines its Rasch prediction with a metadata-informed smoothed success estimate and a separate \textbf{support-conditioned kernel probe}. The kernel branch uses a Beta-mixture posterior for the subject baseline and subject-centered kernel ridge regression to learn item-dependent residuals from revealed labels. Posterior smoothing and ridge regularization limit sensitivity to sparse evidence. Fixed budget-dependent weights emphasize the Rasch hybrid at low budgets and the kernel branch as support grows. Shrunk, capped topic residuals adjust systematic errors observed in public development data, with embedding clusters as a fallback for missing topic matches. Source guards can reduce late-budget kernel weight when a stored source key matches.
+A scalar ability estimate cannot express every subject's relative strengths across item types. ASRP therefore combines its Rasch prediction with a metadata-informed smoothed success estimate and a separate \textbf{support-conditioned kernel probe}. The kernel branch uses a Beta-mixture posterior for the subject baseline and subject-centered kernel ridge regression to learn item-dependent residuals from revealed labels. Posterior smoothing and ridge regularization limit sensitivity to sparse evidence. Fixed budget-dependent weights emphasize the Rasch hybrid at low budgets and the kernel branch as support grows. Shrunk, capped topic residuals adjust systematic errors observed in public development data, with embedding clusters as a fallback for missing topic matches.
 
 \paragraph{Selection and evaluation.}
 Our streaming acquisition rule combines covariance gain with the remaining label allowance to favor informative candidates after a bounded warm-up. ASRP's contribution is this budget-aware integration of established modeling tools and its reproducible evaluation. We compare ASRP and the official Empirical Mean under both Random and Adaptive acquisition on three paired public-data splits, and separately report ten official formative evaluations of the same submission. Section~\ref{sec:method} specifies the prediction and acquisition components.
@@ -87,7 +87,7 @@ For a query subject $s$ and item $i$ in benchmark $b$, let $\mathcal D_b$ be the
 \begin{figure}[H]
   \centering
   \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
-  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. The source guard is inactive for anonymous proxy identifiers. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
+  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
   \label{fig:method}
 \end{figure}
 
@@ -134,17 +134,16 @@ Appendix~\ref{app:kernel} defines $K$, the Beta weight update, and the centered 
 
 The ensemble gives the kernel weights $w_n=(0,0,0.2,0.4,1,1)$ at budgets $(0,1,3,7,15,31)$. Thus the Rasch hybrid supplies the cold-start prediction, while a larger support set allows the local residual to receive more weight. These are design choices encoded in the released configuration.
 
-\subsection{Topic calibration and source guard}\label{sec:calibration}
+\subsection{Topic calibration}\label{sec:calibration}
 
 A frozen topic correction $\Delta_n(i)$ adjusts the ensemble using the first matching topic entry in visible metadata. Without a match, the model uses the closest of eight frozen embedding centroids. Count-based shrinkage and caps limit the adjustment to $0.06$ for explicit topics or $0.03$ for clusters. Missing statistics give zero correction.
 
-A benchmark-keyed guard $g_n(b)\in[0,0.35]$ reduces kernel weight at $n\ge15$ when a stored source key matches; it is zero otherwise. The final prediction is
+The budget-specific ensemble is followed by topic correction:
 \[
- \widetilde w_n(b)=w_n[1-g_n(b)],\qquad
  p_{\mathrm{final}}=\operatorname{clip}\!\left(
- [1-\widetilde w_n(b)]p_{\mathrm{hybrid}}+\widetilde w_n(b)p_{\mathrm{kernel}}+\Delta_n(i),0,1\right).
+ (1-w_n)p_{\mathrm{hybrid}}+w_n p_{\mathrm{kernel}}+\Delta_n(i),0,1\right).
 \]
-The guard is inactive for the anonymous identifiers in this proxy; topic correction remains active. Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
+Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
 
 \subsection{Adaptive acquisition}\label{sec:acquisition}
 
@@ -402,14 +401,7 @@ Let $t=t(i)$ be the first explicit topic key--value entry, in visible metadata o
 \]
 If no entry exists, $\Delta_n(i)=0$. Cluster cosine normalization floors norms at $10^{-8}$ and resolves ties by the first maximum. At the six checkpoints, the residual array index is the corresponding budget index.
 
-Let $g^{\mathrm{stored}}(b)$ be the guard stored under the exact runtime benchmark identifier in the calibration artifact. The implemented guard is
-\[
- g_n(b)=\begin{cases}
- \operatorname{clip}(g^{\mathrm{stored}}(b),0,0.35),&n\ge15\text{ and a key matches},\\
- 0,&\text{otherwise}.
- \end{cases}
-\]
-It modifies $w_n$ before mixing, while $\Delta_n(i)$ is added after mixing. A final clip to $[0,1]$ completes \texttt{predict}. The proxy's anonymous identifiers have no matching source keys.
+The correction $\Delta_n(i)$ is added after mixing the hybrid and kernel predictions with weight $w_n$. A final clip to $[0,1]$ completes \texttt{predict}.
 
 \subsection{Covariance calculation for Section~\ref{sec:acquisition}}\label{app:acquisition}
 

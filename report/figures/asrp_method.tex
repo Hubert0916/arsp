@@ -28,7 +28,7 @@
 \node[online, right=of input] (encode) {Encode item\\+ visible metadata};
 \node[online, right=of encode, yshift=9mm] (rasch) {Rasch hybrid\\$p_{\rm hybrid}$};
 \node[online, right=of encode, yshift=-9mm] (kernel) {Kernel Probe\\$p_{\rm kernel}$};
-\node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble\\conditional source guard};
+\node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble};
 \node[online, right=of blend] (adjust) {Topic calibration};
 \node[output, right=of adjust] (pred) {Final probability\\$p(\mathrm{correct})$};
 \draw[flow] (input.east) -- (encode.west);

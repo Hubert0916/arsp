@@ -254,14 +254,7 @@ def predict(input: list, labeled: list | None = None) -> float:
             fraction = (n - BUDGETS[left]) / (BUDGETS[right] - BUDGETS[left])
             weight = PROBE_WEIGHTS[left] + fraction * (PROBE_WEIGHTS[right] - PROBE_WEIGHTS[left])
     calibration = _resources()[2].get("topic_calibration")
-    # A source-level late-budget guard reduces the kernel contribution only
-    # where public validation showed a repeatable regression against smoothing.
-    guard = 0.0
-    if calibration is not None and n >= 15:
-        stats = calibration.get("source", {}).get(str(benchmark), {})
-        guard = float(np.clip(stats.get("guard", 0.0), 0.0, 0.35))
-    effective_weight = weight * (1.0 - guard)
-    probability = effective_weight * probe + (1.0 - effective_weight) * hybrid
+    probability = weight * probe + (1.0 - weight) * hybrid
     probability = _calibration_adjust(probability, item, query_vector, n, calibration)
     return float(np.clip(probability, 0.0, 1.0))
 

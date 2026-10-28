@@ -92,8 +92,7 @@ uv run --locked python tools/reproduce.py --prepared
   benchmark aliases. Separate grading/reference-answer columns, traces, and
   target outcomes are not passed to the predictor/hook. Upstream item content,
   including any embedded examples, is retained as supplied.
-- Frozen source-name guards do not match anonymous aliases and remain inactive;
-  topic calibration is active. Frozen model weights are identical across all runs.
+- Topic calibration is active. Frozen model weights are identical across all runs.
 
 These are local public-proxy results. Public training/calibration and proxy data
 come from the same release; the online acquisition/evaluation split is not a

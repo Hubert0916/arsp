@@ -64,7 +64,7 @@ def main():
     if len(forced_groups)==1:
         size=forced_groups[0]['n_items'];warmup=(size+1)//2-max_budget
         analysis+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
-    analysis+=r'Topic calibration is active; the source-name guard remains inactive because the benchmark aliases are anonymous.'
+    analysis+=r'Topic calibration is active.'
     save('results_analysis.tex',analysis)
     d=result['acquisition_effect']['asrp']['adaptive_minus_random_alc']
     ending=(f"The three-seed public proxy gives ASRP + Adaptive a mean Brier ALC of ${a['alc']:.4f}$. "
