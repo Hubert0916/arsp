@@ -244,8 +244,10 @@ Separately, we summarize copied Codabench formative feedback for ASRP with adapt
 
 \section{Limitations}
 
+\input{official_limitation}
+
 \paragraph{Sparse metadata and local adaptation.}
-Some public items lack usable topic metadata, motivating the frozen embedding-cluster fallback. Topic groups with few observations can have residual estimates dominated by sampling noise. This motivates shrinking and capping topic corrections. Likewise, an unrepresentative acquired support set can cause the kernel to over-update. The source guard only limits its weight when a public-source key matches; anonymous or unseen sources do not receive this adjustment. These considerations motivate conservative correction magnitudes; neither topic calibration nor local adaptation guarantees improvement on every source.
+Missing topic metadata requires an embedding-cluster fallback, and small topic groups produce noisy residual estimates. An unrepresentative acquired support set can also cause the kernel to over-update. Shrinking and capping corrections reduce these risks, but do not ensure improvement on every source. The source guard applies only when a public-source key matches and cannot protect anonymous or unseen sources.
 
 \section{Reproducibility and disclosure}
 

@@ -25,6 +25,13 @@ def main():
           +f"Mean Brier score decreases from ${metrics['brier'][0]['mean']:.4f}$ at budget zero to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
           +"These official samples are separate from the local public-proxy comparisons.")
     save('official_overview.tex',text)
+    save('official_limitation.tex',
+         r'\paragraph{Cold-start transfer.} '
+         +r'Without revealed labels, ASRP relies on frozen public-data priors, estimated item difficulty, and topic corrections. '
+         +f"Across the {n} official evaluations, its mean zero-label Brier score is ${metrics['brier'][0]['mean']:.4f}$, "
+         +r'compared with $0.2500$ for a constant prediction of $0.5$ on any binary outcome. '
+         +r'This identifies a weakness in the combined initialization on the sampled private data; the aggregate scores do not identify which component is responsible. '
+         +f"Revealed evidence reduces mean Brier to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31, but accurate prediction before acquiring labels remains a limitation.")
     save('official_abstract.tex',f"Separately, {n} complete, distinct official formative-feedback records for ASRP with adaptive acquisition have mean Brier ALC ${alc['mean']:.4f}$ (SD ${alc['sample_sd']:.4f}$).")
     save('official_conclusion.tex',f"The supplied official formative feedback gives ASRP with adaptive acquisition a mean Brier ALC of ${alc['mean']:.4f}$ across {n} complete, distinct records.")
     audit=json.loads((directory/'ingestion.json').read_text())
