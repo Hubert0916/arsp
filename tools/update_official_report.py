@@ -21,7 +21,9 @@ def main():
     same_zip=provenance.get('same_submission_zip_confirmed_by_submitter',False)
     metrics=summary['complete_six_budget'];n=summary['n_complete_blocks'];alc=metrics['brier_alc']
     def save(name,text): (report/name).write_text(text+'\n')
-    save('official_metadata.tex',r'\newcommand{\OfficialRuns}{'+str(n)+'}')
+    macros={'OfficialRuns':str(n), 'OfficialALC':f"{alc['mean']:.4f}",
+            'OfficialZeroBrier':f"{metrics['brier'][0]['mean']:.4f}"}
+    save('official_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+v+'}' for k,v in macros.items()))
     table=[r'\begin{tabular}{lrrrrrrr}',r'\toprule',
            r'ASRP + Adaptive & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
     for key,label in [('mean','Mean'),('sample_sd','SD')]:
@@ -29,16 +31,15 @@ def main():
     save('official_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
     text=(f"Across {n} official formative evaluations of the same ASRP submission with adaptive acquisition, "
           +r"\textbf{mean Brier ALC is $"+f"{alc['mean']:.4f}"+r"$} (sample SD $"+f"{alc['sample_sd']:.4f}"+r"$; Table~\ref{tab:official}). "
-          +f"Mean Brier score decreases from ${metrics['brier'][0]['mean']:.4f}$ at budget zero to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
           +"These official samples are separate from the local public-proxy comparisons.")
     save('official_overview.tex',text)
     save('official_limitation.tex',
          r'\paragraph{Cold-start transfer.} '
-         +r'Without revealed labels, ASRP relies on frozen public-data priors, estimated item difficulty, and topic corrections. '
-         +f"Across the {n} official evaluations, its mean zero-label Brier score is ${metrics['brier'][0]['mean']:.4f}$, "
-         +r'compared with $0.2500$ for a constant prediction of $0.5$ on any binary outcome. '
-         +r'This identifies a weakness in the combined initialization on the sampled private data; the aggregate scores do not identify which component is responsible. '
-         +f"Revealed evidence reduces mean Brier to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31, but accurate prediction before acquiring labels remains a limitation.")
+         +r'Frozen public priors, difficulty estimates, and topic corrections may transfer poorly before labels are available. '
+         +f"Across {n} official evaluations, zero-label Brier is ${metrics['brier'][0]['mean']:.4f}$, "
+         +r'above the $0.2500$ of a constant $0.5$ prediction. '
+         +f"Revealed evidence reduces it to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
+         +r'The public ablations do not identify which initialization component causes the private-data errors; accurate cold-start prediction remains a limitation.')
     note=(f"We evaluated the same ASRP + "
           +r"\texttt{adaptive\_4\_warm} ZIP in "
           +f"{n} official formative evaluations. " if same_zip else "")

@@ -46,29 +46,22 @@
 \maketitle
 
 \begin{abstract}
-Benchmark scores depend on the sampled items and evaluation protocol, motivating predictions that account for individual subjects, item characteristics, and available evidence. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)} for predicting an AI system's probability of success on an item under a limited label budget. ASRP combines public-data priors and text-based Rasch modeling with a support-conditioned kernel probe. Budget-dependent mixing and conservative topic calibration adapt predictions as labels accumulate, while streaming acquisition selects informative candidates using covariance gain. Paired public-data experiments and repeated official evaluations examine this approach, with an emphasis on reproducible prediction and explicit evaluation conditions.
+A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. On a public proxy covering \ProxySources{} source groups and three seeds, ASRP achieves Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels; switching ASRP from random to adaptive acquisition provides a smaller additional reduction of $\AcquisitionALCGain{}$.
 \end{abstract}
 
 \section{Introduction}
 
-A benchmark average summarizes an AI system's observed performance, but does not specify its probability of success on a new item. With few observed responses, the estimate also depends on which items were selected. The Predictive AI Evaluation Competition (PAIEC) asks for subject--item success probabilities with at most 31 revealed labels per subject--benchmark pair. This motivates \textbf{ASRP}: a predictor that uses content and public priors before labels are available, then adapts as evidence accumulates.
+The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success probability on an individual item with at most 31 revealed labels per subject--benchmark pair. It requires both zero-label prediction and adaptation from sparse responses. Our target is query-level success, following the distinction from confidence in a particular generated answer made by \citet{capability_calibration}.
 
-\paragraph{Ability and difficulty as a modeling foundation.}
-Lord's treatment of item response theory (IRT) relates response probabilities to test-taker ability and item parameters \citep{lord1980}. ASRP adopts a Rasch-style model in which success depends on ability minus difficulty. Public subject statistics initialize ability; revealed responses update it through maximum a posteriori estimation. This supplies a structured prediction when little subject-specific evidence is available.
+\textbf{Shared structure and local evidence address different limitations.} Item response theory models subject ability and item difficulty \citep{lord1980}, while amortized evaluation predicts difficulty from content \citep{amortized_eval}. This shared structure supports cold-start prediction, but a scalar ability cannot express every relative strength across item types, and frozen estimates may transfer imperfectly to new benchmarks. Conversely, local corrections learned from one or two labels can overreact to individual outcomes. ASRP therefore combines prior-based estimation with regularized support-driven adaptation, increasing the latter's weight as evidence grows.
 
-\paragraph{Learning difficulty from content.}
-\emph{Reliable and Efficient Amortized Model-based Evaluation} predicts question difficulty from content, reducing the need to estimate a separate parameter from responses to every new question. It also introduces difficulty-conditioned question generation for adaptive evaluation \citep{amortized_eval}. ASRP adopts content-based difficulty estimation through frozen MiniLM embeddings \citep{wang2020minilm} and a small feed-forward network. We also pursue informative item selection, but operate on the competition's existing candidate stream using covariance gain; we do not generate questions or reproduce that paper's selection procedure.
+ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
 
-\paragraph{Defining the prediction target.}
-\emph{On Calibration of Large Language Models: From Response to Capability} distinguishes the correctness of a particular generated answer from a model's expected success on a query \citep{capability_calibration}. ASRP targets the latter: it estimates success from subject and item attributes without inspecting a generated answer to the evaluation item. This connection motivates our prediction target, rather than providing the topic-correction algorithm used below.
+\textbf{The main measured improvement comes from prediction, with a smaller acquisition benefit.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence, a reduction of $\PredictorALCGain{}$. Holding ASRP fixed, switching Random to Adaptive acquisition reduces ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$ ($\AcquisitionALCGain{}$). Component removals show a larger kernel benefit at high budgets, while the Rasch term helps zero-label prediction but does not improve mean ALC in this proxy. Ten separate official formative evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction. Transfer of the initial estimate remains a challenge.
 
-\paragraph{Adapting beyond a single ability estimate.}
-A scalar ability estimate cannot express every subject's relative strengths across item types. ASRP therefore combines its Rasch prediction with a metadata-informed smoothed success estimate and a separate \textbf{support-conditioned kernel probe}. The kernel branch uses a Beta-mixture posterior for the subject baseline and subject-centered kernel ridge regression to learn item-dependent residuals from revealed labels. Posterior smoothing and ridge regularization limit sensitivity to sparse evidence. Fixed budget-dependent weights emphasize the Rasch hybrid at low budgets and the kernel branch as support grows. Shrunk, capped topic residuals adjust systematic errors observed in public development data, with embedding clusters as a fallback for missing topic matches.
+\section{Competition Setting and Data}\label{sec:setting}
 
-\paragraph{Selection and evaluation.}
-Our streaming acquisition rule combines covariance gain with the remaining label allowance after a bounded warm-up. ASRP contributes a budget-aware integration of established models and a reusable paired evaluation protocol. We compare ASRP and the official Empirical Mean under Random and Adaptive acquisition on three public-data splits, and separately report ten official formative evaluations. Released source-selection manifests, predictions, and acquisition traces let others audit the comparison and reuse its splits. Section~\ref{sec:method} specifies the method.
-
-\section{Competition setting}
+\subsection{Prediction interface and metrics}
 
 At runtime the platform supplies a pair of dictionaries $x=(s,i)$ describing a subject and an item, together with a list of previously acquired binary observations. The predictor returns a finite probability in $[0,1]$. Eligible subject--benchmark groups have at least 80 distinct items. The platform creates a fixed acquisition/evaluation split and evaluates the same evaluation items at the \textbf{six label budgets}
 \[
@@ -86,13 +79,13 @@ The group-level Brier ALC is the normalized area on the logarithmic budget axis 
 \]
 The official score averages these group-level ALC values equally across subject--benchmark groups. \textbf{Lower is better.} All reported local tables use this same weighting.
 
-\section{Data and permitted training}
+\subsection{Public data and frozen artifacts}
 
-The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. The public-proxy evaluation starts from a fixed inventory of 142 binary sources and retains sources containing a complete subject group with 80--1,000 distinct binary-response items. This yields \textbf{\ProxySources{} sources}; \ProxyExcluded{} sources have no qualifying group. One eligible subject is fixed per source, and all items in that group are retained without truncation. The selected groups contain \ProxyItems{} items in total. Appendix~\ref{app:sources} lists the evaluated sources; the manifest records both inclusions and exclusions. Upstream metadata and licenses remain authoritative.
+The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. Public responses provide subject priors and metadata statistics, while item content supplies semantic features. The local evaluation selects \ProxySources{} source groups from a fixed inventory of 142 binary sources; Section~\ref{sec:setup} describes selection and splitting. Appendix~\ref{app:sources} lists the evaluated sources. Upstream metadata and licenses remain authoritative.
 
 The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
-\section{ASRP method}\label{sec:method}
+\section{Proposed Method: ASRP}\label{sec:method}
 
 For a query subject $s$ and item $i$ in benchmark $b$, let $\mathcal D_b$ be the revealed support and $\mathcal D_s$ its rows for the current subject. Write $n=|\mathcal D_s|$ and $S_s=\sum_{r\in\mathcal D_s}y_r$. All predictions below concern this query; their arguments are suppressed when unambiguous. Figure~\ref{fig:method} shows the computation. Appendix~\ref{app:implementation} gives the shared notation, numerical details, and corresponding code functions.
 
@@ -169,12 +162,14 @@ For $L$ labels and $R$ candidates remaining, including the current candidate, th
 \]
 A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every remaining candidate is acquired, overriding warm-up. Appendix~\ref{app:acquisition} defines $G_j$, $V_j$, and the boundary cases. The rule uses only acquired support and already-seen/current features; it never accesses future candidates or unseen outcomes.
 
-\section{Experimental setup}
+\section{Experimental Setup}\label{sec:setup}
+
+We use paired public-data comparisons to separate prediction and acquisition effects, and report private-platform evaluations separately. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
 
 \subsection{Public proxy protocol}
 
 \paragraph{Data and repeated splits.}
-We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all retained, yielding \textbf{\ProxySources{} source groups}. The upper limit bounds local evaluation cost. We fix one binary outcome per item when repeated responses exist; official evaluation instead retains all recorded evaluation responses. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The manifest records the data version, selected records, and splits.
+We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all retained, yielding \textbf{\ProxySources{} source groups} and \ProxyItems{} items. The other \ProxyExcluded{} sources in the 142-source inventory have no qualifying group. The upper limit bounds local evaluation cost. We fix one binary outcome per item when repeated responses exist; official evaluation instead retains all recorded evaluation responses. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The manifest records the data version, selected records, and splits.
 
 \paragraph{Paired comparison.}
 We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Random samples uniformly without replacement; Adaptive uses \texttt{adaptive\_4\_warm} from Section~\ref{sec:acquisition}. Within each seed, both policies receive the same candidate order and evaluation pool. Both predictors receive identical acquired labels \emph{within each policy}, while different policies may select different labels. A single acquisition trajectory targets 31 labels and supplies nested evidence at all six budgets; selection does not restart at each checkpoint. Every checkpoint evaluates the same held-out items.
@@ -194,13 +189,17 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
 \]
 It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Random is its default acquisition policy; the Adaptive variant uses ASRP's selected labels.
 
-We use the metrics and equal-group weighting in Section~2, then average the three seed-level scores equally. We report each seed's ALC and their sample standard deviation (SD), describing split variation. Source-level comparisons average paired ALC differences over the three seeds before counting improvements, with each selected source counted once.
+We use the metrics and equal-group weighting in Section~\ref{sec:setting}, then average the three seed-level scores equally. We report each seed's ALC and their sample standard deviation (SD), describing split variation. Source-level comparisons average paired ALC differences over the three seeds before counting improvements, with each selected source counted once.
+
+\subsection{Component ablations}\label{sec:ablation_setup}
+
+We remove one prediction component at a time on the same \ProxySources{} groups and three seeds, replaying the published Adaptive acquisition trajectories. \textbf{No Rasch} sets $\eta_n=0$, retaining metadata smoothing and the kernel branch; \textbf{No Kernel Probe} sets $w_n=0$, using the Rasch hybrid at every budget; \textbf{No topic calibration} sets $\Delta_n(i)=0$. All other parameters and calibration statistics stay fixed, with no refitting or retuning. Thus these comparisons measure component removal within the released system, conditional on the same acquired evidence. The full-model rerun is checked against every published Adaptive prediction within $10^{-7}$.
 
 \subsection{Official formative feedback}
 
 We separately evaluate the same ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset, distinct from the public proxy. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} lists the submission IDs and per-run results.
 
-\section{Results and analysis}
+\section{Results and Analysis}
 
 \subsection{Public proxy results}
 
@@ -236,6 +235,20 @@ We separately evaluate the same ASRP + \texttt{adaptive\_4\_warm} ZIP in \Offici
 
 \input{results_analysis}
 
+\subsection{Component contributions}\label{sec:ablations}
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\input{ablation_table}
+\vspace{6pt}
+\caption{Component removals with fixed Adaptive evidence and remaining parameters, averaged over \ProxySources{} groups and three seeds. Positive $\Delta$ALC (variant minus full ASRP) indicates worse performance.}
+\label{tab:ablation}
+\end{table}
+
+\input{ablation_analysis}
+
 \subsection{Official formative results}
 
 \input{official_overview}
@@ -250,32 +263,15 @@ We separately evaluate the same ASRP + \texttt{adaptive\_4\_warm} ZIP in \Offici
 \label{tab:official}
 \end{table}
 
-\section{Limitations}
+\section{Limitations and Discussion}
 
 \input{official_limitation}
 
-\section{Reproducibility and disclosure}
-
-Code, frozen weights, evaluation manifests, predictions, acquisition traces, and report source are available at \url{https://github.com/Hubert0916/arsp}. After accepting the measurement-db access conditions, run from the repository root:
-
-\begin{samepage}
-\begin{verbatim}
-uv sync --locked
-uv run hf auth login
-uv run --locked python tools/reproduce.py
-\end{verbatim}
-\end{samepage}
-
-The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. A clean-checkout rerun reproduced both outputs exactly. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
-
-Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
-
-Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
-
 \section{Conclusion}
 
-ASRP treats predictive evaluation as an explicit relationship between an AI system, an item, and the evidence available at a given label budget. It integrates prior-based ability and difficulty estimates with local residual adaptation and active label acquisition. The paired experimental design distinguishes predictor effects from acquisition effects, while repeated evaluations characterize variation across sampled test groups. This approach supports more informative evaluation than a benchmark average alone, without treating a score as a context-free measure of capability. Improving the transfer of initial predictions to unfamiliar benchmarks remains a priority.
+ASRP balances public-data initialization with support-driven adaptation as labels accumulate. Paired experiments show a larger predictor benefit than acquisition benefit, with component removals supporting kernel adaptation at higher budgets and topic calibration. Rasch helps zero-label prediction but not mean ALC in this proxy. Official evaluations identify cold-start transfer as a remaining challenge. Released artifacts and matched splits make these comparisons reproducible.
 
+\clearpage
 \appendix
 
 \section{Mathematical and Implementation Details}\label{app:implementation}
@@ -464,6 +460,28 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \caption{Official formative evaluations identified by Codabench submission ID. Brier ALC is reconstructed from the rounded group feedback and may differ from the platform display by $10^{-6}$. Evaluation-item counts do not determine group weights.}
 \label{tab:official_records}
 \end{table}
+
+\section{Reproducibility and Disclosure}\label{app:reproducibility}
+
+Code, frozen weights, evaluation manifests, predictions, acquisition traces, and report source are available at \url{https://github.com/Hubert0916/arsp}. After accepting the measurement-db access conditions, run from the repository root:
+
+\begin{samepage}
+\begin{verbatim}
+uv sync --locked
+uv run hf auth login
+uv run --locked python tools/reproduce.py
+\end{verbatim}
+\end{samepage}
+
+The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. A clean-checkout rerun reproduced both outputs exactly. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
+
+For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \path{tools/evaluate_ablation.py} after the main pipeline has prepared the data. Released compressed predictions can be audited and the ablation table regenerated with \path{tools/update_ablation_report.py}.
+
+\input{results_acquisition_details}
+
+Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
+
+Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 
 % unsrtnat preserves the order in which references first appear in the text.
 \bibliographystyle{unsrtnat}

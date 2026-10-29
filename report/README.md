@@ -23,6 +23,7 @@ uv run --locked python tools/score_proxy.py results/proxy
 uv run --locked python tools/update_report_results.py results/proxy
 uv run --locked python report/make_proxy_plot.py
 uv run --locked python tools/update_official_report.py
+uv run --locked python tools/update_ablation_report.py
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
@@ -38,11 +39,16 @@ Per-item predictions and acquisition trajectories are released in
 [`results/proxy`](../results/proxy). These are public-proxy results, not private
 Codabench results. The NeurIPS checklist is not included in this competition report.
 
-Section 4 presents the core prediction and acquisition equations. Appendix A
-uses the same notation and follows Sections 4.1–4.5 in order: feature construction,
+The main text has seven sections; reproduction and disclosure are in Appendix D.
+Section 3 presents the core prediction and acquisition equations. Appendix A
+uses the same notation and follows Sections 3.1–3.5 in order: feature construction,
 priors and MAP updates, kernel/Beta calculations, mixing/calibration, and acquisition.
 Rasch mixing weights (eta), kernel ridge penalty (lambda_K), and acquisition
 gain/utility (G/V) have separate symbols and explicit code mappings.
+
+Component ablations hold the published Adaptive evidence fixed across all 92
+groups and three seeds, removing one component at a time without refitting.
+See [`results/ablation`](../results/ablation) for predictions and rerun commands.
 
 ## Official formative feedback
 

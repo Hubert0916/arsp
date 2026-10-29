@@ -31,6 +31,9 @@ The release provides reusable source selections, disjoint splits, per-item
 predictions, and acquisition traces, with source-level comparisons in the
 [scored summary](results/proxy/summary.json).
 
+[Component ablations](results/ablation) compare removal of Rasch, Kernel Probe,
+and topic calibration with the same Adaptive labels and frozen parameters.
+
 **Official formative evaluation:** ASRP + Adaptive achieved mean Brier ALC
 **0.19107 ± 0.01105** (sample SD) over 10 evaluations of the same ZIP.
 These are separate private-platform samples, not a matched baseline comparison.

@@ -24,7 +24,12 @@ def main():
     macros={'ProxySources':result['n_sources'],'ProxyItems':f"{result['n_items']:,}",
             'ProxyTargets':f"{result['n_rows_per_seed']:,}",'ProxyExcluded':result['n_excluded_sources'],
             'ProxyMinItems':result['group_items_range'][0],'ProxyMaxItems':result['group_items_range'][1],
-            'ProxyMinPool':result['acquisition_pool_range'][0],'ProxyMaxPool':result['acquisition_pool_range'][1]}
+            'ProxyMinPool':result['acquisition_pool_range'][0],'ProxyMaxPool':result['acquisition_pool_range'][1],
+            'ASRPAdaptiveALC':f"{c['asrp_adaptive']['alc']:.4f}",
+            'ASRPRandomALC':f"{c['asrp_random']['alc']:.4f}",
+            'EMAdaptiveALC':f"{c['empirical_mean_adaptive']['alc']:.4f}",
+            'PredictorALCGain':f"{c['empirical_mean_adaptive']['alc']-c['asrp_adaptive']['alc']:.4f}",
+            'AcquisitionALCGain':f"{c['asrp_random']['alc']-c['asrp_adaptive']['alc']:.4f}"}
     save('results_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+str(v)+'}' for k,v in macros.items()))
     header=r'\begin{tabular}{lrrrrrrr}'+'\n'+r'\toprule'+'\n'+r'Predictor + acquisition & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\'+'\n'+r'\midrule'+'\n'
     rows=''.join(LABELS[k]+' & '+' & '.join(f'{v:.4f}' for v in c[k]['brier']+[c[k]['alc']])+r'\\'+'\n' for k in ORDER)
@@ -38,16 +43,14 @@ def main():
     overview=(r'Table~\ref{tab:proxy} reports the \textbf{four predictor--acquisition combinations}, averaged equally over groups and then over seeds 42, 43, and 44. '
               +f"ASRP + Adaptive has a mean Brier ALC of ${a['alc']:.4f}$, compared with ${b['alc']:.4f}$ for Empirical Mean + Random "
               +f"(an absolute {'reduction' if gain>=0 else 'increase'} of ${abs(gain):.4f}$). "
-              +(f'Its aggregate Brier score is lower at all six budgets. ' if wins==6 else f'Its aggregate Brier score is lower at {wins} of the six budgets. ')
-              +r'The two predictors share identical labels within each acquisition policy; the Random and Adaptive policies use identical candidate orders and evaluation pools.')
+              +(f'Its aggregate Brier score is lower at all six budgets.' if wins==6 else f'Its aggregate Brier score is lower at {wins} of the six budgets.'))
     save('results_overview.tex',overview)
     analysis=r'\paragraph{Predictor effect with acquisition held fixed.}'+'\n'
-    for policy in ['random','adaptive']:
-        x,y=c['asrp_'+policy],c['empirical_mean_'+policy];d=y['alc']-x['alc']
-        analysis+=f"Under {policy.capitalize()} acquisition, ASRP's mean ALC is ${x['alc']:.4f}$ versus ${y['alc']:.4f}$ for Empirical Mean, "
-        analysis+=f"a {'reduction' if d>=0 else 'increase'} of ${abs(d):.4f}$. "
+    random_gain=c['empirical_mean_random']['alc']-c['asrp_random']['alc']
+    adaptive_gain=c['empirical_mean_adaptive']['alc']-c['asrp_adaptive']['alc']
+    analysis+=f"Relative to Empirical Mean with matched labels, ASRP reduces ALC by ${random_gain:.4f}$ under Random and ${adaptive_gain:.4f}$ under Adaptive acquisition. "
     analysis+=f"Empirical Mean + Random rises from ${b['brier'][0]:.4f}$ at zero labels to ${b['brier'][1]:.4f}$ at one label: a single outcome makes its prediction either zero or one. ASRP smooths early evidence using public priors. "
-    analysis+=r'This comparison measures the complete predictor, including its frozen public-data information. At budget zero, the hybrid combines metadata smoothing and Rasch predictions before topic correction; the kernel weight is zero. At budgets 15 and 31, the kernel weight is one.'+'\n\n'
+    analysis+=r'This comparison measures the complete predictor, including its frozen public-data information; component removals are examined in Section~\ref{sec:ablations}.'+'\n\n'
     analysis+=r'\paragraph{Acquisition effect with the predictor held fixed.}'+'\n'
     for method,label in [('asrp','ASRP'),('empirical_mean','Empirical Mean')]:
         e=result['acquisition_effect'][method];d=e['adaptive_minus_random_alc']
@@ -62,15 +65,16 @@ def main():
     analysis+=r'\paragraph{Variation across sources.}'+'\n'
     analysis+=f"Averaging the paired ALC differences over seeds within each source, ASRP beats Empirical Mean on {predictor['improved']} of {result['n_sources']} sources under Adaptive acquisition and loses on {predictor['worsened']}. "
     analysis+=f"For ASRP, Adaptive improves on Random in {acquisition['improved']} sources, worsens in {acquisition['worsened']}, and ties in {acquisition['tied']} (tolerance $10^{{-12}}$). "
-    analysis+=r'These counts describe the selected subject per source; the aggregate gain does not imply a gain on every source.'+'\n\n'
-    analysis+=r'\paragraph{Selection capacity.}'+'\n'
-    analysis+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
+    analysis+=r'These counts describe the selected subject per source.'
+    save('results_analysis.tex',analysis.rstrip())
+    acquisition_details=r'\paragraph{Selection capacity.}'+'\n'
+    acquisition_details+=f"Across the full experiment, {result['adaptive_trajectories_with_discretion']} of {result['n_groups']*len(result['seeds'])} Adaptive trajectories execute at least one discretionary decision. "
     max_budget=max(result['budgets'])
     forced_groups=[g for g in manifest['groups'] if (g['n_items']+1)//2-min(16,max(0,(g['n_items']+1)//2-max_budget))<=max_budget]
     if len(forced_groups)==1:
         size=forced_groups[0]['n_items'];warmup=(size+1)//2-max_budget
-        analysis+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
-    save('results_analysis.tex',analysis.rstrip())
+        acquisition_details+=f"The {len(result['seeds'])} trajectories without discretionary choices belong to one {size}-item group: {warmup} warm-up skips leave exactly {max_budget} candidates, all mandatory. "
+    save('results_acquisition_details.tex',acquisition_details.rstrip())
     save('source_inventory.tex',r'\begin{verbatim}'+'\n'+'\n'.join(g['source'] for g in manifest['groups'])+'\n'+r'\end{verbatim}')
     markdown=['| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |',
               '|---|---:|---:|---:|---:|---:|---:|---:|']
