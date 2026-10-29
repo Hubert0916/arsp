@@ -24,6 +24,7 @@ uv run --locked python tools/update_report_results.py results/proxy
 uv run --locked python report/make_proxy_plot.py
 uv run --locked python tools/update_official_report.py
 uv run --locked python tools/update_ablation_report.py
+uv run --locked python tools/update_rasch_report.py
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
@@ -42,18 +43,20 @@ Codabench results. The NeurIPS checklist is not included in this competition rep
 The main text has seven sections; reproduction and disclosure are in Appendix D.
 Section 3 presents the core prediction and acquisition equations. Appendix A
 uses the same notation and follows Sections 3.1–3.5 in order: feature construction,
-priors and MAP updates, kernel/Beta calculations, mixing/calibration, and acquisition.
-Rasch mixing weights (eta), kernel ridge penalty (lambda_K), and acquisition
-gain/utility (G/V) have separate symbols and explicit code mappings.
+prior construction, kernel/Beta calculations, mixing/calibration, and acquisition.
+Kernel mixing weights (w), ridge penalty (lambda_K), and acquisition gain/utility
+(G/V) have separate symbols and explicit code mappings.
 
 Component ablations hold the published Adaptive evidence fixed across all 92
 groups and three seeds, removing one component at a time without refitting.
-See [`results/ablation`](../results/ablation) for predictions and rerun commands.
+Current component predictions are saved in the main inference pass; see
+[`results/proxy`](../results/proxy). The Rasch removal study uses six paired
+seeds; see [`results/rasch_confirmation`](../results/rasch_confirmation).
 
 ## Official formative feedback
 
 The report separately summarizes ten complete formative evaluations of the same
-ASRP + `adaptive_4_warm` ZIP, identified by Codabench submission IDs in Appendix C.
+earlier ASRP + `adaptive_4_warm` ZIP **containing Rasch**, identified by Codabench submission IDs in Appendix C.
 
 `../results/official/runs.json` contains evaluation-level aggregates, and
 `summary.json` contains equal-record means and sample standard deviations.
@@ -74,6 +77,6 @@ and duplicate feedback. Anonymous platform group IDs are not exported. These
 commands reproduce aggregation, not the platform's private evaluation draws.
 
 The public reproduction pipeline uses frozen artifacts. It does not retrain the
-original priors, difficulty network, or calibration; see
+original priors or calibration; see
 [`artifacts/README.md`](../artifacts/README.md). Keep the generated numeric inputs
 in sync by running the commands above after changing the scored results.

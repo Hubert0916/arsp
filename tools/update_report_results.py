@@ -3,7 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import shutil
-from prepare_proxy import ROOT
+from prepare_proxy import ROOT, sha
 
 ORDER=['empirical_mean_random','empirical_mean_adaptive','asrp_random','asrp_adaptive']
 LABELS={'empirical_mean_random':'Empirical Mean + Random','empirical_mean_adaptive':'Empirical Mean + Adaptive',
@@ -15,6 +15,8 @@ def main():
     parser.add_argument('directory',nargs='?',type=Path,default=ROOT/'results/proxy')
     args=parser.parse_args()
     result=json.loads((args.directory/'summary.json').read_text())
+    if result.get('inference_manifest_sha256') != sha(ROOT/'artifacts/manifest.sha256.json'):
+        raise ValueError('Score summary belongs to a different model version; rescore the matching inference run')
     manifest=json.loads((ROOT/'experiments/proxy_manifest.json').read_text())
     if result['n_groups']!=len(manifest['groups']) or result['seeds']!=manifest['config']['seeds']:
         raise ValueError('Only a complete published run can update the report')

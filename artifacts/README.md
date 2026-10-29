@@ -5,16 +5,15 @@ The released evaluation uses these files directly. Verify their checksums with
 
 | File in `asrp/` | Runtime role |
 |---|---|
-| `encoder/` | Frozen MiniLM encoder for difficulty and cluster assignment. |
+| `encoder/` | Frozen MiniLM encoder for topic-cluster assignment. |
 | `probe_encoder/` | Frozen ONNX MiniLM encoder for kernel and acquisition features. |
-| `difficulty_model.npz` | Feature normalization and 390–128–32–1 difficulty network. |
-| `binary_subject_prior.json` | Model-name offsets for initial ability and Beta means. |
-| `feature_prior.json` | Public subject/metadata success counts for the hybrid prior. |
+| `binary_subject_prior.json` | Model-name offsets for the kernel Beta prior mean. |
+| `feature_prior.json` | Public subject/metadata success counts for the query-specific smoothed prior. |
 | `topic_calibration.json` | Budget-specific topic residuals, counts, eight centroids, and correction caps. |
-| `runtime_config.json` | Rasch prior variance, smoothing strength, and hybrid weights. |
+| `runtime_config.json` | Smoothing strength and budget-specific kernel weights. |
 | `probe_config.json` | Beta-mixture, kernel, ridge, and acquisition configuration. |
 
-The final kernel weights are `PROBE_WEIGHTS` in `src/asrp/model.py`.
+The final kernel weights are `probe_weights` in `asrp/runtime_config.json`.
 Appendix A of the [report](../report/main.pdf) gives the equations and code
 mapping. The build tool copies `asrp/` and `src/asrp/` into a flat submission ZIP.
 

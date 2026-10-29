@@ -25,22 +25,24 @@ def main():
             'OfficialZeroBrier':f"{metrics['brier'][0]['mean']:.4f}"}
     save('official_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+v+'}' for k,v in macros.items()))
     table=[r'\begin{tabular}{lrrrrrrr}',r'\toprule',
-           r'ASRP + Adaptive & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
+           r'Earlier ASRP + Adaptive & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
     for key,label in [('mean','Mean'),('sample_sd','SD')]:
         table.append(label+' & '+' & '.join(f'{m[key]:.4f}' for m in metrics['brier']+[alc])+r'\\')
     save('official_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    text=(f"Across {n} official formative evaluations of the same ASRP submission with adaptive acquisition, "
+    text=(f"Across {n} official formative evaluations of the same earlier ASRP submission (including Rasch) with adaptive acquisition, "
           +r"\textbf{mean Brier ALC is $"+f"{alc['mean']:.4f}"+r"$} (sample SD $"+f"{alc['sample_sd']:.4f}"+r"$; Table~\ref{tab:official}). "
-          +"These official samples are separate from the local public-proxy comparisons.")
+          +f"Its zero-label Brier of ${metrics['brier'][0]['mean']:.4f}$ exceeds the $0.2500$ of a constant $0.5$ predictor, "
+          +f"while revealed evidence reduces Brier to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
+          +"These scores do not evaluate the current prior--kernel version.")
     save('official_overview.tex',text)
     save('official_limitation.tex',
          r'\paragraph{Cold-start transfer.} '
-         +r'Frozen public priors, difficulty estimates, and topic corrections may transfer poorly before labels are available. '
+         +r'In the earlier Rasch version, frozen public priors, difficulty estimates, and topic corrections may transfer poorly before labels are available. '
          +f"Across {n} official evaluations, zero-label Brier is ${metrics['brier'][0]['mean']:.4f}$, "
          +r'above the $0.2500$ of a constant $0.5$ prediction. '
          +f"Revealed evidence reduces it to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
          +r'The public ablations do not identify which initialization component causes the private-data errors; accurate cold-start prediction remains a limitation.')
-    note=(f"We evaluated the same ASRP + "
+    note=(f"We evaluated the same earlier ASRP (including Rasch) + "
           +r"\texttt{adaptive\_4\_warm} ZIP in "
           +f"{n} official formative evaluations. " if same_zip else "")
     note+=r'Table~\ref{tab:official_records} lists the submission IDs and corresponding results.'

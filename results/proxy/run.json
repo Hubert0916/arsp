@@ -188,16 +188,17 @@
   "n_groups": 92,
   "data_sha256": "de3bd4bcf3c3010caa41405cba0e9f4d29cc657a7bc93e884b0688c4ad43ab86",
   "split_manifest_sha256": "754619874ca41bbfca2020777c895def90889f630acc92ec8c91d5b8f65c82fc",
-  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+  "inference_manifest_sha256": "adda6f626d003f1c8068c866d856b149ffe85baac9ac590466d4017e29078e05",
   "lockfile_sha256": "a9924f66312872664dcee40fa4100a78e546af49df6bcb31e7b63362679b5747",
   "python": "3.11.17",
   "files": {
-    "predictions.jsonl": "ff21e54217ba3eb9fb879eebffa8c9064d6a7d407d2f10c9cc2421fa127b8dde",
-    "acquisition.jsonl": "b13cfe43ad51f6f71282ca55d28c020e35a5a90f2b49372f653a6387d7278555"
+    "predictions.jsonl": "8df8b22ba3b5877b97f91a0cfa1d30301390da106684125ba63a0bd3a0465cca",
+    "acquisition.jsonl": "b13cfe43ad51f6f71282ca55d28c020e35a5a90f2b49372f653a6387d7278555",
+    "component_predictions.jsonl.gz": "12efb36058cf7486d68c45f3e03c82ff60e0f1dca42f6b892e5dfc40fa4a7209"
   },
   "scripts": {
     "tools/prepare_proxy.py": "d4671cb1b6f26ccc2ea3bdda2827aa6bc0b668ce07d077a80b59f899e9978430",
-    "tools/evaluate_proxy.py": "5c7a7c1404d53831d851efb5cdbf7c748600f97eaa480ae21b2227c2aa8be85a",
+    "tools/evaluate_proxy.py": "7f86befa24f3bfab85646e310540d8fb0f69db954662640a615b7c432aa5fa63",
     "baselines/empirical_mean/model.py": "1e570641dd9b981baae988779b904ae58ad610a99bd44fb861647c60c93e935e"
   }
 }

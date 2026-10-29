@@ -3,7 +3,7 @@
 **Yuhan Chiu — National Taiwan University**
 
 ASRP predicts an AI system's probability of answering an item correctly with
-0–31 revealed labels. It combines a Rasch hybrid, Kernel Probe, topic calibration,
+0–31 revealed labels. It combines metadata-prior smoothing, Kernel Probe, topic calibration,
 and adaptive label acquisition.
 
 [Report](report/main.pdf) · [Method code](src/asrp) · [Report source and build instructions](report/README.md)
@@ -19,8 +19,8 @@ Scores average groups and seeds equally; lower is better.
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Empirical Mean + Random | 0.2500 | 0.3488 | 0.2518 | 0.2086 | 0.1910 | 0.1842 | 0.2435 |
 | Empirical Mean + Adaptive | 0.2500 | 0.3594 | 0.2366 | 0.2003 | 0.1883 | 0.1837 | 0.2403 |
-| ASRP + Random | 0.2263 | 0.2166 | 0.2075 | 0.1947 | 0.1845 | 0.1755 | 0.2008 |
-| ASRP + Adaptive | 0.2263 | 0.2161 | 0.2043 | 0.1912 | 0.1819 | 0.1738 | 0.1987 |
+| ASRP + Random | 0.2277 | 0.2165 | 0.2069 | 0.1945 | 0.1845 | 0.1755 | 0.2008 |
+| ASRP + Adaptive | 0.2277 | 0.2154 | 0.2035 | 0.1912 | 0.1819 | 0.1738 | 0.1985 |
 
 <!-- RESULTS_END -->
 
@@ -31,12 +31,15 @@ The release provides reusable source selections, disjoint splits, per-item
 predictions, and acquisition traces, with source-level comparisons in the
 [scored summary](results/proxy/summary.json).
 
-[Component ablations](results/ablation) compare removal of Rasch, Kernel Probe,
-and topic calibration with the same Adaptive labels and frozen parameters.
+[Component ablations](results/proxy/ablation_summary.json) remove Kernel Probe or
+topic calibration with matched Adaptive labels. A [six-seed check](results/rasch_confirmation)
+supported simplifying the model by removing Rasch: mean ALC was 0.19875 with it
+and 0.19872 without it, with slightly worse zero-label predictions after removal.
 
-**Official formative evaluation:** ASRP + Adaptive achieved mean Brier ALC
+**Earlier version with Rasch:** ASRP + Adaptive achieved official mean Brier ALC
 **0.19107 ± 0.01105** (sample SD) over 10 evaluations of the same ZIP.
-These are separate private-platform samples, not a matched baseline comparison.
+These scores belong to the earlier model. The current version has not been
+evaluated on the private platform.
 [Official results and submission IDs](results/official).
 
 ## Reproduce local results
@@ -53,7 +56,7 @@ uv run --locked python tools/reproduce.py
 ```
 
 This downloads pinned data, uses bundled frozen weights, evaluates all four
-combinations, and checks predictions against the published results. It reproduces
+combinations, records component ablations, and checks predictions against the published results. It reproduces
 inference and scoring; original offline fitting scripts are not included. Outputs go
 to `results/reproduced/`. Inference runs on CPU without external API calls.
 Allow about 6 GB of disk plus the Python environment. Use `--workers 1` for fewer
@@ -63,6 +66,7 @@ To recalculate scores from published predictions without rerunning inference:
 
 ```bash
 uv run --locked python tools/score_proxy.py results/proxy
+uv run --locked python tools/score_ablation.py results/proxy
 ```
 
 ## Build a submission

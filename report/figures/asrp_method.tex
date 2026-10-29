@@ -16,27 +16,27 @@
 % Offline preparation: equal-width nodes on one baseline.
 \node[offline] (data) {Permitted public\\measurement-db};
 \node[offline, right=of data] (features) {MiniLM text\\+ metadata};
-\node[offline, right=of features] (models) {Frozen difficulty\\+ subject prior};
+\node[offline, right=of features] (models) {Frozen subject\\+ metadata priors};
 \node[offline, right=of models] (cal) {Topic residuals\\+ fallback centroids};
 \draw[flow] (data.east) -- (features.west);
 \draw[flow] (features.east) -- (models.west);
 \draw[flow] (models.east) -- (cal.west);
 \node[lane, above=1.5mm of data, anchor=south west] {OFFLINE / FROZEN};
 
-% Online prediction path. Rasch and kernel are parallel branches.
+% Online prediction path. Smoothed-prior and kernel are parallel branches.
 \node[online, below=14mm of data] (input) {Subject--item pair\\$[s,i]$};
 \node[online, right=of input] (encode) {Encode item\\+ visible metadata};
-\node[online, right=of encode, yshift=9mm] (rasch) {Rasch hybrid\\$p_{\rm hybrid}$};
+\node[online, right=of encode, yshift=9mm] (prior) {Smoothed prior\\$p_{\rm smooth}$};
 \node[online, right=of encode, yshift=-9mm] (kernel) {Kernel Probe\\$p_{\rm kernel}$};
 \node[blendbox, online, right=of encode, xshift=60mm] (blend) {Budget-specific\\ensemble};
 \node[online, right=of blend] (adjust) {Topic calibration};
 \node[output, right=of adjust] (pred) {Final probability\\$p(\mathrm{correct})$};
 \draw[flow] (input.east) -- (encode.west);
-\draw[flow] (encode.east) -- (rasch.west);
+\draw[flow] (encode.east) -- (prior.west);
 \draw[flow] (encode.east) -- (kernel.west);
 \coordinate (blendtop) at ($(blend.west)+(0,4mm)$);
 \coordinate (blendbottom) at ($(blend.west)+(0,-4mm)$);
-\draw[flow] (rasch.east) -- (blendtop);
+\draw[flow] (prior.east) -- (blendtop);
 \draw[flow] (kernel.east) -- (blendbottom);
 \draw[flow] (blend.east) -- (adjust.west);
 \draw[flow] (adjust.east) -- (pred.west);
@@ -57,6 +57,6 @@
 \draw[feedback] (labels.south) -- (feedbackdown) -| (feedbackleft) |- (feedbackunder) -- (encode.south);
 
 % Frozen artifacts enter the corresponding online stages through orthogonal paths.
-\draw[feedback] (models.south) -- ++(0,-5mm) -| (rasch.north);
+\draw[feedback] (models.south) -- ++(0,-5mm) -| (prior.north);
 \draw[feedback] (cal.south) -- ++(0,-5mm) -| (adjust.north);
 \end{tikzpicture}

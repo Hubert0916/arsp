@@ -1,14 +1,24 @@
 {
   "policy": "adaptive",
-  "seeds": [42, 43, 44],
-  "budgets": [0, 1, 3, 7, 15, 31],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "budgets": [
+    0,
+    1,
+    3,
+    7,
+    15,
+    31
+  ],
   "variants": {
-    "full": "Released ASRP, unchanged",
-    "no_rasch": "Set eta_n to zero; retain metadata smoothing, kernel mixing, and topic correction",
-    "no_kernel": "Set w_n to zero; use the Rasch hybrid and the unchanged topic correction at every budget",
-    "no_topic": "Set Delta_n(i) to zero; retain both prediction branches and their released mixing weights"
+    "full": "Current ASRP prior/kernel predictor, unchanged",
+    "no_kernel": "Set all kernel weights to zero; retain metadata-prior smoothing and the frozen topic correction",
+    "no_topic": "Set the topic correction to zero; retain metadata-prior smoothing, Kernel Probe, and the frozen mixing weights"
   },
-  "evidence": "Replay the published adaptive acquisition prefixes; identical support and evaluation items for every variant",
+  "evidence": "Record all variants in the paired evaluator using identical Adaptive acquisition prefixes and evaluation items",
   "fitting": "Inference-time component removal only; no refitting or retuning, including calibration",
   "aggregation": "Mean squared error within each group, equal group means within each seed, equal seed means; official six-budget ALC weights",
   "validation": "Full ASRP must reproduce every published adaptive prediction within 1e-7; component calculations are also checked against native predict with the corresponding component disabled"

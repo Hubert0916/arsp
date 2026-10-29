@@ -1,0 +1,28 @@
+{
+  "action": "remove_rasch",
+  "reason": "Prefer the simpler frozen prior/kernel predictor: six paired seeds show near-identical aggregate ALC and inconsistent gains from retaining Rasch. This is a parsimony decision, not evidence that Rasch is harmful or universally unnecessary.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "with_rasch_alc": 0.19875492457886443,
+  "without_rasch_alc": 0.1987239366214219,
+  "removal_improves_seed_count": 4,
+  "with_rasch_brier_zero": 0.2258291899024826,
+  "without_rasch_brier_zero": 0.22695715588112345,
+  "scope": "Same 92 public source groups, frozen remaining artifacts, matched acquired labels and evaluation items; additional seeds are not independent held-out sources.",
+  "official_results": "All ten recorded official evaluations used the earlier version containing Rasch; the revised version has not been evaluated on the private platform.",
+  "simplified_runtime_verification": {
+    "adaptive_probability_count": 402426,
+    "max_difference_from_initial_no_rasch_predictions": 0.0,
+    "unchanged_acquisition_trajectories": 552,
+    "empirical_mean_predictions_unchanged": true,
+    "budgets_15_and_31_unchanged": true,
+    "new_run": "results/proxy/run.json",
+    "new_prediction_sha256": "8df8b22ba3b5877b97f91a0cfa1d30301390da106684125ba63a0bd3a0465cca"
+  }
+}

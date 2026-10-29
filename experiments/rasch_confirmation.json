@@ -1,0 +1,9 @@
+{
+  "legacy_commit": "f9afbd258cc1f47ef158487261c79db14a48eafa",
+  "seeds": [45, 46, 47],
+  "policies": ["adaptive"],
+  "budgets": [0, 1, 3, 7, 15, 31],
+  "comparison": "Earlier ASRP versus the same frozen model with all Rasch mixing weights set to zero",
+  "scope": "Additional split/acquisition seeds on the same 92 selected source groups; not new held-out sources",
+  "controls": "Identical acquired labels and evaluation items; no refitting or retuning of any remaining component"
+}

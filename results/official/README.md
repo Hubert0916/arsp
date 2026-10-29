@@ -1,4 +1,4 @@
-# Official formative feedback
+# Earlier-version official formative feedback
 
 - `runs.json`: per-record group-averaged metrics; no anonymous platform group IDs.
 - `summary.json`: equal-record statistics over ten complete, distinct records.
@@ -6,6 +6,9 @@
 - `provenance.json`: same-ZIP confirmation and transcription history.
 - `submissions.json`: Codabench submission IDs and displayed scores from the supplied screenshot, matched uniquely to feedback records.
 - `raw/official_result.log`: feedback retained locally and ignored by Git.
+
+These results belong to the **earlier version containing Rasch**; the current
+prior/kernel version has not been evaluated on the private platform.
 
 We evaluated the same ASRP + `adaptive_4_warm` ZIP ten times. All records include
 all six budgets, with no imputed scores. Submission IDs are matched uniquely to

@@ -166,6 +166,8 @@ def main():
     args=parser.parse_args()
     manifest=json.loads((ROOT/'experiments/proxy_manifest.json').read_text());config=manifest['config']
     run=json.loads((args.directory/'run.json').read_text())
+    if run['inference_manifest_sha256'] != sha(ROOT/'artifacts/manifest.sha256.json'):
+        raise ValueError('Run belongs to different frozen inference files; use its matching Git revision')
     if run['config']!=config or run['split_manifest_sha256']!=sha(ROOT/'experiments/proxy_manifest.json') or run['data_sha256']!=manifest['prepared_sha256'] or run['n_groups']!=len(manifest['groups']):
         raise ValueError('Run does not match the complete published protocol')
     for name,expected in run['files'].items():
@@ -179,7 +181,10 @@ def main():
     result['at_least_160_items']['n_groups']=len(large)
     sizes=[g['n_items'] for g in manifest['groups']]
     decisions=Counter(d['reason'] for a in acquisitions if a['policy']=='adaptive' for d in a['decisions'])
-    result.update(status='public_proxy',protocol_version=2,n_sources=len(manifest['groups']),n_groups=len(manifest['groups']),
+    result.update(status='public_proxy',protocol_version=2,
+                  model_version=json.loads((ROOT/'artifacts/asrp/config.json').read_text())['version'],
+                  inference_manifest_sha256=run['inference_manifest_sha256'],
+                  n_sources=len(manifest['groups']),n_groups=len(manifest['groups']),
                   n_items=sum(sizes),n_rows_per_seed=sum(n//2 for n in sizes),n_prediction_records=len(records),
                   group_items_range=[min(sizes),max(sizes)],acquisition_pool_range=[min((n+1)//2 for n in sizes),max((n+1)//2 for n in sizes)],
                   n_excluded_sources=sum(x['status']!='included' for x in manifest['source_inventory']),
