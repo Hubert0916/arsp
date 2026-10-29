@@ -53,28 +53,15 @@ Current component predictions are saved in the main inference pass; see
 [`results/proxy`](../results/proxy). The Rasch removal study uses six paired
 seeds; see [`results/rasch_confirmation`](../results/rasch_confirmation).
 
-## Official formative feedback
+## Official evaluation placeholder
 
-The report separately summarizes ten complete formative evaluations of the same
-earlier ASRP + `adaptive_4_warm` ZIP **containing Rasch**, identified by Codabench submission IDs in Appendix C.
+Appendix C reserves a six-budget and ALC table for official Codabench results of
+the current version without Rasch. Its values are pending. The state is recorded
+in [`results/official/status.json`](../results/official/status.json).
 
-`../results/official/runs.json` contains evaluation-level aggregates, and
-`summary.json` contains equal-record means and sample standard deviations.
-The report generator recomputes and verifies these statistics before generating
-its tables. It needs no private feedback file.
-
-The original feedback is retained locally at
-`../results/official/raw/official_result.log` and is not tracked. When that private
-file is available, re-import it with:
-
-```bash
-uv run --locked python tools/parse_official_results.py
-uv run --locked python tools/update_official_report.py
-```
-
-The parser checks group joins, counts, all six budgets, ALC and ECE consistency,
-and duplicate feedback. Anonymous platform group IDs are not exported. These
-commands reproduce aggregation, not the platform's private evaluation draws.
+`tools/update_official_report.py` regenerates this placeholder and checks its
+model version and inference-manifest checksum. New feedback must be linked to
+the evaluated model before replacing the placeholder with scores.
 
 The public reproduction pipeline uses frozen artifacts. It does not retrain the
 original priors or calibration; see

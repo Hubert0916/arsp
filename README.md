@@ -36,11 +36,8 @@ topic calibration with matched Adaptive labels. A [six-seed check](results/rasch
 supported simplifying the model by removing Rasch: mean ALC was 0.19875 with it
 and 0.19872 without it, with slightly worse zero-label predictions after removal.
 
-**Earlier version with Rasch:** ASRP + Adaptive achieved official mean Brier ALC
-**0.19107 ± 0.01105** (sample SD) over 10 evaluations of the same ZIP.
-These scores belong to the earlier model. The current version has not been
-evaluated on the private platform.
-[Official results and submission IDs](results/official).
+**Official Codabench evaluation:** pending for the current version without Rasch.
+The report contains an [official-results placeholder](results/official).
 
 ## Reproduce local results
 
@@ -87,7 +84,7 @@ packaging and execution; it does not measure benchmark performance.
 - [`artifacts/`](artifacts/README.md): frozen models, settings, and reproduction scope.
 - [`baselines/empirical_mean/`](baselines/empirical_mean): official baseline.
 - [`experiments/`](experiments): protocol and pinned data/split manifest.
-- [`results/`](results): public-proxy predictions and official aggregates.
+- [`results/`](results): public-proxy predictions and official-evaluation status.
 - [`report/`](report): paper, figures, and LaTeX source.
 - [`tools/`](tools): reproduction, scoring, and packaging scripts.
 

@@ -40,7 +40,6 @@
 \newcommand{\alc}{\mathrm{ALC}}
 
 \input{results_metadata}
-\input{official_metadata}
 
 \begin{document}
 \maketitle
@@ -57,7 +56,7 @@ The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success
 
 ASRP has two prediction branches. The first updates a metadata-informed prior with revealed success counts. The second uses frozen MiniLM representations \citep{wang2020minilm} and lexical features to fit kernel residuals around a Beta-mixture subject baseline. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. A paired evaluation design, released predictions, and acquisition traces make these effects inspectable.
 
-\textbf{We distinguish predictor improvements from acquisition improvements.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence. Holding ASRP fixed, switching Random to Adaptive acquisition changes ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$. We also examine removal of an earlier Rasch component using three additional paired draws, and report ablations of the current kernel and calibration components. Earlier official evaluations, which used the version containing Rasch, exposed weak cold-start transfer; those results are retained separately in Appendix~\ref{app:official}.
+\textbf{We distinguish predictor improvements from acquisition improvements.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence. Holding ASRP fixed, switching Random to Adaptive acquisition changes ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$. We also examine removal of an earlier Rasch component using three additional paired draws, and report ablations of the current kernel and calibration components. Official evaluation of the current version is pending (Appendix~\ref{app:official}).
 
 \section{Competition Setting and Data}\label{sec:setting}
 
@@ -153,7 +152,7 @@ A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every r
 
 \section{Experimental Setup}\label{sec:setup}
 
-We use paired public-data comparisons to separate prediction and acquisition effects, and report private-platform evaluations separately. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
+We use paired public-data comparisons to separate prediction and acquisition effects. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
 
 \subsection{Public proxy protocol}
 
@@ -253,7 +252,7 @@ On seeds 42--44, we also remove one component from the current ASRP predictor at
 
 \section{Limitations and Discussion}
 
-\paragraph{Cold-start transfer.} The initial prediction still depends on frozen public priors and topic corrections. Additional split seeds on the same public sources do not establish their transfer to unfamiliar benchmarks, and public training and proxy evaluation use the same data release. The ten recorded official evaluations used the earlier version containing Rasch; they do not measure the revised predictor. Cold-start behavior of the simplified submission on private competition data remains unmeasured.
+\paragraph{Cold-start transfer.} The initial prediction still depends on frozen public priors and topic corrections. Additional split seeds on the same public sources do not establish their transfer to unfamiliar benchmarks, and public training and proxy evaluation use the same data release. Cold-start behavior of the simplified submission on private competition data remains unmeasured.
 
 \section{Conclusion}
 
@@ -416,11 +415,7 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \input{source_inventory}
 \endgroup
 
-\section{Earlier Official Feedback}\label{app:official}
-
-\input{official_audit}
-
-\subsection{Earlier version summary}
+\section{Official Evaluation}\label{app:official}
 
 \input{official_overview}
 
@@ -430,19 +425,8 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \setlength{\tabcolsep}{4pt}
 \input{official_table}
 \vspace{6pt}
-\caption{Official Brier scores and ALC for the earlier ASRP version containing Rasch with adaptive acquisition: mean and sample SD over \OfficialRuns{} evaluations, with equal group weighting within each evaluation. Lower is better.}
+\caption{Official Codabench results for the current ASRP version. Dashes indicate pending evaluation.}
 \label{tab:official}
-\end{table}
-
-
-
-\begin{table}[H]
-\centering
-\small
-\input{official_runs_table}
-\vspace{6pt}
-\caption{Official formative evaluations identified by Codabench submission ID. Brier ALC is reconstructed from the rounded group feedback and may differ from the platform display by $10^{-6}$. Evaluation-item counts do not determine group weights.}
-\label{tab:official_records}
 \end{table}
 
 \section{Reproducibility and Disclosure}\label{app:reproducibility}
@@ -463,7 +447,7 @@ For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \
 
 \input{results_acquisition_details}
 
-The additional removal check is reproduced with \path{tools/confirm_rasch_removal.py}, which loads the earlier runtime from its pinned Git revision. Released official aggregates and scripts regenerate the earlier-version result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
+The additional removal check is reproduced with \path{tools/confirm_rasch_removal.py}, which loads the earlier runtime from its pinned Git revision. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 

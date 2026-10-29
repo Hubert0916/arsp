@@ -15,7 +15,7 @@
   "with_rasch_brier_zero": 0.2258291899024826,
   "without_rasch_brier_zero": 0.22695715588112345,
   "scope": "Same 92 public source groups, frozen remaining artifacts, matched acquired labels and evaluation items; additional seeds are not independent held-out sources.",
-  "official_results": "All ten recorded official evaluations used the earlier version containing Rasch; the revised version has not been evaluated on the private platform.",
+  "official_results": "Official evaluation of the current predictor is pending; see results/official/status.json.",
   "simplified_runtime_verification": {
     "adaptive_probability_count": 402426,
     "max_difference_from_initial_no_rasch_predictions": 0.0,

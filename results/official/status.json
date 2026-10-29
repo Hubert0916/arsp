@@ -1,0 +1,7 @@
+{
+  "status": "pending",
+  "model_version": "prior-kernel-v2",
+  "inference_manifest_sha256": "adda6f626d003f1c8068c866d856b149ffe85baac9ac590466d4017e29078e05",
+  "acquisition_policy": "adaptive_4_warm",
+  "n_evaluations": 0
+}
