@@ -1,24 +1,24 @@
-# Current ASRP public-proxy evaluation
+# ASRP public-proxy evaluation
 
-The current prior/kernel model has no Rasch component. All results use the same
-92 selected source groups, seeds 42/43/44, six budgets, and paired predictions
-under Random and Adaptive acquisition. See `experiments/proxy_config.json`.
+These predictions use the restored **with-Rasch** ASRP runtime, the same 92
+selected source groups, seeds 42/43/44, and six budgets under Random and Adaptive
+acquisition. See `experiments/proxy_config.json`.
 
 - `predictions.jsonl`: ASRP and Empirical Mean probabilities for both policies.
 - `acquisition.jsonl`: candidate decisions and acquired outcomes.
 - `summary.json` and `by_source.json`: main scores and paired differences.
-- `component_predictions.jsonl.gz`: full/no-kernel/no-topic predictions using
-  the same Adaptive evidence, captured in the main inference pass.
-- `ablation_summary.json` and `ablation_by_source.json`: current component scores.
 - `run.json`: frozen-input, script, and output checksums.
+- `restoration_check.json`: full rerun of the restored package, reproducing all
+  134,142 prediction records and 552 acquisition trajectories exactly.
 
 From the repository root, regenerate scores with:
 
 ```bash
 uv run --locked python tools/score_proxy.py results/proxy
-uv run --locked python tools/score_ablation.py results/proxy
 ```
 
-`tools/reproduce.py` reruns inference and compares the resulting predictions and
-acquisition traces to this release. Components are disabled only at inference;
-remaining parameters and calibration statistics are not refitted.
+`tools/reproduce.py` reruns inference and compares probabilities and acquisition
+traces against this release. Component-removal predictions are in
+[`../ablation`](../ablation), with additional Rasch draws in
+[`../rasch_confirmation`](../rasch_confirmation). Remaining parameters and
+calibration statistics are not refitted for these comparisons.

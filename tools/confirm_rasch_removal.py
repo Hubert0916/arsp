@@ -1,7 +1,7 @@
 """Compare Rasch retention/removal on three additional paired draws.
 
-The earlier runtime is read from a pinned Git commit so this experiment remains
-reproducible after Rasch code and artifacts are removed from the current runtime.
+The runtime is read from a pinned Git commit so the paired comparison remains
+fixed independently of later submission edits.
 """
 import argparse
 from collections import defaultdict

@@ -22,7 +22,6 @@ def main():
     run("build_submission.py", "asrp")
     run("evaluate_proxy.py", "--workers", str(args.workers))
     run("score_proxy.py", "results/reproduced", "--compare", "results/proxy")
-    run("score_ablation.py", "results/reproduced", "--compare", "results/proxy")
     print("Reproduction complete: results/reproduced/summary.json")
 
 

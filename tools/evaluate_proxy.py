@@ -3,8 +3,6 @@ import argparse
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 import hashlib
-import gzip
-import io
 import json
 import math
 import multiprocessing
@@ -46,47 +44,26 @@ def random_choose(input, context):
 
 
 def init_worker(bundle, config):
-    global MODEL, LABELING, BASELINE, CONFIG, ORIGINAL_EMBEDDING, VECTOR, VALIDATED
+    global MODEL, LABELING, BASELINE, CONFIG, ORIGINAL_VECTOR, ORIGINAL_DIFFICULTY, VECTOR, DIFFICULTY, VALIDATED
     sys.path.insert(0, str(bundle))
     MODEL = load_module(Path(bundle) / 'model.py', 'asrp_submission')
     LABELING = load_module(Path(bundle) / 'labeling.py', 'asrp_labeling')
     BASELINE = load_module(ROOT / 'baselines/empirical_mean/model.py', 'empirical_baseline')
     CONFIG = config
     VALIDATED = False
-    ORIGINAL_EMBEDDING = MODEL._item_embedding
+    ORIGINAL_VECTOR, ORIGINAL_DIFFICULTY = MODEL._item_vector, MODEL._difficulty
     @lru_cache(maxsize=4096)
     def vector(encoder, content):
-        value = ORIGINAL_EMBEDDING(encoder, {'item_content': content})
+        value = ORIGINAL_VECTOR(encoder, {'item_content': content})
         value.flags.writeable = False
         return value
-    VECTOR = vector
-    MODEL._item_embedding = lambda encoder, item: vector(encoder, item.get('item_content', ''))
-
-
-def component_predictions(input, evidence):
-    smooth, kernel, vector, n = MODEL._prediction_components(input, evidence)
-    full = MODEL._combine(input, smooth, kernel, vector, n)
-    no_kernel = MODEL._calibration_adjust(smooth, input[1], vector, n,
-                                         MODEL._resources()['topic_calibration'])
-    weight = MODEL._kernel_weight(n)
-    no_topic = weight * kernel + (1. - weight) * smooth
-    return {k: finite_probability(v) for k,v in
-            [('full',full),('no_kernel',no_kernel),('no_topic',no_topic)]}
-
-
-def validate_components(input, evidence, values):
-    config = MODEL._resources()['config']
-    weights, adjust = config['probe_weights'], MODEL._calibration_adjust
-    try:
-        config['probe_weights'] = [0.] * 6
-        if abs(MODEL.predict(input, evidence)-values['no_kernel']) > 1e-12:
-            raise ValueError('Kernel-removal prediction differs from native inference')
-        config['probe_weights'] = weights
-        MODEL._calibration_adjust = lambda p, *args: p
-        if abs(MODEL.predict(input, evidence)-values['no_topic']) > 1e-12:
-            raise ValueError('Calibration-removal prediction differs from native inference')
-    finally:
-        config['probe_weights'], MODEL._calibration_adjust = weights, adjust
+    @lru_cache(maxsize=4096)
+    def difficulty(raw, dtype, artifact_id):
+        import numpy as np
+        return ORIGINAL_DIFFICULTY(np.frombuffer(raw, dtype=dtype), MODEL._resources()[1])
+    VECTOR, DIFFICULTY = vector, difficulty
+    MODEL._item_vector = lambda encoder, item: vector(encoder, item.get('item_content', ''))
+    MODEL._difficulty = lambda value, artifact: difficulty(value.tobytes(), value.dtype.str, id(artifact))
 
 
 def evaluate_group(group):
@@ -102,7 +79,8 @@ def evaluate_group_inner(group):
     MODEL.get_predictor().vectors.clear()
     MODEL.get_predictor().fits.clear()
     VECTOR.cache_clear()
-    predictions, acquisitions, components = [], [], []
+    DIFFICULTY.cache_clear()
+    predictions, acquisitions = [], []
     for seed in CONFIG['seeds']:
         pool, targets = split_group(group, seed)
         warmup = min(16, max(0, len(pool)-31))
@@ -113,8 +91,6 @@ def evaluate_group_inner(group):
             rows = [{'source': group['source'], 'subject_id': group['subject_id'],
                      'seed': seed, 'policy': policy, 'item_id': r['item_id'], 'response_id': r['response_id'],
                      'y': r['label'], 'asrp': [], 'empirical_mean': []} for r in targets]
-            component_rows = [{k: v for k,v in row.items() if k not in {'asrp','empirical_mean'}} |
-                              {'full': [], 'no_kernel': [], 'no_topic': []} for row in rows]
             for budget in CONFIG['budgets']:
                 while len(support) < budget:
                     if cursor >= len(pool):
@@ -137,34 +113,27 @@ def evaluate_group_inner(group):
                         support.append([candidate['input'], candidate['label']])
                         ids.append(candidate['item_id'])
                     cursor += 1
-                for index, (row, target) in enumerate(zip(rows, targets)):
-                    values = component_predictions(target['input'], support.copy())
-                    row['asrp'].append(values['full'])
-                    for variant, value in values.items():
-                        component_rows[index][variant].append(value)
-                    if index == 0 and not VALIDATED:
-                        validate_components(target['input'], support.copy(), values)
+                for row, target in zip(rows, targets):
+                    row['asrp'].append(finite_probability(MODEL.predict(target['input'], support.copy())))
                     row['empirical_mean'].append(finite_probability(BASELINE.predict(target['input'], support.copy())))
                 # Verify every checkpoint/trajectory on the first group in each worker.
                 if not VALIDATED:
-                    cached_vector = MODEL._item_embedding
-                    MODEL._item_embedding = ORIGINAL_EMBEDDING
+                    cached_vector, cached_difficulty = MODEL._item_vector, MODEL._difficulty
+                    MODEL._item_vector, MODEL._difficulty = ORIGINAL_VECTOR, ORIGINAL_DIFFICULTY
                     try:
                         direct = finite_probability(MODEL.predict(targets[0]['input'], support.copy()))
                     finally:
-                        MODEL._item_embedding = cached_vector
+                        MODEL._item_vector, MODEL._difficulty = cached_vector, cached_difficulty
                     if abs(direct-rows[0]['asrp'][-1]) > 1e-12:
                         raise ValueError('Feature memoization changed a packaged prediction')
             predictions.extend(rows)
-            if policy == 'adaptive':
-                components.extend(component_rows)
             acquisitions.append({'source': group['source'], 'subject_id': group['subject_id'],
                                  'seed': seed, 'policy': policy, 'n_items': len(group['items']),
                                  'pool_size': len(pool), 'evaluation_size': len(targets),
                                  'warmup': warmup if policy == 'adaptive' else 0,
                                  'acquired_item_ids': ids, 'labels': [r[1] for r in support], 'decisions': decisions})
     VALIDATED = True
-    return group['source'], predictions, acquisitions, components, time.monotonic()-start
+    return group['source'], predictions, acquisitions, time.monotonic()-start
 
 
 def main():
@@ -196,8 +165,8 @@ def main():
                                  initializer=init_worker, initargs=(root, config)) as executor:
             futures = [executor.submit(evaluate_group, group) for group in groups]
             for number, future in enumerate(as_completed(futures), 1):
-                source, predictions, acquisitions, components, seconds = future.result()
-                for name, records in [('predictions', predictions), ('acquisition', acquisitions), ('components', components)]:
+                source, predictions, acquisitions, seconds = future.result()
+                for name, records in [('predictions', predictions), ('acquisition', acquisitions)]:
                     (chunks / f'{source}.{name}.jsonl').write_text(''.join(json.dumps(r, separators=(',', ':'))+'\n' for r in records))
                 print(f'Evaluated {number}/{len(groups)}: {source} ({seconds:.1f}s; {len(predictions)} prediction rows)', flush=True)
     # Stable ordering is independent of worker scheduling.
@@ -205,16 +174,11 @@ def main():
         with (args.output / f'{name}.jsonl').open('w') as stream:
             for group in groups:
                 stream.write((chunks / f"{group['source']}.{name}.jsonl").read_text())
-    with (args.output / 'component_predictions.jsonl.gz').open('wb') as raw:
-        with gzip.GzipFile(filename='', mode='wb', fileobj=raw, mtime=0) as zipped:
-            with io.TextIOWrapper(zipped, encoding='utf-8') as stream:
-                for group in groups:
-                    stream.write((chunks / f"{group['source']}.components.jsonl").read_text())
     provenance = {'config': config, 'n_groups': len(groups), 'data_sha256': sha(args.data),
                   'split_manifest_sha256': sha(ROOT / 'experiments/proxy_manifest.json'),
                   'inference_manifest_sha256': sha(ROOT / 'artifacts/manifest.sha256.json'),
                   'lockfile_sha256': sha(ROOT / 'uv.lock'), 'python': platform.python_version(),
-                  'files': {name: sha(args.output / name) for name in ['predictions.jsonl', 'acquisition.jsonl', 'component_predictions.jsonl.gz']},
+                  'files': {f'{name}.jsonl': sha(args.output / f'{name}.jsonl') for name in ['predictions', 'acquisition']},
                   'scripts': {str(p.relative_to(ROOT)): sha(p) for p in
                               [ROOT / 'tools/prepare_proxy.py', Path(__file__), ROOT / 'baselines/empirical_mean/model.py']}}
     write_json(args.output / 'run.json', provenance)

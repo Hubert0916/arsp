@@ -1,0 +1,36 @@
+{
+  "description": "Full restored-package inference rerun matches the published with-Rasch predictions and acquired-label traces exactly.",
+  "runtime_reference_commit": "f9afbd258cc1f47ef158487261c79db14a48eafa",
+  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+  "commands": [
+    "uv run --locked python tools/evaluate_proxy.py --workers 8 --output results/check-restored-rasch",
+    "uv run --locked python tools/score_proxy.py results/check-restored-rasch --compare results/proxy"
+  ],
+  "n_groups": 92,
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "budgets": [
+    0,
+    1,
+    3,
+    7,
+    15,
+    31
+  ],
+  "n_prediction_records": 134142,
+  "n_prediction_values": 1609704,
+  "n_acquisition_trajectories": 552,
+  "max_prediction_difference": 0.0,
+  "prediction_files_byte_identical": true,
+  "acquisition_files_byte_identical": true,
+  "summary_identical": true,
+  "output_sha256": {
+    "predictions.jsonl": "ff21e54217ba3eb9fb879eebffa8c9064d6a7d407d2f10c9cc2421fa127b8dde",
+    "acquisition.jsonl": "b13cfe43ad51f6f71282ca55d28c020e35a5a90f2b49372f653a6387d7278555"
+  },
+  "rerun_metadata_sha256": "a81ef97ad677db9cbbc11366cbae4bb2a23ef8024e5340001edafb6303fa8e1e",
+  "submission_zip_sha256": "e94a0885192ee060dcf68002500f2b29dd9ec897606299fd177bec265cfd3f75"
+}

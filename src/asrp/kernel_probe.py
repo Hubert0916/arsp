@@ -1,8 +1,8 @@
 """Kernel Probe predictor used by the budget-wise ensemble.
 
 This is the support-conditioned part of the submission.  It is deliberately
-kept separate from metadata-prior smoothing in ``model.py`` so the
-ensemble can weight global evidence and local residuals by label budget.
+kept separate from the amortized difficulty model in ``model.py`` so the
+ensemble can trust the two signals at different label budgets.
 """
 
 import json

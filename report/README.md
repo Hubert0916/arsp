@@ -49,19 +49,23 @@ Kernel mixing weights (w), ridge penalty (lambda_K), and acquisition gain/utilit
 
 Component ablations hold the published Adaptive evidence fixed across all 92
 groups and three seeds, removing one component at a time without refitting.
-Current component predictions are saved in the main inference pass; see
-[`results/proxy`](../results/proxy). The Rasch removal study uses six paired
-seeds; see [`results/rasch_confirmation`](../results/rasch_confirmation).
+Component predictions and native-runtime checks are produced by
+`tools/evaluate_ablation.py`; see [`results/ablation`](../results/ablation).
+The Rasch comparison uses six paired seeds; see
+[`results/rasch_confirmation`](../results/rasch_confirmation). Its evidence
+supports a small zero-label benefit, not an overall local ALC advantage.
 
-## Official evaluation placeholder
+## Official evaluation
 
-Appendix C reserves a six-budget and ALC table for official Codabench results of
-the current version without Rasch. Its values are pending. The state is recorded
-in [`results/official/status.json`](../results/official/status.json).
+The report restores the ten detailed with-Rasch evaluations. A separate unpaired
+comparison uses all 16 completed no-Rasch entries in the later platform
+screenshot, excluding its cancelled entry. No missing budget scores are inferred.
+Appendix C lists both batches' submission IDs.
 
-`tools/update_official_report.py` regenerates this placeholder and checks its
-model version and inference-manifest checksum. New feedback must be linked to
-the evaluated model before replacing the placeholder with scores.
+`tools/update_official_report.py` regenerates the tables from published records,
+checks the old feedback summary, and verifies the restored inference manifest.
+Historical platform ZIP hashes are unavailable; method association is documented
+in [`results/official`](../results/official).
 
 The public reproduction pipeline uses frozen artifacts. It does not retrain the
 original priors or calibration; see

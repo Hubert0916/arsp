@@ -1,13 +1,1 @@
-{
-  "method": "ASRP",
-  "version": "prior-kernel-v2",
-  "probe_weights": [
-    0.0,
-    0.0,
-    0.2,
-    0.4,
-    1.0,
-    1.0
-  ],
-  "acquisition": "adaptive_4_warm"
-}
+{"method":"BudgetWiseAdaptiveProbeEnsemble","probe_weights":[0.15,0.15,0.4,0.8,1.0,1.0],"acquisition":"adaptive_4_warm"}

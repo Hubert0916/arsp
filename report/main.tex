@@ -40,23 +40,24 @@
 \newcommand{\alc}{\mathrm{ALC}}
 
 \input{results_metadata}
+\input{official_metadata}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-With few labels, item-dependent adaptation can overreact to individual outcomes, while a subject-wide success rate ignores differences across item types. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which balances a metadata-informed smoothed prior with support-conditioned kernel residuals. Fixed budget-dependent weights favor the prior at low label budgets and local adaptation as evidence accumulates. Shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. On a public proxy covering \ProxySources{} source groups and three seeds, ASRP achieves Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels; switching ASRP from random to adaptive acquisition provides an additional reduction of $\AcquisitionALCGain{}$.
+A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. On a public proxy covering \ProxySources{} source groups and three seeds, ASRP achieves Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels; switching ASRP from random to adaptive acquisition provides a smaller additional reduction of $\AcquisitionALCGain{}$.
 \end{abstract}
 
 \section{Introduction}
 
 The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success probability on an individual item with at most 31 revealed labels per subject--benchmark pair. It requires both zero-label prediction and adaptation from sparse responses. Our target is query-level success, following the distinction from confidence in a particular generated answer made by \citet{capability_calibration}.
 
-\textbf{Public priors and local evidence address different limitations.} Public subject and metadata statistics provide an initial estimate before labels are available, but do not fully describe a subject's relative strengths on the current benchmark. Conversely, adapting to only one or two outcomes can produce unstable probabilities. ASRP therefore combines smoothing toward a public prior with regularized, item-dependent corrections learned from the acquired support set. The label budget controls how strongly the prediction relies on local evidence.
+\textbf{Shared structure and local evidence address different limitations.} Item response theory models subject ability and item difficulty \citep{lord1980}, while amortized evaluation predicts difficulty from content \citep{amortized_eval}. This shared structure supports cold-start prediction, but a scalar ability cannot express every relative strength across item types, and frozen estimates may transfer imperfectly to new benchmarks. Conversely, local corrections learned from one or two labels can overreact to individual outcomes. ASRP therefore combines prior-based estimation with regularized support-driven adaptation, increasing the latter's weight as evidence grows.
 
-ASRP has two prediction branches. The first updates a metadata-informed prior with revealed success counts. The second uses frozen MiniLM representations \citep{wang2020minilm} and lexical features to fit kernel residuals around a Beta-mixture subject baseline. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. A paired evaluation design, released predictions, and acquisition traces make these effects inspectable.
+ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
 
-\textbf{We distinguish predictor improvements from acquisition improvements.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence. Holding ASRP fixed, switching Random to Adaptive acquisition changes ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$. We also examine removal of an earlier Rasch component using three additional paired draws, and report ablations of the current kernel and calibration components. Official evaluation of the current version is pending (Appendix~\ref{app:official}).
+\textbf{The main measured improvement comes from prediction, with a smaller acquisition benefit.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence, a reduction of $\PredictorALCGain{}$. Holding ASRP fixed, switching Random to Adaptive acquisition reduces ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$ ($\AcquisitionALCGain{}$). Component removals support the kernel at high budgets; six-draw Rasch ablations find a small zero-label benefit but essentially tied mean ALC. Ten separate official with-Rasch evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction. The later no-Rasch batch has worse mean ALC under different draws, motivating retention without establishing causality.
 
 \section{Competition Setting and Data}\label{sec:setting}
 
@@ -82,7 +83,7 @@ The official score averages these group-level ALC values equally across subject-
 
 The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. Public responses provide subject priors and metadata statistics, while item content supplies semantic features. The local evaluation selects \ProxySources{} source groups from a fixed inventory of 142 binary sources; Section~\ref{sec:setup} describes selection and splitting. Appendix~\ref{app:sources} lists the evaluated sources. Upstream metadata and licenses remain authoritative.
 
-The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
+The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
 \section{Proposed Method: ASRP}\label{sec:method}
 
@@ -91,25 +92,36 @@ For a query subject $s$ and item $i$ in benchmark $b$, let $\mathcal D_b$ be the
 \begin{figure}[H]
   \centering
   \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
-  \caption{ASRP overview. Frozen public-data artifacts supply prior and calibration estimates. Revealed labels update the smoothed prior and kernel probe before budget-specific ensembling and topic correction. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
+  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
   \label{fig:method}
 \end{figure}
 
-\subsection{Item representations}\label{sec:features}
+\subsection{Item representation and amortized difficulty}\label{sec:difficulty}
 
-Two frozen MiniLM encodings serve distinct roles. The normalized item-text embedding $e_i\in\mathbb R^{384}$ assigns items to fallback topic clusters. The kernel branch instead combines text, visible metadata, and interactor descriptions into a semantic vector $\mathbf h_i\in\mathbb R^{384}$ and a hashed lexical vector $\boldsymbol\ell_i\in\mathbb R^{8192}$. This representation allows acquired responses to inform predictions on similar items. Neither encoder is updated online. Appendix~\ref{app:features} specifies truncation, pooling, and lexical hashing.
-
-\subsection{Public priors and evidence smoothing}\label{sec:prior}
-
-A query-specific metadata prior $p_{\mathrm{meta}}(s,i)$ combines frozen subject and visible-feature success counts. Unknown subjects fall back to public global statistics. With $n$ acquired labels and $S_s$ successes for the current subject--benchmark group, the first branch predicts
+MiniLM encodes the normalized item text as $e_i\in\mathbb R^{384}$. Six deterministic numeric text features form $z_i\in\mathbb R^6$. A frozen feed-forward network standardizes their concatenation and predicts a clipped difficulty:
 \[
- p_{\mathrm{smooth}}=\frac{S_s+\kappa p_{\mathrm{meta}}(s,i)}{n+\kappa},\qquad \kappa=4.
+ d_i=\operatorname{clip}\!\left(f_\phi([e_i;z_i]),-2,2\right).
 \]
-Thus at $n=0$, it returns the metadata prior. A separate frozen subject offset $o_s$, looked up by normalized model name, initializes the kernel branch's Beta prior:
+The network has dimensions 390--128--32--1 and ReLU hidden layers. This amortized estimate supplies a difficulty for an unseen item without fitting an item-specific parameter online. Appendix~\ref{app:features} specifies text limits, pooling, and standardization.
+
+\subsection{Public prior and Rasch update}\label{sec:rasch}
+
+A frozen subject offset $o_s$, looked up by normalized model name, defines a prior mean and initial ability:
 \[
- \mu_s=\operatorname{clip}(0.5+0.5o_s,0.05,0.95).
+ \mu_s=\operatorname{clip}(0.5+0.5o_s,0.05,0.95),\qquad
+ \theta_{0,s}=\operatorname{logit}(\mu_s).
 \]
-An unknown name has $o_s=0$. The two priors have distinct roles: $p_{\mathrm{meta}}$ is query-dependent, while $\mu_s$ sets the initial subject baseline. Appendix~\ref{app:priors} gives the exact count aggregation and lookup rules.
+An unknown name has $o_s=0$. With revealed labels, clipped Newton--Raphson iterations approximate the \textbf{maximum a posteriori (MAP) estimate} under a Bernoulli Rasch likelihood and Gaussian ability prior $\mathcal N(\theta_{0,s},v_\theta)$, with $v_\theta=2$. The resulting ability $\hat\theta_s$ gives
+\[
+ p_{\mathrm{Rasch}}=\sigma(\hat\theta_s-d_i),\qquad
+ \sigma(t)=(1+e^{-t})^{-1}.
+\]
+At $n=0$, $\hat\theta_s=\theta_{0,s}$. Separately, a query-specific metadata prior $p_{\mathrm{meta}}(s,i)$ combines frozen subject and visible-feature counts. The hybrid smooths observed successes toward this prior and blends the result with the Rasch probability:
+\[
+ p_{\mathrm{smooth}}=\frac{S_s+\kappa p_{\mathrm{meta}}(s,i)}{n+\kappa},\qquad
+ p_{\mathrm{hybrid}}=(1-\eta_n)p_{\mathrm{smooth}}+\eta_n p_{\mathrm{Rasch}},\qquad \kappa=4.
+\]
+Here $\eta_n$ is the frozen Rasch mixing weight. Appendix~\ref{app:priors} gives the prior lookup and Newton updates; Appendix~\ref{app:ensemble} lists the six mixing weights.
 
 \subsection{Support-conditioned kernel probe}\label{sec:kernel}
 
@@ -125,7 +137,7 @@ Subject-centered kernel ridge regression, with penalty $\lambda_K=0.3$, fits res
 \]
 Appendix~\ref{app:kernel} defines $K$, the Beta weight update, and the centered linear solve. If the current subject has no revealed labels, this branch returns $\mu_s$. The implementation supports multiple subjects within a benchmark; this proxy uses one subject per group.
 
-The ensemble gives the kernel weights $w_n=(0,0,0.2,0.4,1,1)$ at budgets $(0,1,3,7,15,31)$. Thus the smoothed metadata prior supplies the cold-start prediction, while a larger support set allows the local residual to receive more weight. These are design choices encoded in the released configuration.
+The ensemble gives the kernel weights $w_n=(0,0,0.2,0.4,1,1)$ at budgets $(0,1,3,7,15,31)$. Thus the Rasch hybrid supplies the cold-start prediction, while a larger support set allows the local residual to receive more weight. These are design choices encoded in the released configuration.
 
 \subsection{Topic calibration}\label{sec:calibration}
 
@@ -134,7 +146,7 @@ A frozen topic correction $\Delta_n(i)$ adjusts the ensemble using the first mat
 The budget-specific ensemble is followed by topic correction:
 \[
  p_{\mathrm{final}}=\operatorname{clip}\!\left(
- (1-w_n)p_{\mathrm{smooth}}+w_n p_{\mathrm{kernel}}+\Delta_n(i),0,1\right).
+ (1-w_n)p_{\mathrm{hybrid}}+w_n p_{\mathrm{kernel}}+\Delta_n(i),0,1\right).
 \]
 Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
 
@@ -152,7 +164,7 @@ A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every r
 
 \section{Experimental Setup}\label{sec:setup}
 
-We use paired public-data comparisons to separate prediction and acquisition effects. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
+We use paired public-data comparisons to separate prediction and acquisition effects, and report private-platform evaluations separately. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
 
 \subsection{Public proxy protocol}
 
@@ -179,13 +191,13 @@ It uses only the current subject--benchmark group's acquired labels, without ite
 
 We use the metrics and equal-group weighting in Section~\ref{sec:setting}, then average the three seed-level scores equally. We report each seed's ALC and their sample standard deviation (SD), describing split variation. Source-level comparisons average paired ALC differences over the three seeds before counting improvements, with each selected source counted once.
 
-\subsection{Rasch removal check}\label{sec:rasch_check_setup}
+\subsection{Component ablations}\label{sec:ablation_setup}
 
-An earlier ASRP version blended a Rasch ability--difficulty prediction into its low-budget branch. We compare that frozen model with the same predictor after setting the Rasch mixing weight to zero, retaining all other weights and calibration statistics. The initial comparison uses seeds 42--44; an additional check uses seeds \textbf{45, 46, and 47}. Each pair shares its Adaptive acquisition trajectory and evaluation items. The additional draws use the same \ProxySources{} selected groups, so they assess split/acquisition stability rather than transfer to new sources. The archived implementation and exact protocol are specified in \path{experiments/rasch_confirmation.json}.
+We remove one prediction component at a time on the same \ProxySources{} groups and three seeds, replaying the published Adaptive acquisition trajectories. \textbf{No Rasch} sets $\eta_n=0$, retaining metadata smoothing and the kernel branch; \textbf{No Kernel Probe} sets $w_n=0$, using the Rasch hybrid at every budget; \textbf{No topic calibration} sets $\Delta_n(i)=0$. All other parameters and calibration statistics stay fixed, with no refitting or retuning. The full-model rerun is checked against every published Adaptive prediction within $10^{-7}$. We additionally repeat the paired Rasch comparison on seeds \textbf{45, 46, and 47}. These six draws reuse the same selected sources and assess split sensitivity, not transfer to unseen sources.
 
-\subsection{Current component ablations}\label{sec:ablation_setup}
+\subsection{Official formative feedback}
 
-On seeds 42--44, we also remove one component from the current ASRP predictor at a time. \textbf{No Kernel Probe} sets $w_n=0$, retaining the smoothed prior and topic correction; \textbf{No topic calibration} sets $\Delta_n(i)=0$. The comparison uses identical Adaptive labels and evaluation items, with remaining parameters fixed and no refitting. Shared component calculations are checked against the native runtime with the corresponding component disabled.
+We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. A later no-Rasch batch provides 16 completed platform scores; its one cancelled submission is excluded. Only total ALC is available for this batch. The two batches use different draws and dates and therefore form an \textbf{unpaired comparison}, distinct from the controlled public ablation. Appendix~\ref{app:official} records the submission IDs and available feedback.
 
 \section{Results and Analysis}
 
@@ -223,19 +235,6 @@ On seeds 42--44, we also remove one component from the current ASRP predictor at
 
 \input{results_analysis}
 
-\subsection{Rasch removal assessment}\label{sec:rasch_check}
-
-\input{rasch_removal_analysis}
-
-\begin{table}[H]
-\centering
-\small
-\input{rasch_removal_table}
-\vspace{6pt}
-\caption{Paired Adaptive comparisons of the earlier Rasch version and its removal. The additional seeds assess the same source groups under new splits. $\Delta$ALC is removal minus retention.}
-\label{tab:rasch_removal}
-\end{table}
-
 \subsection{Component contributions}\label{sec:ablations}
 
 \begin{table}[H]
@@ -250,13 +249,52 @@ On seeds 42--44, we also remove one component from the current ASRP predictor at
 
 \input{ablation_analysis}
 
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\input{rasch_retention_table}
+\vspace{6pt}
+\caption{Rasch ablation extended to seeds 42--47 on the same \ProxySources{} source groups. Each pair shares acquired labels and evaluation items; remaining parameters are fixed.}
+\label{tab:rasch_retention}
+\end{table}
+
+\input{rasch_retention_analysis}
+
+\subsection{Official formative results}\label{sec:official}
+
+\input{official_overview}
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\input{official_table}
+\vspace{6pt}
+\caption{Official Brier scores and ALC for ASRP with adaptive acquisition: mean and sample SD over \OfficialRuns{} evaluations, with equal group weighting within each evaluation. Lower is better.}
+\label{tab:official}
+\end{table}
+
+\begin{table}[H]
+\centering
+\small
+\input{official_comparison_table}
+\vspace{6pt}
+\caption{Unpaired official batches. The with-Rasch batch was evaluated on October 27 and the no-Rasch batch on October 30, 2026. SD describes variation across completed runs.}
+\label{tab:official_comparison}
+\end{table}
+
+\input{official_comparison_analysis}
+
 \section{Limitations and Discussion}
 
-\paragraph{Cold-start transfer.} The initial prediction still depends on frozen public priors and topic corrections. Additional split seeds on the same public sources do not establish their transfer to unfamiliar benchmarks, and public training and proxy evaluation use the same data release. Cold-start behavior of the simplified submission on private competition data remains unmeasured.
+\input{official_limitation}
+
+\paragraph{Evidence for model selection.} The public proxy shares its data release with offline fitting and calibration, so local gains may be optimistic. Six seeds on the same sources do not constitute six independent generalization tests. The official batches also differ in sampled subjects and items; their ALC gap cannot establish a causal Rasch benefit. Without per-budget feedback for the no-Rasch batch, we cannot locate its regression at cold start. Retaining Rasch is a conservative model-selection decision, not evidence that it is indispensable.
 
 \section{Conclusion}
 
-ASRP balances metadata-informed initialization with support-conditioned kernel adaptation as labels accumulate. Paired experiments separate the benefits of prediction and acquisition, while the removal study examines whether added psychometric structure is warranted. The revised method retains public-prior smoothing, kernel residuals, topic calibration, and streaming acquisition. Released artifacts, per-item predictions, and matched splits make these comparisons reproducible; transfer of the initial estimates remains an important evaluation target.
+ASRP balances public-data initialization with support-driven adaptation as labels accumulate. Paired experiments show a larger predictor benefit than acquisition benefit, with component removals supporting kernel adaptation at higher budgets and topic calibration. We retain Rasch for its small local initialization benefit and because its removal has no established overall advantage; the later official batch reinforces caution about simplification. Accurate cold-start transfer remains a challenge. Released artifacts and matched splits make these comparisons reproducible.
 
 \clearpage
 \appendix
@@ -268,24 +306,26 @@ These equations specify inference with the released frozen artifacts at the six 
 \paragraph{Shared notation.}
 A support row $r$ contains a subject $s_r$, item $i_r$, and binary outcome $y_r$. The row collection $\mathcal D_b$ contains all revealed responses for benchmark $b$ and has size $M$. Its subject-specific subset $\mathcal D_s$ has $n_s$ rows and $S_s$ successes. For the current query subject, the budget is $n=n_s\le31$. In this proxy $M=n$; the formulas below also describe the implementation's multi-subject kernel. Runtime subject identity uses the complete subject dictionary, whereas frozen subject-prior lookup uses \texttt{normalized\_name}.
 
-We distinguish $w_n$ (kernel mixing weight) and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Acquisition uses gain $G_j$, utility $V_j$, probability $\pi_*^{\mathrm{acq}}$, and uniform variate $\xi$; none denotes an embedding coordinate.
+We distinguish $\eta_n$ (Rasch mixing weight), $w_n$ (kernel mixing weight), and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Acquisition uses gain $G_j$, utility $V_j$, probability $\pi_*^{\mathrm{acq}}$, and uniform variate $\xi$; none denotes an embedding coordinate.
 
-\subsection{Feature construction for Section~\ref{sec:features}}\label{app:features}
+\subsection{Feature construction for Section~\ref{sec:difficulty}}\label{app:features}
 
-The topic-cluster encoder normalizes whitespace, takes the first 6,000 characters of item content, and tokenizes to at most 256 tokens. Masked mean pooling followed by $L_2$ normalization gives $e_i\in\mathbb R^{384}$. This encoder supports the frozen centroid lookup; there is no learned difficulty head in the current predictor.
+The Rasch encoder normalizes whitespace, takes the first 6,000 characters of item content, and tokenizes to at most 256 tokens. Masked mean pooling followed by $L_2$ normalization gives $e_i\in\mathbb R^{384}$. The six coordinates of $z_i$ are $\log(1+\text{text length})/10$, digit fraction, non-ASCII fraction, and indicators for code, mathematical notation, and a question mark. Fractions and the question-mark indicator use the first 2,000 characters; code/math markers use the first 6,000. Text length is measured before these truncations.
 
-The kernel encoder uses a separate text construction containing item content, metadata, and interactor descriptions. It pools up to four evenly spaced windows of 254 content tokens, each with special tokens, normalizes each pooled vector, and normalizes their sum to obtain $\mathbf h_i\in\mathbb R^{384}$. The lexical vector $\boldsymbol\ell_i\in\mathbb R^{8192}$ uses signed CRC32 hashing of lowercased tokens and adjacent token bigrams, weights $1+\log(\text{count})$, and $L_2$ normalization. Only these semantic and lexical coordinates enter the kernel. See \path{text_encoder.py}, \path{window_features.py}, and \path{evidence_features.py} under \path{src/asrp/}.
+For stored feature mean $\bar{\mathbf x}$ and scale $\boldsymbol\sigma_x$, the difficulty network receives $\operatorname{clip}(([e_i;z_i]-\bar{\mathbf x})\oslash\boldsymbol\sigma_x,-10,10)$, where $\oslash$ denotes coordinatewise division. Frozen weights in \path{difficulty_model.npz} implement the 390--128--32--1 map; the final scalar is clipped to $[-2,2]$ by \texttt{\_predict\_hybrid}, after \texttt{\_difficulty} evaluates the network.
 
-\subsection{Prior construction for Section~\ref{sec:prior}}\label{app:priors}
+The kernel encoder uses a separate text construction containing item content, metadata, and interactor descriptions. It pools up to four evenly spaced windows of 254 content tokens, each with special tokens, normalizes each pooled vector, and normalizes their sum to obtain $\mathbf h_i\in\mathbb R^{384}$. The lexical vector $\boldsymbol\ell_i\in\mathbb R^{8192}$ uses signed CRC32 hashing of lowercased tokens and adjacent token bigrams, weights $1+\log(\text{count})$, and $L_2$ normalization. Only these semantic and lexical coordinates enter the kernel. See \path{ml_features.py}, \path{window_features.py}, and \path{evidence_features.py} under \path{src/asrp/}.
+
+\subsection{Priors and ability update for Section~\ref{sec:rasch}}\label{app:priors}
 
 \paragraph{Two distinct frozen priors.}
-The scalar $o_s$ comes from \path{binary_subject_prior.json} and defines the kernel prior mean $\mu_s$ in Section~\ref{sec:prior}. The query-dependent metadata prior $p_{\mathrm{meta}}(s,i)$ instead uses the success/count tables in \path{feature_prior.json}; it corresponds to \texttt{\_feature\_prior} in \path{src/asrp/model.py}.
+The scalar $o_s$ comes from \path{binary_subject_prior.json}. It defines $\mu_s$ and $\theta_{0,s}$ exactly as in Section~\ref{sec:rasch}. The metadata prior $p_{\mathrm{meta}}(s,i)$ instead uses the success/count tables in \path{feature_prior.json}; it corresponds to \texttt{\_feature\_prior} and the runtime variable \texttt{p\_source} in \path{src/asrp/model.py}. The released source-prior weight is one, prior shift is zero, and metadata-match adaptation weight is zero.
 
 Let $(A_0,N_0)$ be global public successes and counts, and $(A_s,N_s)$ the subject totals. The frozen rates are
 \[
  q_0=\frac{A_0}{\max(N_0,1)},\qquad q_s=\frac{A_s+8q_0}{N_s+8}.
 \]
-Unknown subjects use global totals. Their offset $o_s$ is separately zero, so $\mu_s=0.5$, but $p_{\mathrm{meta}}(s,i)$ need not equal $0.5$. All released global totals have positive counts.
+Unknown subjects use global totals. Their offset $o_s$ is separately zero, so $\theta_{0,s}=0$, but $p_{\mathrm{meta}}(s,i)$ need not equal $0.5$. All released global totals have positive counts.
 
 For each token $t$ in the query metadata with stored global counts, let $q_t=A_t/\max(N_t,1)$. When subject--token counts exist,
 \[
@@ -300,7 +340,24 @@ Otherwise $q_{st}=q_t$ and $\rho_{st}=\min(N_t,300)/[\min(N_t,300)+100]$. For th
 \]
 An empty token set gives clipped $q_s$. Token parsing, deduplication, and stop words follow \texttt{\_feature\_tokens}. The packaged artifact is present; if it were absent, the runtime fallback would be $\mu_s$.
 
-The smoothing branch uses at most the first 31 matching binary labels in acquisition order, filtering by the complete subject dictionary and benchmark identifier. At zero labels it returns the metadata prior directly. These steps are implemented by \texttt{\_predict\_smooth}.
+\paragraph{MAP objective and numerical update.}
+Using only $\mathcal D_s$, the penalized Bernoulli log-likelihood is
+\[
+ \mathcal L_s(\theta)=\sum_{r\in\mathcal D_s}
+ \left[y_r\log\sigma(\theta-d_{i_r})+(1-y_r)\log(1-\sigma(\theta-d_{i_r}))\right]
+ -\frac{(\theta-\theta_{0,s})^2}{2v_\theta},\qquad v_\theta=2.
+\]
+Starting at $\theta_{0,s}$, \texttt{update\_ability} computes
+\[
+ \begin{aligned}
+ p_r(\theta)&=\sigma(\operatorname{clip}(\theta-d_{i_r},-40,40)),\\
+ J_s(\theta)&=\sum_{r\in\mathcal D_s}(y_r-p_r(\theta))-(\theta-\theta_{0,s})/v_\theta,\\
+ \mathcal I_s(\theta)&=\sum_{r\in\mathcal D_s}p_r(\theta)(1-p_r(\theta))+1/v_\theta,\\
+ \delta_\theta&=\operatorname{clip}\!\left(J_s(\theta)/\max(\mathcal I_s(\theta),10^{-6}),-2,2\right),\qquad
+ \theta\leftarrow\theta+\delta_\theta.
+ \end{aligned}
+\]
+Here $J_s$ is the gradient and $\mathcal I_s$ the positive negative-Hessian magnitude, not the Hessian itself. The routine stops after 30 iterations or when $|\delta_\theta|<10^{-7}$, then clips $\hat\theta_s$ to $[-12,12]$. With no labels it returns $\theta_{0,s}$ directly. The runtime sigmoid also clips its logit to $[-40,40]$ when computing $p_{\mathrm{Rasch}}$. The hybrid uses at most the first 31 matching labels in acquisition order.
 
 \subsection{Kernel calculations for Section~\ref{sec:kernel}}\label{app:kernel}
 
@@ -356,12 +413,13 @@ The six released mixing weights are
 \[
 \begin{array}{c|rrrrrr}
  n &0&1&3&7&15&31\\\hline
+ \eta_n&0.2875&0.3000&0.2875&0.2750&0.2250&0.2375\\
  w_n&0&0&0.2&0.4&1&1
 \end{array}
 \]
-Here $w_n$ maps to \texttt{runtime\_config.json:probe\_weights} and $\lambda_K$ maps to \texttt{probe\_config.json:ridge}. The smoothing concentration is \texttt{runtime\_config.json:kappa}. Between checkpoints, the kernel weight is linearly interpolated and clamped to the endpoint values; the experiment uses only the six official counts.
+Here $\eta_n$ maps to \texttt{runtime\_config.json:lambdas}; $w_n$ is the active \texttt{PROBE\_WEIGHTS} in \path{src/asrp/model.py}; and $\lambda_K$ maps to \texttt{probe\_config.json:ridge}. They are distinct parameters. The formulas in this report concern the official checkpoint counts; defensive interpolation/fallback behavior at other counts is not used in the experiment.
 
-Let $t=t(i)$ be the first explicit topic key--value entry, in visible metadata order, present in the frozen topic table. If none matches, assign the item-text embedding $e_i$ to the closest of eight frozen centroids by cosine similarity and use its cluster entry. Write $C_t^{\mathrm{cal}}$ for that entry's frozen count and $r_{t,n}$ for its signed correction at budget $n$. Then
+Let $t=t(i)$ be the first explicit topic key--value entry, in visible metadata order, present in the frozen topic table. If none matches, assign the Rasch embedding $e_i$ to the closest of eight frozen centroids by cosine similarity and use its cluster entry. Write $C_t^{\mathrm{cal}}$ for that entry's frozen count and $r_{t,n}$ for its signed correction at budget $n$. Then
 \[
  \Delta_n(i)=\operatorname{clip}\!\left(
  \frac{C_t^{\mathrm{cal}}}{C_t^{\mathrm{cal}}+a_t^{\mathrm{cal}}}\,r_{t,n},
@@ -372,7 +430,7 @@ Let $t=t(i)$ be the first explicit topic key--value entry, in visible metadata o
 \]
 If no entry exists, $\Delta_n(i)=0$. Cluster cosine normalization floors norms at $10^{-8}$ and resolves ties by the first maximum. At the six checkpoints, the residual array index is the corresponding budget index.
 
-The correction $\Delta_n(i)$ is added after mixing the smoothed-prior and kernel predictions with weight $w_n$. A final clip to $[0,1]$ completes \texttt{predict}.
+The correction $\Delta_n(i)$ is added after mixing the hybrid and kernel predictions with weight $w_n$. A final clip to $[0,1]$ completes \texttt{predict}.
 
 \subsection{Covariance calculation for Section~\ref{sec:acquisition}}\label{app:acquisition}
 
@@ -415,19 +473,29 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \input{source_inventory}
 \endgroup
 
-\section{Official Evaluation}\label{app:official}
+\section{Official feedback provenance}\label{app:official}
 
-\input{official_overview}
+\input{official_audit}
 
 \begin{table}[H]
 \centering
 \small
-\setlength{\tabcolsep}{4pt}
-\input{official_table}
+\input{official_runs_table}
 \vspace{6pt}
-\caption{Official Codabench results for the current ASRP version. Dashes indicate pending evaluation.}
-\label{tab:official}
+\caption{Official formative evaluations identified by Codabench submission ID. Brier ALC is reconstructed from the rounded group feedback and may differ from the platform display by $10^{-6}$. Evaluation-item counts do not determine group weights.}
+\label{tab:official_records}
 \end{table}
+
+\begin{table}[H]
+\centering
+\small
+\input{official_without_rasch_runs}
+\vspace{6pt}
+\caption{Completed no-Rasch submissions transcribed from the October 30 platform screenshot. Cancelled submission 1020351 is excluded. Only total ALC is available.}
+\label{tab:official_without_rasch_records}
+\end{table}
+
+The earlier ten evaluations were confirmed to use the same with-Rasch ZIP. The local inference files are restored to the pre-removal revision. Historical platform ZIP hashes are unavailable; the no-Rasch batch association follows our submission record and screenshot, rather than a hash recovered from Codabench.
 
 \section{Reproducibility and Disclosure}\label{app:reproducibility}
 
@@ -441,13 +509,15 @@ uv run --locked python tools/reproduce.py
 \end{verbatim}
 \end{samepage}
 
-The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
+The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. A full rerun of the restored package reproduced both output files byte-for-byte. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
 
-For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \path{tools/score_ablation.py} after the main evaluation; component predictions are saved in the same inference pass. The component predictions can be audited and the ablation table regenerated with \path{tools/update_ablation_report.py}.
+For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \path{tools/evaluate_ablation.py} after the main pipeline has prepared the data. Released compressed predictions can be audited and the ablation table regenerated with \path{tools/update_ablation_report.py}.
+
+The additional Rasch comparisons use \path{tools/confirm_rasch_removal.py}; their pinned implementation and seeds are recorded in \path{experiments/rasch_confirmation.json}. Run \path{tools/update_rasch_report.py} to regenerate the six-seed comparison from both sets of paired predictions.
 
 \input{results_acquisition_details}
 
-The additional removal check is reproduced with \path{tools/confirm_rasch_removal.py}, which loads the earlier runtime from its pinned Git revision. File descriptions and build instructions are provided in the repository README.
+Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 

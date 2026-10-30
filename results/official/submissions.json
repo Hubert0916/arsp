@@ -1,0 +1,96 @@
+{
+  "source": "Codabench screenshot supplied by the submitter on 2026-10-28.",
+  "matching": "Unique match to mean ALC reconstructed from six-decimal group feedback, within 0.00000100001; screenshot timestamps have no specified timezone.",
+  "submissions": [
+    {
+      "submission_id": 1012098,
+      "feedback_block": 1,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:12",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.18582
+    },
+    {
+      "submission_id": 1012118,
+      "feedback_block": 2,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:14",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.193108
+    },
+    {
+      "submission_id": 1012128,
+      "feedback_block": 3,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:20",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.200457
+    },
+    {
+      "submission_id": 1012139,
+      "feedback_block": 4,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:25",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.173472
+    },
+    {
+      "submission_id": 1012173,
+      "feedback_block": 5,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:46",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Running",
+      "displayed_brier_alc": 0.192103
+    },
+    {
+      "submission_id": 1012180,
+      "feedback_block": 7,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:49",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.173129
+    },
+    {
+      "submission_id": 1012205,
+      "feedback_block": 6,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:55",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.19075
+    },
+    {
+      "submission_id": 1012212,
+      "feedback_block": 8,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 14:59",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.205026
+    },
+    {
+      "submission_id": 1013248,
+      "feedback_block": 9,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 22:10",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.203112
+    },
+    {
+      "submission_id": 1013255,
+      "feedback_block": 10,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-27 22:14",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.193747
+    }
+  ]
+}

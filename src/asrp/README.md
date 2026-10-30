@@ -1,20 +1,18 @@
 # ASRP submission
 
-ASRP (Adaptive Support-Based Response Prediction) combines:
+ASRP (Adaptive Support-Based Response Prediction) combines the following components:
 
-- frozen public success counts for the subject and visible item metadata;
-- evidence smoothing of that query-specific prior;
-- Kernel Probe residuals fitted to revealed labels and item similarities;
-- shrunk, capped topic corrections, with frozen MiniLM centroids as fallback.
+- a public-training prior keyed by the runtime `normalized_name` and visible `item_features`;
+- a Rasch-style item difficulty estimate from frozen MiniLM features;
+- the support-conditioned kernel Probe after labels are acquired.
+- a conservative public-data calibration layer with topic residual shrinkage
+  and frozen MiniLM centroids for items without
+  topic metadata.
 
-The kernel receives weights 0, 0, 0.2, 0.4, 1, and 1 at label budgets
-0, 1, 3, 7, 15, and 31. `runtime_config.json` stores these weights and the
-smoothing concentration. `labeling.py` uses `adaptive_4_warm` acquisition.
-`text_encoder.py` supplies embeddings for topic-cluster assignment; kernel and
-acquisition features use the packaged ONNX encoder.
+The metadata prior uses only public `measurement-db` training responses. At test time it reads the query's `item_features`; the current conservative configuration updates this prior with the aggregate revealed labels and lets the kernel Probe use the acquired item embeddings. No benchmark response lookup or private item data is used.
 
-The predictor reads only the supplied subject/item attributes and revealed
-binary outcomes. Frozen artifacts come from public measurement-db responses.
-The current version has no Rasch difficulty network or online ability update.
-Earlier-version comparisons are retained under `results/legacy_rasch` and
-`results/rasch_confirmation` in the repository.
+`runtime_config.json` contains the frozen budget-specific blend. `labeling.py` uses the `adaptive_4_warm` acquisition policy. The six budgets are 0, 1, 3, 7, 15, and 31 labels.
+
+`topic_calibration.json` is generated only from public binary responses. Topic
+corrections are shrunk toward zero and capped. If this artifact is absent, the predictor
+falls back to the original ASRP path.

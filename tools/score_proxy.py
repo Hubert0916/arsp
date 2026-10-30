@@ -182,7 +182,7 @@ def main():
     sizes=[g['n_items'] for g in manifest['groups']]
     decisions=Counter(d['reason'] for a in acquisitions if a['policy']=='adaptive' for d in a['decisions'])
     result.update(status='public_proxy',protocol_version=2,
-                  model_version=json.loads((ROOT/'artifacts/asrp/config.json').read_text())['version'],
+                  model_version=json.loads((ROOT/'artifacts/asrp/config.json').read_text()).get('version', 'rasch-hybrid-v1'),
                   inference_manifest_sha256=run['inference_manifest_sha256'],
                   n_sources=len(manifest['groups']),n_groups=len(manifest['groups']),
                   n_items=sum(sizes),n_rows_per_seed=sum(n//2 for n in sizes),n_prediction_records=len(records),

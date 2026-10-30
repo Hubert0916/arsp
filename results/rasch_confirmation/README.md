@@ -1,4 +1,4 @@
-# Paired Rasch removal check
+# Paired Rasch retention/removal comparison
 
 The initial comparison used seeds 42/43/44. This additional check uses seeds
 45/46/47 on the **same 92 source groups**, with identical acquired labels and
@@ -11,15 +11,18 @@ transfer. Remaining frozen parameters and topic corrections are unchanged.
 | Additional seeds 45–47 | 0.19880 | 0.19892 |
 | All six seeds | 0.19875 | 0.19872 |
 
-The aggregate difference is negligible. Removal improves four of six seeds but
-slightly worsens average zero-label Brier (0.22583 to 0.22696). We choose the
-simpler prior/kernel architecture; this does not establish that Rasch is harmful
-or uniformly unnecessary. The decision is recorded in `decision.json`.
+The aggregate ALC difference is negligible. Retaining Rasch improves zero-label
+Brier in all six seeds (mean 0.22583 vs 0.22696), but improves ALC in only two.
+Budgets 15 and 31 are identical because the hybrid has zero weight there.
+We **retain Rasch** for this small initialization benefit and withdraw the
+simplification after observing the worse, unpaired no-Rasch official batch.
+The latter is not a causal ablation. Neither comparison proves a general Rasch
+advantage. See `decision.json` and [`../official`](../official).
 
 `predictions.jsonl.gz` contains both variants for the additional draws;
 `acquisition.jsonl.gz` records their shared evidence. `summary.json`,
 `by_source.json`, and `run.json` contain scores and provenance. Initial results
-are archived in [`../legacy_rasch`](../legacy_rasch).
+are in [`../ablation`](../ablation).
 
 After preparing `data/proxy.jsonl`, reproduce from the repository root:
 

@@ -1,0 +1,147 @@
+{
+  "source": "Codabench screenshot supplied by the author on 2026-10-30 in the Rasch removal discussion.",
+  "method": "ASRP without Rasch + adaptive_4_warm",
+  "model_version": "prior-kernel-v2",
+  "method_association": "Identified as the no-Rasch batch from the author's message and preceding submission packaging; filenames alone do not identify model contents.",
+  "submission_zip_sha256": null,
+  "six_budget_feedback_available": false,
+  "inclusion": "All and only Finished submissions shown; Cancelled excluded.",
+  "submissions": [
+    {
+      "submission_id": 1020351,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:31",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Cancelled",
+      "displayed_brier_alc": 0.217564
+    },
+    {
+      "submission_id": 1020350,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:30",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.215615
+    },
+    {
+      "submission_id": 1020346,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:28",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.207015
+    },
+    {
+      "submission_id": 1020343,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:26",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.219614
+    },
+    {
+      "submission_id": 1020340,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:24",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.213506
+    },
+    {
+      "submission_id": 1020339,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:23",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.179669
+    },
+    {
+      "submission_id": 1020332,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:22",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.22196
+    },
+    {
+      "submission_id": 1020330,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:21",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.168412
+    },
+    {
+      "submission_id": 1020290,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:12",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.240898
+    },
+    {
+      "submission_id": 1020279,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:08",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.20559
+    },
+    {
+      "submission_id": 1020275,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:06",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.184611
+    },
+    {
+      "submission_id": 1020271,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:04",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.250078
+    },
+    {
+      "submission_id": 1020259,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:02",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.224247
+    },
+    {
+      "submission_id": 1020258,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:01",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.26555
+    },
+    {
+      "submission_id": 1020257,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 10:00",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.181208
+    },
+    {
+      "submission_id": 1020256,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 09:58",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.17568
+    },
+    {
+      "submission_id": 1020254,
+      "filename": "asrp.zip",
+      "displayed_datetime": "2026-10-30 09:57",
+      "displayed_timezone": null,
+      "status_in_screenshot": "Finished",
+      "displayed_brier_alc": 0.189257
+    }
+  ]
+}
