@@ -1,0 +1,10 @@
+{
+  "draw_id": 0,
+  "n_response_records": 3724,
+  "n_probability_values": 111720,
+  "max_probability_difference": 0.0,
+  "acquisition_exact_match": true,
+  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+  "formative_manifest_sha256": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
+  "scope": "Independent fresh model process reproduces both policies and all component variants for draw 0; all draws also receive native per-group/checkpoint inference checks."
+}

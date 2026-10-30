@@ -45,7 +45,7 @@
 % Acquisition/update row. The three boxes share a baseline.
 \node[online, below=11mm of encode] (candidates) {Candidate stream\\$\lceil N/2\rceil$ items};
 \node[online, right=of candidates] (acq) {Random or\\Adaptive acquisition};
-\node[online, right=of acq] (labels) {Revealed labels\\$\{(i_r,y_r)\}$};
+\node[online, right=of acq] (labels) {Revealed labels\\$\{(s_r,i_r,y_r)\}$};
 \draw[flow] (candidates.east) -- (acq.west);
 \draw[flow] (acq.east) -- (labels.west);
 

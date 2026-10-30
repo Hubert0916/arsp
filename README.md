@@ -2,50 +2,41 @@
 
 **Yuhan Chiu — National Taiwan University**
 
-ASRP predicts an AI system's probability of answering an item correctly with
-0–31 revealed labels. It combines a Rasch ability–difficulty model, metadata-prior
-smoothing, Kernel Probe, topic calibration, and adaptive label acquisition.
+ASRP predicts success with 0–31 revealed labels using a Rasch hybrid, Kernel Probe,
+topic calibration, and adaptive acquisition.
 
-[Report](report/main.pdf) · [Method code](src/asrp) · [Report source and build instructions](report/README.md)
+[Report](report/main.pdf) · [Method code](src/asrp) · [Report source](report/README.md)
 
-## Results
+## Evaluation
 
-**Local public proxy:** 92 source groups, seeds 42/43/44, and six label budgets.
-Scores average groups and seeds equally; lower is better.
+The current public simulation uses **30 complete-group draws capped at 1,000
+subject–item pairs each**. Subjects vary between draws; within-group pools remain
+fixed, and every evaluation response is scored. Predictors share labels within
+Random or Adaptive acquisition. See the [protocol](experiments/formative_protocol.md)
+and [released predictions and ablations](results/formative).
 
 <!-- RESULTS_START -->
 
 | Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Empirical Mean + Random | 0.2500 | 0.3488 | 0.2518 | 0.2086 | 0.1910 | 0.1842 | 0.2435 |
-| Empirical Mean + Adaptive | 0.2500 | 0.3594 | 0.2366 | 0.2003 | 0.1883 | 0.1837 | 0.2403 |
-| ASRP + Random | 0.2263 | 0.2166 | 0.2075 | 0.1947 | 0.1845 | 0.1755 | 0.2008 |
-| ASRP + Adaptive | 0.2263 | 0.2161 | 0.2043 | 0.1912 | 0.1819 | 0.1738 | 0.1987 |
+| Empirical Mean + Random | 0.2500 | 0.3439 | 0.2161 | 0.1909 | 0.1794 | 0.1745 | 0.2285 |
+| Empirical Mean + Adaptive | 0.2500 | 0.3462 | 0.2139 | 0.1931 | 0.1805 | 0.1765 | 0.2294 |
+| ASRP + Random | 0.2111 | 0.2032 | 0.1924 | 0.1830 | 0.1778 | 0.1707 | 0.1895 |
+| ASRP + Adaptive | 0.2111 | 0.2061 | 0.1915 | 0.1847 | 0.1797 | 0.1720 | 0.1907 |
 
 <!-- RESULTS_END -->
 
-Prediction methods share acquired labels within each policy. Public training and
-proxy evaluation use the same data release, so this is not a source-held-out test.
-See [protocol](experiments/proxy_config.json) and [full results](results/proxy).
-The release provides reusable source selections, disjoint splits, per-item
-predictions, and acquisition traces, with source-level comparisons in the
-[scored summary](results/proxy/summary.json).
+This follows the documented formative design on public data. The private sampler
+and test pool are unavailable; local choices are explicit. Frozen fitting and
+calibration overlap the public release, so these are not source-held-out results.
 
-[Component ablations](results/ablation) remove Rasch, Kernel Probe, or topic
-calibration with matched Adaptive labels. The [six-seed analysis](results/rasch_confirmation)
-shows offsetting budget effects: Rasch improves B0 and B7 but slightly worsens
-B1 and B3. A [factorial prior ablation](results/rasch_prior_ablation) finds a more
-favorable Rasch contribution at B0/B1 when the count prior is removed, conditional
-on fixed topic calibration. The submission retains the original calibrated hybrid.
+**Official Codabench:** ten with-Rasch ASRP evaluations have mean Brier ALC
+**0.19107** (sample SD **0.01105**). [Aggregates](results/official).
 
-**Official Codabench:** ten evaluations of ASRP with Rasch and adaptive acquisition
-have mean Brier ALC **0.19107** (sample SD **0.01105**).
-[Records and aggregation](results/official).
-
-## Reproduce local results
+## Reproduce
 
 Install [uv](https://docs.astral.sh/uv/) and accept the access conditions for
-[measurement-db](https://huggingface.co/datasets/aims-foundations/measurement-db), then run:
+[measurement-db](https://huggingface.co/datasets/aims-foundations/measurement-db):
 
 ```bash
 git clone https://github.com/Hubert0916/arsp.git
@@ -55,33 +46,25 @@ uv run hf auth login
 uv run --locked python tools/reproduce.py
 ```
 
-This downloads pinned data, uses bundled frozen weights, evaluates all four
-combinations, and checks predictions against the published results. It reproduces
-inference and scoring; original offline fitting scripts are not included. Outputs go
-to `results/reproduced/`. Inference runs on CPU without external API calls.
-Allow about 6 GB of disk plus the Python environment. Use `--workers 1` for fewer
-workers, `--cache-only` for cached data, or `--prepared` to reuse prepared inputs.
+This reconstructs the pinned public data and draws, runs frozen inference on CPU,
+and compares every prediction and acquisition decision with the release. Outputs
+are in `results/check-formative/`. Use `--cache-only` for cached data, `--prepared`
+for verified prepared data, or `--workers 1` on a smaller machine. The public tables
+total about 4.6 GB, plus prepared data, outputs, models and the Python environment.
+Original offline fitting scripts are not included.
 
-To recalculate scores from published predictions without rerunning inference:
-
-```bash
-uv run --locked python tools/score_proxy.py results/proxy
-uv run --locked python tools/update_ablation_report.py
-uv run --locked python tools/confirm_rasch_removal.py --score-only
-uv run --locked python tools/update_rasch_report.py
-uv run --locked python tools/evaluate_rasch_prior.py --score-only
-uv run --locked python tools/update_rasch_prior_report.py
-```
-
-To rerun component inference and additional Rasch draws on the same sources:
+Audit scores without model inference:
 
 ```bash
-uv run --locked python tools/evaluate_ablation.py --workers 4 --output results/check-ablation
-uv run --locked python tools/confirm_rasch_removal.py --workers 4 --output results/check-rasch
-uv run --locked python tools/evaluate_rasch_prior.py --workers 4 --output results/check-prior
+uv run --locked python tools/score_draws.py results/formative
+uv run --locked python tools/update_formative_report.py
 ```
 
-## Build a submission
+Earlier fixed-subject experiments remain under `results/proxy`, `results/ablation`,
+and `results/rasch_*`; they are not mixed into the current report. Use
+`tools/reproduce.py --legacy` to reproduce the old main proxy.
+
+## Submission and files
 
 ```bash
 uv run --locked python tools/verify_artifacts.py
@@ -89,19 +72,12 @@ uv run --locked python tools/build_submission.py asrp
 uv run --locked python tools/smoke_test.py dist/asrp.zip
 ```
 
-Upload `dist/asrp.zip` to Codabench. To build the baseline, replace `asrp` with
-`empirical_mean` in the build and smoke-test commands. The smoke test checks
-packaging and execution; it does not measure benchmark performance.
+Upload `dist/asrp.zip` to Codabench. Replace `asrp` with `empirical_mean` to package
+the official baseline. The evaluation revision does not alter the submitted model.
 
-## Files
+- `src/asrp`, `artifacts`: inference code and frozen models.
+- `experiments`, `tools`: protocols, manifests, and reproduction scripts.
+- `results`, `report`: predictions, scores, paper, and figures.
 
-- [`src/asrp/`](src/asrp): prediction and acquisition code.
-- [`artifacts/`](artifacts/README.md): frozen models, settings, and reproduction scope.
-- [`baselines/empirical_mean/`](baselines/empirical_mean): official baseline.
-- [`experiments/`](experiments): protocol and pinned data/split manifest.
-- [`results/`](results): public-proxy predictions, ablations, and official feedback.
-- [`report/`](report): paper, figures, and LaTeX source.
-- [`tools/`](tools): reproduction, scoring, and packaging scripts.
-
-See [third-party notices](THIRD_PARTY_NOTICES.md). Codex assisted with development
-and writing; it is not an online predictor.
+See [third-party notices](THIRD_PARTY_NOTICES.md). Codex assisted development and
+writing; no external LLM API is used during scoring.

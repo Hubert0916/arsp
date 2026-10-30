@@ -1,5 +1,9 @@
 # ASRP public-proxy evaluation
 
+**Historical protocol.** The current report uses the complete-group formative
+simulation in [`../formative`](../formative). These fixed-subject results remain
+available for comparison and use `tools/reproduce.py --legacy` for reproduction.
+
 These predictions use the restored **with-Rasch** ASRP runtime, the same 92
 selected source groups, seeds 42/43/44, and six budgets under Random and Adaptive
 acquisition. See `experiments/proxy_config.json`.
@@ -17,7 +21,7 @@ From the repository root, regenerate scores with:
 uv run --locked python tools/score_proxy.py results/proxy
 ```
 
-`tools/reproduce.py` reruns inference and compares probabilities and acquisition
+`tools/reproduce.py --legacy` reruns inference and compares probabilities and acquisition
 traces against this release. Component-removal predictions are in
 [`../ablation`](../ablation), with additional Rasch draws in
 [`../rasch_confirmation`](../rasch_confirmation). Remaining parameters and

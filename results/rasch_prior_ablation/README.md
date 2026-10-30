@@ -1,5 +1,9 @@
 # Rasch and count-prior interaction
 
+**Historical fixed-subject experiment.** Current report results use the
+[formative simulation](../formative); the scores below are not part of its tables.
+
+
 A fixed 2×2 component ablation on all 92 public-proxy groups, seeds 42/43/44,
 and budgets 0 and 1. Each condition uses exactly the published Adaptive support
 and evaluation items. No weights or calibration statistics are refitted.

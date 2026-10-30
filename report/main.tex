@@ -46,7 +46,7 @@
 \maketitle
 
 \begin{abstract}
-A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. On a public proxy covering \ProxySources{} source groups and three seeds, ASRP achieves Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels; switching ASRP from random to adaptive acquisition provides a smaller additional reduction of $\AcquisitionALCGain{}$.
+A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. Across \ProxyDraws{} public-data draws following the documented formative protocol, ASRP achieves mean Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels. Paired policy and component comparisons characterize the contributions of prediction, acquisition, and initialization.
 \end{abstract}
 
 \section{Introduction}
@@ -57,7 +57,7 @@ The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success
 
 ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
 
-\textbf{The main measured improvement comes from prediction, with a smaller acquisition benefit.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence, a reduction of $\PredictorALCGain{}$. Switching ASRP from Random to Adaptive acquisition provides a smaller reduction of $\AcquisitionALCGain{}$. Component removals support the kernel at high budgets. Rasch's effects vary by budget; a factorial ablation finds a larger low-budget contribution when the public count prior is removed, conditional on the calibration layer. Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.
+\input{introduction_results}
 
 \section{Competition Setting and Data}\label{sec:setting}
 
@@ -81,7 +81,7 @@ The official score averages these group-level ALC values equally across subject-
 
 \subsection{Public data and frozen artifacts}
 
-The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. Public responses provide subject priors and metadata statistics, while item content supplies semantic features. The local evaluation selects \ProxySources{} source groups from a fixed inventory of 142 binary sources; Section~\ref{sec:setup} describes selection and splitting. Appendix~\ref{app:sources} lists the evaluated sources. Upstream metadata and licenses remain authoritative.
+The predictor uses frozen artifacts trained and calibrated from the public \path{aims-foundations/measurement-db} release \citep{measurementdb}. Public responses provide subject priors and metadata statistics, while item content supplies semantic features. The local evaluation samples from \EligibleGroups{} eligible subject--benchmark groups in \EligibleSources{} sources within a fixed inventory of 142 binary sources; Section~\ref{sec:setup} describes selection and splitting. Appendix~\ref{app:sources} lists the evaluated sources. Upstream metadata and licenses remain authoritative.
 
 The subject prior and metadata statistics are frozen public-response aggregates. Their runtime use and fallback rules are specified in Appendix~\ref{app:implementation}; reproducing the reported scores uses the released weights without refitting them. MiniLM is used as a pretrained encoder; the packaged encoder is \path{sentence-transformers/all-MiniLM-L6-v2}, based on MiniLM \citep{wang2020minilm}. Its weights are \textbf{frozen at runtime}. The difficulty model, priors, kernel configuration, calibration statistics, and cluster centroids are prepared offline and bundled with the submission; kernel residual coefficients are fitted online from revealed labels. The current submission uses \textbf{no external LLM or web search API during scoring}. At runtime, the program uses only the supplied subject and item attributes, anonymous benchmark identifiers, and labels revealed within the allowed budget; it does not access hidden evaluation outcomes.
 
@@ -135,7 +135,7 @@ Subject-centered kernel ridge regression, with penalty $\lambda_K=0.3$, fits res
 \[
  p_{\mathrm{kernel}}=\operatorname{clip}\!\left(b_s+\mathbf k_i^\top\gamma-\bar f_s,0,1\right).
 \]
-Appendix~\ref{app:kernel} defines $K$, the Beta weight update, and the centered linear solve. If the current subject has no revealed labels, this branch returns $\mu_s$. The implementation supports multiple subjects within a benchmark; this proxy uses one subject per group.
+Appendix~\ref{app:kernel} defines $K$, the Beta weight update, and the centered linear solve. If the current subject has no revealed labels, this branch returns $\mu_s$. The implementation supports multiple subjects within a benchmark; the evaluator supplies evidence across all sampled groups, and this branch filters it to the current benchmark.
 
 The ensemble gives the kernel weights $w_n=(0,0,0.2,0.4,1,1)$ at budgets $(0,1,3,7,15,31)$. Thus the Rasch hybrid supplies the cold-start prediction, while a larger support set allows the local residual to receive more weight. These are design choices encoded in the released configuration.
 
@@ -166,16 +166,19 @@ A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every r
 
 We use paired public-data comparisons to separate prediction and acquisition effects, and report private-platform evaluations separately. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
 
-\subsection{Public proxy protocol}
+\subsection{Public formative simulation}
 
-\paragraph{Data and repeated splits.}
-We select one eligible subject per source using a fixed seed and keep these subjects unchanged across experiments. Eligible groups contain 80--1,000 distinct items, all retained, yielding \textbf{\ProxySources{} source groups} and \ProxyItems{} items. The other \ProxyExcluded{} sources in the 142-source inventory have no qualifying group. The upper limit bounds local evaluation cost. We fix one binary outcome per item when repeated responses exist; official evaluation instead retains all recorded evaluation responses. For each seed (\textbf{42, 43, and 44}), items are split approximately equally into disjoint acquisition and evaluation pools. Candidate pools contain \ProxyMinPool{}--\ProxyMaxPool{} items, and each seed has \textbf{\ProxyTargets{} evaluation outcomes}. The manifest records the data version, selected records, and splits.
+\paragraph{Complete groups and repeated draws.}
+The pinned public snapshot contains \EligibleGroups{} eligible subject--benchmark groups in \EligibleSources{} sources, each with 80--1,000 distinct items. We predeclare \textbf{\ProxyDraws{} draw seeds}. Each draw selects complete groups under a \textbf{total 1,000-pair cap}, preferring less-represented benchmarks and subjects with random tie-breaking; groups that do not fit are skipped. The draws cover \ProxyGroups{} distinct groups from \ProxySources{} sources, with \ProxyMinGroups{}--\ProxyMaxGroups{} groups and \ProxyMinPairs{}--\ProxyMaxPairs{} pairs per draw.
 
-\paragraph{Paired comparison.}
-We evaluate \textbf{ASRP and Empirical Mean under both Random and Adaptive acquisition}. Random samples uniformly without replacement; Adaptive uses \texttt{adaptive\_4\_warm} from Section~\ref{sec:acquisition}. Within each seed, both policies receive the same candidate order and evaluation pool. Both predictors receive identical acquired labels \emph{within each policy}, while different policies may select different labels. A single acquisition trajectory targets 31 labels and supplies nested evidence at all six budgets; selection does not restart at each checkpoint. Every checkpoint evaluates the same held-out items.
+\paragraph{Fixed pools and all responses.}
+One snapshot seed fixes each group's 50/50 item split and candidate order across draws. All runs of an item stay together. Acquisition reveals one fixed recorded response per selected item; \textbf{all recorded evaluation responses are scored}, reusing a prediction for identical visible inputs. Across draws, this yields \ProxyTargets{} evaluation-item occurrences and \ProxyResponses{} response occurrences per policy, including repeated appearances of groups.
 
-\paragraph{Evaluation scope.}
-Evaluation outcomes are never revealed online. However, public training, calibration, and proxy evaluation use the same data release, so this is not an independent test of all fitted components and local scores may be optimistic.
+\paragraph{Matched evidence and checkpoint barriers.}
+ASRP and Empirical Mean use the same draws and pools under Random and Adaptive acquisition. Predictors share labels within each policy; policies may select different labels. One trajectory supplies nested prefixes. \textbf{Every group completes a checkpoint before evaluation}; each call receives all evidence revealed across groups, excluding future labels and evaluation outcomes. Ablations use these same labels and frozen artifacts.
+
+\paragraph{Alignment.}
+These constraints follow the public rules and starting kit. Private coordinator details are unavailable, so benchmark-first tie-breaking, group scheduling, and acquisition-response selection remain explicit local choices (Appendix~\ref{app:protocol}). This is a \textbf{public simulation of the documented design}, not an exact private-sampler replay or a source-held-out test; public fitting and calibration overlap the evaluation release.
 
 \subsection{Baseline and score aggregation}
 
@@ -189,13 +192,11 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
 \]
 It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Random is its default acquisition policy; the Adaptive variant uses ASRP's selected labels.
 
-We use the metrics and equal-group weighting in Section~\ref{sec:setting}, then average the three seed-level scores equally. We report each seed's ALC and their sample standard deviation (SD), describing split variation. Source-level comparisons average paired ALC differences over the three seeds before counting improvements, with each selected source counted once.
+We use the metrics in Section~\ref{sec:setting}: average all response losses within a group, groups equally within a draw, then the \ProxyDraws{} draws equally. We report sample SD and range across draw scores. Paired differences compare methods on the same draw. Repeated appearances of a group are retained as part of the sampling distribution; draw SD describes composition variability, not independent evidence about new-source transfer.
 
 \subsection{Component ablations}\label{sec:ablation_setup}
 
-We remove one prediction component at a time on the same \ProxySources{} groups and three seeds, replaying the published Adaptive acquisition trajectories. \textbf{No Rasch} sets $\eta_n=0$, retaining metadata smoothing and the kernel branch; \textbf{No Kernel Probe} sets $w_n=0$, using the Rasch hybrid at every budget; \textbf{No topic calibration} sets $\Delta_n(i)=0$. All other parameters and calibration statistics stay fixed, with no refitting or retuning. The full-model rerun is checked against every published Adaptive prediction within $10^{-7}$. We additionally repeat the paired Rasch comparison on seeds \textbf{45, 46, and 47}. These six draws reuse the same selected sources and assess split sensitivity, not transfer to unseen sources.
-
-To test overlap between the two prior signals, a \textbf{factorial prior ablation} on seeds 42--44 crosses Rasch enabled/disabled with the public count prior enabled/disabled at budgets zero and one, where the kernel weight is zero. Disabling the count prior activates the native fallback $p_{\mathrm{meta}}=\mu_s$; the binary subject prior, item features, acquired labels, and topic correction remain fixed. We record both final and pre-calibration probabilities. This tests component dependence, not performance on an unseen source.
+On each draw we remove one prediction component while keeping the acquired evidence and all remaining parameters fixed. \textbf{No Rasch} sets $\eta_n=0$; \textbf{No Kernel Probe} sets $w_n=0$; \textbf{No topic calibration} sets $\Delta_n(i)=0$. No component is refitted or retuned. Shared-branch calculations are checked against the native packaged prediction path for each variant on the first evaluation input of every group, budget, and policy. The report presents the Adaptive ablations; predictions for both policies are released.
 
 \subsection{Official formative feedback}
 
@@ -203,7 +204,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \section{Results and Analysis}
 
-\subsection{Public proxy results}
+\subsection{Public draw results}
 
 \input{results_overview}
 
@@ -213,14 +214,14 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \setlength{\tabcolsep}{4pt}
 \input{results_table}
 \vspace{6pt}
-\caption{Public proxy Brier scores averaged equally over \ProxySources{} groups and seeds 42, 43, and 44. Lower is better. Evaluation pools are matched across policies; acquired labels are matched across predictors within each policy.}
+\caption{Public formative-simulation Brier scores: equal groups within each draw, then equal weight across \ProxyDraws{} draws. Evaluation pools are matched across policies; acquired labels are matched across predictors within each policy. Lower is better.}
 \label{tab:proxy}
 \end{table}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\columnwidth,height=0.24\textheight,keepaspectratio]{figures/public_proxy_curve.pdf}
-  \caption{Mean public-proxy Brier curves for the four predictor--acquisition combinations on the official $\log_2(1+n)$ budget axis. Solid lines denote Adaptive acquisition and dashed lines Random; values match Table~\ref{tab:proxy}.}
+  \caption{Mean public formative-simulation Brier curves for the four predictor--acquisition combinations on the official $\log_2(1+n)$ budget axis. Solid lines denote Adaptive acquisition and dashed lines Random; values match Table~\ref{tab:proxy}.}
   \label{fig:proxy_curve}
 \end{figure}
 
@@ -229,7 +230,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \small
 \input{results_seed_table}
 \vspace{6pt}
-\caption{Group-averaged Brier ALC for each split/acquisition seed. SD is the sample standard deviation over the three seed scores. Lower ALC is better.}
+\caption{Distribution of group-averaged Brier ALC across \ProxyDraws{} public draws. SD and range describe changing sampled group compositions under fixed within-group pools.}
 \label{tab:seeds}
 \end{table}
 
@@ -245,35 +246,13 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \setlength{\tabcolsep}{3pt}
 \input{ablation_table}
 \vspace{6pt}
-\caption{Component removals with fixed Adaptive evidence and remaining parameters, averaged over \ProxySources{} groups and three seeds. Positive $\Delta$ALC (variant minus full ASRP) indicates worse performance.}
+\caption{Component removals with matched Adaptive evidence, averaged within and across the same \ProxyDraws{} draws. Positive $\Delta$ALC (variant minus full ASRP) indicates worse performance.}
 \label{tab:ablation}
 \end{table}
 
 \input{ablation_analysis}
 
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\input{rasch_retention_table}
-\vspace{6pt}
-\caption{Rasch ablation extended to seeds 42--47 on the same \ProxySources{} source groups. Each pair shares acquired labels and evaluation items; remaining parameters are fixed. Negative differences favor Rasch.}
-\label{tab:rasch_retention}
-\end{table}
-
 \input{rasch_retention_analysis}
-
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\input{rasch_prior_table}
-\vspace{6pt}
-\caption{Factorial prior ablation at budgets zero and one, using the same 92 groups and seeds 42--44. Removing the count prior activates the native subject-mean fallback; all other components and labels are fixed.}
-\label{tab:rasch_prior}
-\end{table}
-
-\input{rasch_prior_analysis}
 
 \subsection{Official formative results}\label{sec:official}
 
@@ -293,11 +272,11 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{official_limitation}
 
-\paragraph{Scope of the local evidence.} The public proxy shares its data release with offline fitting and calibration, so local gains may be optimistic. Six seeds on the same sources do not constitute six independent generalization tests. Component removals measure effects within a fixed configuration; the prior ablation does not recreate private data or establish why a different official draw scores differently. These comparisons characterize when the component contributes, rather than proving that it is indispensable.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. Unknown coordinator details remain local assumptions. Component removals measure effects within the calibrated system rather than universal necessity.
 
 \section{Conclusion}
 
-ASRP balances public-data initialization with support-driven adaptation as labels accumulate. Paired experiments show a larger predictor benefit than acquisition benefit, with component removals supporting kernel adaptation at higher budgets and topic calibration. Rasch supplies a structured initialization signal whose measured contribution depends on the label budget and the other retained components. Accurate cold-start transfer remains a challenge. Released artifacts and matched splits make these comparisons reproducible.
+\input{conclusion_results}
 
 \clearpage
 \appendix
@@ -307,7 +286,7 @@ ASRP balances public-data initialization with support-driven adaptation as label
 These equations specify inference with the released frozen artifacts at the six competition budgets. They use the same symbols as Section~\ref{sec:method}. The reproduction command evaluates these artifacts without repeating their original offline fitting. Throughout, $\operatorname{clip}(x,l,u)=\min(u,\max(l,x))$, applied coordinatewise to vectors, and $\operatorname{norm}(x)=x/\max(\|x\|_2,10^{-12})$.
 
 \paragraph{Shared notation.}
-A support row $r$ contains a subject $s_r$, item $i_r$, and binary outcome $y_r$. The row collection $\mathcal D_b$ contains all revealed responses for benchmark $b$ and has size $M$. Its subject-specific subset $\mathcal D_s$ has $n_s$ rows and $S_s$ successes. For the current query subject, the budget is $n=n_s\le31$. In this proxy $M=n$; the formulas below also describe the implementation's multi-subject kernel. Runtime subject identity uses the complete subject dictionary, whereas frozen subject-prior lookup uses \texttt{normalized\_name}.
+A support row $r$ contains a subject $s_r$, item $i_r$, and binary outcome $y_r$. The row collection $\mathcal D_b$ contains all revealed responses for benchmark $b$ and has size $M$. Its subject-specific subset $\mathcal D_s$ has $n_s$ rows and $S_s$ successes. For the current query subject, the budget is $n=n_s\le31$. The kernel can share residual evidence across subjects in the same benchmark; $M$ need not equal $n$. Runtime subject identity uses the complete subject dictionary, whereas frozen subject-prior lookup uses \texttt{normalized\_name}.
 
 We distinguish $\eta_n$ (Rasch mixing weight), $w_n$ (kernel mixing weight), and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Acquisition uses gain $G_j$, utility $V_j$, probability $\pi_*^{\mathrm{acq}}$, and uniform variate $\xi$; none denotes an embedding coordinate.
 
@@ -469,7 +448,7 @@ To ensure reproducibility, we generate a deterministic pseudorandom value $\xi\i
 
 \section{Public source inventory}\label{app:sources}
 
-The following \ProxySources{} public binary source identifiers occur in the paired three-seed evaluation. They identify the evaluation sources; the benchmark inventory and upstream licenses remain authoritative.
+The following \ProxySources{} public binary source identifiers occur across the \ProxyDraws{} public formative draws. They identify the evaluation sources; the benchmark inventory and upstream licenses remain authoritative.
 
 \begingroup
 \scriptsize
@@ -501,32 +480,21 @@ uv run --locked python tools/reproduce.py
 \end{verbatim}
 \end{samepage}
 
-The pipeline reconstructs the pinned public-data splits, evaluates all four combinations across three seeds on CPU, and checks predictions within $10^{-7}$ and acquired labels exactly against the published results. A full rerun of the restored package reproduced both output files byte-for-byte. Reproduction uses the released frozen artifacts; original offline fitting scripts are not included.
+The pipeline reconstructs the eligible inventory, fixed pools, and all \ProxyDraws{} draws, evaluates both policies and all variants on CPU, and compares probabilities within $10^{-7}$ and acquisition decisions exactly against the release. An independent fresh-process rerun of one complete draw reproduced all 111,720 probabilities exactly; a separate NumPy audit verified all response labels, Empirical Mean prefixes, and aggregate scores. Reproduction uses frozen artifacts; original offline fitting scripts are not included.
 
-For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \path{tools/evaluate_ablation.py} after the main pipeline has prepared the data. Released compressed predictions can be audited and the ablation table regenerated with \path{tools/update_ablation_report.py}.
-
-The additional Rasch comparisons use \path{tools/confirm_rasch_removal.py}; their pinned implementation and seeds are recorded in \path{experiments/rasch_confirmation.json}. Run \path{tools/update_rasch_report.py} to regenerate the six-seed comparison from both sets of paired predictions.
-
-The factorial prior experiment uses \path{tools/evaluate_rasch_prior.py} and \path{experiments/rasch_prior_ablation.json}. Its standard-prior conditions are checked against the published per-item Rasch ablation, and every condition is checked against native inference on the first evaluation item at each group, seed, and budget.
-
-\input{results_acquisition_details}
+The protocol is in \path{experiments/formative_config.json}; the manifest records every selected item and response. \path{tools/score_draws.py} audits released compressed predictions without model inference, and \path{tools/update_formative_report.py} regenerates report tables and analyses. The release includes per-group and per-draw scores, both acquisition trajectories, and paired component differences. Earlier fixed-subject experiments remain separate historical results and are not mixed into the current tables.
 
 Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 
-\section{Prior and Calibration Interaction}\label{app:prior_ablation}
+\section{Formative Simulation Details}\label{app:protocol}
 
-\begin{table}[H]
-\centering
-\small
-\input{rasch_prior_raw_table}
-\vspace{6pt}
-\caption{Pre-calibration Brier scores for the factorial prior ablation, using the same evaluation rows as Table~\ref{tab:rasch_prior}.}
-\label{tab:rasch_prior_raw}
-\end{table}
+The local sampler is implemented in \path{tools/draw_protocol.py}. For each draw it filters to unselected complete groups that fit the remaining 1,000-pair allowance. It selects a benchmark with minimum representation in the current draw, then a feasible subject with minimum draw-wide representation among that benchmark's candidates; seeded hash ranks break ties at each stage. Counts reset between draws. The snapshot seed separately fixes the item partition, candidate order, and recorded response revealed for an acquired item. Stable aliases derive from public identities, and are not the private platform's identifiers.
 
-\input{rasch_prior_raw_analysis}
+Within each checkpoint, groups advance sequentially in draw order. Later groups can use evidence already revealed by earlier groups, but no group receives evidence from a higher checkpoint. All groups finish the cap before predictions are committed. The model and acquisition policy filter global evidence using the visible subject dictionary and anonymous benchmark ID. Repeated response rows are preserved, and prediction reuse never changes their scoring weight. Missing metadata can make different upstream subjects indistinguishable through the visible interface; no identifying fields are invented.
+
+The public starting-kit documentation specifies the complete-group draw preference but does not expose the coordinator implementation. The local hierarchy, RNG, group scheduling, alias assignment, and acquisition-response selection therefore remain explicit implementation choices. The protocol audit and source checksums are released in \path{experiments/formative_protocol.md}. These choices provide a reproducible approximation to the published design; they cannot reproduce private group selection or remove overlap with public offline fitting.
 
 % unsrtnat preserves the order in which references first appear in the text.
 \bibliographystyle{unsrtnat}

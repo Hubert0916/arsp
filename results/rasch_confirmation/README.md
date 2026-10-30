@@ -1,5 +1,9 @@
 # Paired Rasch retention/removal comparison
 
+**Historical fixed-subject experiment.** Current report results use the
+[formative simulation](../formative); the scores below are not part of its tables.
+
+
 The initial comparison used seeds 42/43/44. This additional check uses seeds
 45/46/47 on the **same 92 source groups**, with identical acquired labels and
 evaluation items within each pair. It tests draw sensitivity, not new-source

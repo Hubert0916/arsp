@@ -1,5 +1,9 @@
 # Component ablations
 
+**Historical fixed-subject experiment.** Current report results use the
+[formative simulation](../formative); the scores below are not part of its tables.
+
+
 Inference-time removals of the Rasch term, Kernel Probe, and topic calibration
 on all 92 public-proxy source groups and seeds 42/43/44. Each variant replays the
 same published **Adaptive** acquisition trajectory and uses the same evaluation

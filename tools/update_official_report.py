@@ -41,9 +41,9 @@ def main():
     for key,label in [('mean','Mean'),('sample_sd','SD')]:
         table.append(label+' & '+' & '.join(f'{m[key]:.4f}' for m in metrics['brier']+[alc])+r'\\')
     save('official_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    text=(f"Across {n} official formative evaluations of the same ASRP submission with adaptive acquisition, "
+    text=(f"Across {n} official draws of the same ASRP + Adaptive submission, "
           +r"\textbf{mean Brier ALC is $"+f"{alc['mean']:.4f}"+r"$} (sample SD $"+f"{alc['sample_sd']:.4f}"+r"$; Table~\ref{tab:official}). "
-          +"These official samples are separate from the local public-proxy comparisons.")
+          +"These private-data results are separate from the public simulation.")
     save('official_overview.tex',text)
     save('official_limitation.tex',
          r'\paragraph{Cold-start transfer.} '
