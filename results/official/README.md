@@ -1,39 +1,24 @@
 # Official Codabench evaluations
 
-The report presents two separate batches, both using adaptive acquisition:
+The report presents ten evaluations of **ASRP with Rasch + adaptive acquisition**:
+mean Brier ALC **0.19107**, sample SD **0.01105**. All six budget tables are
+available. Group scores are averaged equally within each run, then runs equally.
 
-| Method | Completed runs | Mean Brier ALC | Sample SD |
-|---|---:|---:|---:|
-| With Rasch (retained submission) | 10 | 0.19107 | 0.01105 |
-| Without Rasch | 16 | 0.20893 | 0.02813 |
+- `runs.json`, `summary.json`: per-run aggregates and their verified summary.
+- `submissions.json`: platform IDs matched to the rounded feedback ALC.
+- `status.json`: local inference version and manifest checksum.
+- `provenance.json`, `ingestion.json`: feedback origins and checks.
 
-These batches use different random draws and dates. They are **not a paired
-Rasch ablation**. The controlled public ablations are in [`../ablation`](../ablation)
-and [`../rasch_confirmation`](../rasch_confirmation). The official comparison
-motivates caution about removing Rasch but does not establish its causal effect.
+The author confirmed one ZIP across these ten evaluations. Current local inference
+files match the pre-removal revision. The historical submitted ZIP hash is
+unavailable. Original feedback is retained locally and excluded from this repository.
 
-- `runs.json`, `summary.json`: ten with-Rasch evaluations, with all six budgets;
-  equal groups within each run, equal runs across the batch.
-- `submissions.json`: their platform IDs matched to rounded feedback ALC.
-- `without_rasch_screenshot.json`: all 17 rows from the later screenshot; all
-  16 Finished entries are included and Cancelled submission 1020351 excluded.
-  Only total ALC is supplied for this batch; no budget scores are inferred.
-- `comparison.json`: generated means, SDs, and included/excluded IDs.
-- `status.json`: restored local inference version and manifest checksum.
-- `provenance.json`, `ingestion.json`: origins and checks for the earlier feedback.
-
-The author confirmed one ZIP across the earlier ten evaluations. The current
-local inference files match the pre-removal Git revision. Historical platform
-ZIP hashes are unavailable. The later batch's no-Rasch association follows the
-submission discussion and screenshot; filenames alone cannot establish contents.
-Original feedback is retained locally and excluded from the public repository.
-
-To verify aggregates and regenerate the report tables:
+To verify the aggregates and regenerate report tables:
 
 ```bash
 uv run --locked python tools/update_official_report.py
 ```
 
-Private platform evaluations cannot be reproduced from public data. The local
-parser `tools/parse_official_results.py` can audit detailed platform feedback;
-its raw transcription is not published.
+Private platform evaluations cannot be rerun using public data. Controlled
+component comparisons use the local experiments in [`../ablation`](../ablation)
+and [`../rasch_confirmation`](../rasch_confirmation).

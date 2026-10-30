@@ -1,0 +1,94 @@
+{
+  "definition": "Differences are with Rasch minus without Rasch; negative is favorable to Rasch.",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "n_sources": 92,
+  "budget_effects": [
+    {
+      "budget": 0,
+      "with_rasch": 0.2258291899024826,
+      "without_rasch": 0.22695715588112345,
+      "delta_with_minus_without": -0.0011279659786408436,
+      "alc_weight": 0.1,
+      "alc_contribution": -0.00011279659786408437,
+      "effective_rasch_weight": 0.2875,
+      "source_wins": 43,
+      "source_losses": 49,
+      "source_ties": 0,
+      "mean_absolute_source_effect": 0.029276446907486472
+    },
+    {
+      "budget": 1,
+      "with_rasch": 0.2165174887368219,
+      "without_rasch": 0.21619331464738012,
+      "delta_with_minus_without": 0.00032417408944176995,
+      "alc_weight": 0.2,
+      "alc_contribution": 6.483481788835399e-05,
+      "effective_rasch_weight": 0.3,
+      "source_wins": 45,
+      "source_losses": 47,
+      "source_ties": 0,
+      "mean_absolute_source_effect": 0.01870505963923538
+    },
+    {
+      "budget": 3,
+      "with_rasch": 0.2042986824706656,
+      "without_rasch": 0.20378929725939116,
+      "delta_with_minus_without": 0.0005093852112744435,
+      "alc_weight": 0.2,
+      "alc_contribution": 0.0001018770422548887,
+      "effective_rasch_weight": 0.22999999999999998,
+      "source_wins": 44,
+      "source_losses": 48,
+      "source_ties": 0,
+      "mean_absolute_source_effect": 0.00725269433690178
+    },
+    {
+      "budget": 7,
+      "with_rasch": 0.19132225329307936,
+      "without_rasch": 0.19143688981726253,
+      "delta_with_minus_without": -0.00011463652418317039,
+      "alc_weight": 0.2,
+      "alc_contribution": -2.2927304836634077e-05,
+      "effective_rasch_weight": 0.165,
+      "source_wins": 46,
+      "source_losses": 46,
+      "source_ties": 0,
+      "mean_absolute_source_effect": 0.0025488198295525906
+    },
+    {
+      "budget": 15,
+      "with_rasch": 0.18182135163696786,
+      "without_rasch": 0.18182135163696786,
+      "delta_with_minus_without": 0.0,
+      "alc_weight": 0.2,
+      "alc_contribution": 0.0,
+      "effective_rasch_weight": 0.0,
+      "source_wins": 0,
+      "source_losses": 0,
+      "source_ties": 92,
+      "mean_absolute_source_effect": 0.0
+    },
+    {
+      "budget": 31,
+      "with_rasch": 0.17380050361109223,
+      "without_rasch": 0.17380050361109223,
+      "delta_with_minus_without": 0.0,
+      "alc_weight": 0.1,
+      "alc_contribution": 0.0,
+      "effective_rasch_weight": 0.0,
+      "source_wins": 0,
+      "source_losses": 0,
+      "source_ties": 92,
+      "mean_absolute_source_effect": 0.0
+    }
+  ],
+  "delta_alc": 3.098795744252425e-05,
+  "scope": "Paired component removal on the same public sources and frozen calibration; not source-held-out validation."
+}

@@ -25,6 +25,8 @@ uv run --locked python report/make_proxy_plot.py
 uv run --locked python tools/update_official_report.py
 uv run --locked python tools/update_ablation_report.py
 uv run --locked python tools/update_rasch_report.py
+uv run --locked python tools/evaluate_rasch_prior.py --score-only
+uv run --locked python tools/update_rasch_prior_report.py
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex
 ```
@@ -53,19 +55,17 @@ Component predictions and native-runtime checks are produced by
 `tools/evaluate_ablation.py`; see [`results/ablation`](../results/ablation).
 The Rasch comparison uses six paired seeds; see
 [`results/rasch_confirmation`](../results/rasch_confirmation). Its evidence
-supports a small zero-label benefit, not an overall local ALC advantage.
+is decomposed by budget and source. The factorial study in
+[`results/rasch_prior_ablation`](../results/rasch_prior_ablation) tests dependence
+on the public count prior. Appendix E reports pre-calibration probabilities to
+make interactions with topic correction explicit.
 
 ## Official evaluation
 
-The report restores the ten detailed with-Rasch evaluations. A separate unpaired
-comparison uses all 16 completed no-Rasch entries in the later platform
-screenshot, excluding its cancelled entry. No missing budget scores are inferred.
-Appendix C lists both batches' submission IDs.
-
-`tools/update_official_report.py` regenerates the tables from published records,
-checks the old feedback summary, and verifies the restored inference manifest.
-Historical platform ZIP hashes are unavailable; method association is documented
-in [`results/official`](../results/official).
+The report presents the ten detailed evaluations of ASRP with Rasch and adaptive
+acquisition. Appendix C lists their submission IDs. All six budget scores and ALC
+are available. `tools/update_official_report.py` verifies the released aggregates
+and regenerates their tables; see [`results/official`](../results/official).
 
 The public reproduction pipeline uses frozen artifacts. It does not retrain the
 original priors or calibration; see

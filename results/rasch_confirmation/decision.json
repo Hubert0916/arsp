@@ -1,6 +1,6 @@
 {
   "action": "retain_rasch",
-  "reason": "Retain the original low-budget Rasch term: better zero-label Brier in all six paired draws, essentially tied overall local ALC, and a worse subsequent no-Rasch official batch. The official comparison is unpaired and does not establish a causal or universal Rasch advantage.",
+  "reason": "Keep the configured Rasch contribution for observed zero-label initialization and budget-dependent complementary predictions. Local low-budget effects are mixed; retention is not a claim of necessity or a proven overall ALC advantage.",
   "runtime_reference_commit": "f9afbd258cc1f47ef158487261c79db14a48eafa",
   "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
   "seeds": [
@@ -37,7 +37,7 @@
   },
   "with_rasch_zero_label_wins": 6,
   "with_rasch_alc_wins": 2,
-  "scope": "Same 92 selected public source groups across six draws, matched acquisition/evaluation items, no refitting; seeds are not independent source-held-out tests.",
-  "official_evidence": "results/official/comparison.json",
-  "official_evidence_limit": "Different random draws and dates; only total ALC supplied for the no-Rasch batch; historical submitted ZIP hashes unavailable."
+  "scope": "Paired component removal on the same public sources and frozen calibration; not source-held-out validation.",
+  "budget_analysis": "results/rasch_confirmation/budget_analysis.json",
+  "prior_ablation": "results/rasch_prior_ablation/summary.json"
 }

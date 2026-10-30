@@ -1,0 +1,22 @@
+{
+  "budgets": [
+    0,
+    1
+  ],
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "policy": "adaptive",
+  "n_groups": 92,
+  "variants": {
+    "full": "Released Rasch hybrid and public count prior",
+    "no_rasch": "Set all Rasch lambdas to zero; retain count prior",
+    "no_count_prior": "Set feature_prior to None, activating the native binary-subject-mean fallback; retain Rasch",
+    "no_count_prior_no_rasch": "Disable both count prior and Rasch; keep the same binary-subject mean"
+  },
+  "controls": "Same published acquisition prefixes, evaluation items, frozen weights, and topic corrections. No refitting or tuning. Only checkpoints where kernel mixing weight is zero.",
+  "raw_predictions": "Record pre-topic-calibration probabilities too, to inspect calibration interactions.",
+  "interpretation": "Factorial prediction-component ablation; not a source-held-out test and not a simulation of private-platform feedback."
+}

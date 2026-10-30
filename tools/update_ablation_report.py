@@ -36,14 +36,11 @@ def main():
         + f"the largest increase among the three removals (${kernel['delta_alc_vs_full']:.4f}$). "
         + f"At budget 31, Brier worsens from ${full['brier'][-1]:.4f}$ to ${kernel['brier'][-1]:.4f}$. "
         + r'This supports the kernel branch at higher budgets; its zero weight leaves budgets zero and one unchanged.' + '\n\n'
-        + r'\paragraph{Calibration and Rasch have smaller, different effects.} '
+        + r'\paragraph{Calibration provides a smaller additional gain.} '
         + f"Removing topic calibration increases ALC to ${topic['alc']:.4f}$ "
         + f"(${topic['delta_alc_vs_full']:+.4f}$); its largest Brier benefit is at budget zero. "
-        + f"Removing Rasch slightly lowers ALC to ${rasch['alc']:.4f}$ "
-        + f"(${rasch['delta_alc_vs_full']:+.4f}$), although zero-label Brier worsens "
-        + f"from ${full['brier'][0]:.4f}$ to ${rasch['brier'][0]:.4f}$. "
-        + r'The small ALC change varies in sign across seeds. '
-        + r'Rasch helps initialization but not mean ALC here. Metadata smoothing and the kernel baseline remain, so the broader improvement over Empirical Mean cannot be assigned to Rasch alone.'
+        + r'The Rasch effect is examined by budget and prior availability below; '
+        + r'the full predictor advantage over Empirical Mean cannot be assigned to a single component.'
     )
     (ROOT / 'report/ablation_analysis.tex').write_text(analysis + '\n')
     print('Generated report/ablation_table.tex from audited component predictions.')

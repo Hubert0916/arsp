@@ -1,0 +1,209 @@
+{
+  "protocol": {
+    "budgets": [
+      0,
+      1
+    ],
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "policy": "adaptive",
+    "n_groups": 92,
+    "variants": {
+      "full": "Released Rasch hybrid and public count prior",
+      "no_rasch": "Set all Rasch lambdas to zero; retain count prior",
+      "no_count_prior": "Set feature_prior to None, activating the native binary-subject-mean fallback; retain Rasch",
+      "no_count_prior_no_rasch": "Disable both count prior and Rasch; keep the same binary-subject mean"
+    },
+    "controls": "Same published acquisition prefixes, evaluation items, frozen weights, and topic corrections. No refitting or tuning. Only checkpoints where kernel mixing weight is zero.",
+    "raw_predictions": "Record pre-topic-calibration probabilities too, to inspect calibration interactions.",
+    "interpretation": "Factorial prediction-component ablation; not a source-held-out test and not a simulation of private-platform feedback."
+  },
+  "scoring_script_sha256": "026856a542093d74f5c521589bbeff2734dc1b2a080ea4c2801877cb4bad3a07",
+  "n_prediction_records": 67071,
+  "max_nominal_prediction_difference": 0.0,
+  "variants": {
+    "full": {
+      "brier": [
+        0.2263276125740307,
+        0.2160500621540319
+      ],
+      "raw_brier": [
+        0.22848130663144708,
+        0.21759332407124662
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "brier": [
+            0.22638852655221176,
+            0.21403556610449423
+          ],
+          "raw_brier": [
+            0.2284780945974012,
+            0.21604485349671818
+          ]
+        },
+        {
+          "seed": 43,
+          "brier": [
+            0.22567706079114036,
+            0.21811510380298424
+          ],
+          "raw_brier": [
+            0.22786799214456513,
+            0.21929911345645417
+          ]
+        },
+        {
+          "seed": 44,
+          "brier": [
+            0.22691725037874,
+            0.21599951655461724
+          ],
+          "raw_brier": [
+            0.2290978331523749,
+            0.21743600526056753
+          ]
+        }
+      ]
+    },
+    "no_rasch": {
+      "brier": [
+        0.22769680890018412,
+        0.2153535791510332
+      ],
+      "raw_brier": [
+        0.22791961665894783,
+        0.21604947727991933
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "brier": [
+            0.22850889007056288,
+            0.21570551207208485
+          ],
+          "raw_brier": [
+            0.22866869436492437,
+            0.2168611063495995
+          ]
+        },
+        {
+          "seed": 43,
+          "brier": [
+            0.2266172629763184,
+            0.2162407303411754
+          ],
+          "raw_brier": [
+            0.22689580470564982,
+            0.21661063514520715
+          ]
+        },
+        {
+          "seed": 44,
+          "brier": [
+            0.22796427365367106,
+            0.21411449503983937
+          ],
+          "raw_brier": [
+            0.2281943509062693,
+            0.21467669034495132
+          ]
+        }
+      ]
+    },
+    "no_count_prior": {
+      "brier": [
+        0.24191832631469656,
+        0.22674883100588983
+      ],
+      "raw_brier": [
+        0.24508785418376533,
+        0.22875157176022431
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "brier": [
+            0.24154848368113224,
+            0.22291972208892588
+          ],
+          "raw_brier": [
+            0.24463375913430976,
+            0.22537707722810077
+          ]
+        },
+        {
+          "seed": 43,
+          "brier": [
+            0.24188263626307474,
+            0.23075314541752717
+          ],
+          "raw_brier": [
+            0.2450987351542125,
+            0.23240417936724886
+          ]
+        },
+        {
+          "seed": 44,
+          "brier": [
+            0.2423238589998827,
+            0.2265736255112164
+          ],
+          "raw_brier": [
+            0.24553106826277377,
+            0.2284734586853233
+          ]
+        }
+      ]
+    },
+    "no_count_prior_no_rasch": {
+      "brier": [
+        0.24408635090239883,
+        0.22737666826582192
+      ],
+      "raw_brier": [
+        0.24573451906079818,
+        0.22872884249567563
+      ],
+      "per_seed": [
+        {
+          "seed": 42,
+          "brier": [
+            0.2442754546458287,
+            0.22559359875183022
+          ],
+          "raw_brier": [
+            0.24583237113996387,
+            0.22738916966857906
+          ]
+        },
+        {
+          "seed": 43,
+          "brier": [
+            0.24397753992401314,
+            0.23082321643902554
+          ],
+          "raw_brier": [
+            0.24569452493310695,
+            0.2318601843352819
+          ]
+        },
+        {
+          "seed": 44,
+          "brier": [
+            0.24400605813735465,
+            0.22571318960661002
+          ],
+          "raw_brier": [
+            0.24567666110932374,
+            0.22693717348316594
+          ]
+        }
+      ]
+    }
+  }
+}

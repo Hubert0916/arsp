@@ -11,13 +11,15 @@ transfer. Remaining frozen parameters and topic corrections are unchanged.
 | Additional seeds 45–47 | 0.19880 | 0.19892 |
 | All six seeds | 0.19875 | 0.19872 |
 
-The aggregate ALC difference is negligible. Retaining Rasch improves zero-label
-Brier in all six seeds (mean 0.22583 vs 0.22696), but improves ALC in only two.
-Budgets 15 and 31 are identical because the hybrid has zero weight there.
-We **retain Rasch** for this small initialization benefit and withdraw the
-simplification after observing the worse, unpaired no-Rasch official batch.
-The latter is not a causal ablation. Neither comparison proves a general Rasch
-advantage. See `decision.json` and [`../official`](../official).
+The budget effects offset: Rasch improves mean B0 and B7, slightly worsens B1
+and B3, and has zero mixture weight at B15 and B31. `budget_analysis.json` gives
+the exact weighted contribution of each checkpoint to ALC. `budget_by_source.json`
+contains every source's six-seed mean difference; effects vary across sources.
+The overall near-zero ALC difference does not imply unchanged predictions.
+
+The additional [factorial prior ablation](../rasch_prior_ablation) tests how
+Rasch's contribution depends on the retained count prior and topic calibration.
+The evidence characterizes its conditional role in the frozen hybrid.
 
 `predictions.jsonl.gz` contains both variants for the additional draws;
 `acquisition.jsonl.gz` records their shared evidence. `summary.json`,

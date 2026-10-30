@@ -32,14 +32,15 @@ predictions, and acquisition traces, with source-level comparisons in the
 [scored summary](results/proxy/summary.json).
 
 [Component ablations](results/ablation) remove Rasch, Kernel Probe, or topic
-calibration with matched Adaptive labels. Across [six paired seeds](results/rasch_confirmation),
-Rasch improves zero-label Brier (0.22583 vs 0.22696) but leaves mean ALC essentially
-unchanged (0.19875 vs 0.19872). We retain the original with-Rasch submission.
+calibration with matched Adaptive labels. The [six-seed analysis](results/rasch_confirmation)
+shows offsetting budget effects: Rasch improves B0 and B7 but slightly worsens
+B1 and B3. A [factorial prior ablation](results/rasch_prior_ablation) finds a more
+favorable Rasch contribution at B0/B1 when the count prior is removed, conditional
+on fixed topic calibration. The submission retains the original calibrated hybrid.
 
-**Official Codabench:** the ten with-Rasch evaluations have mean ALC **0.19107**
-(SD 0.01105); the later 16 completed no-Rasch submissions average **0.20893**
-(SD 0.02813). These are different random draws and dates, so this comparison
-does not isolate Rasch's effect. [Records and aggregation](results/official).
+**Official Codabench:** ten evaluations of ASRP with Rasch and adaptive acquisition
+have mean Brier ALC **0.19107** (sample SD **0.01105**).
+[Records and aggregation](results/official).
 
 ## Reproduce local results
 
@@ -68,6 +69,8 @@ uv run --locked python tools/score_proxy.py results/proxy
 uv run --locked python tools/update_ablation_report.py
 uv run --locked python tools/confirm_rasch_removal.py --score-only
 uv run --locked python tools/update_rasch_report.py
+uv run --locked python tools/evaluate_rasch_prior.py --score-only
+uv run --locked python tools/update_rasch_prior_report.py
 ```
 
 To rerun component inference and additional Rasch draws on the same sources:
@@ -75,6 +78,7 @@ To rerun component inference and additional Rasch draws on the same sources:
 ```bash
 uv run --locked python tools/evaluate_ablation.py --workers 4 --output results/check-ablation
 uv run --locked python tools/confirm_rasch_removal.py --workers 4 --output results/check-rasch
+uv run --locked python tools/evaluate_rasch_prior.py --workers 4 --output results/check-prior
 ```
 
 ## Build a submission

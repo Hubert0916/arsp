@@ -1,7 +1,6 @@
 """Generate official-feedback report tables from audited evaluation aggregates."""
 import json
 import hashlib
-import statistics
 from pathlib import Path
 from parse_official_results import ROOT, summarize
 
@@ -62,45 +61,6 @@ def main():
     for r in sorted(runs,key=lambda r:by_block[r['block']]['submission_id']):
         table.append(f"{by_block[r['block']]['submission_id']} & {r['n_groups']} & {r['n_evaluation_items']} & {r['brier_alc']:.6f}"+r'\\')
     save('official_runs_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    comparison=json.loads((directory/'without_rasch_screenshot.json').read_text())
-    entries=comparison['submissions']
-    if len({r['submission_id'] for r in entries})!=len(entries):
-        raise ValueError('Duplicate screenshot submission ID')
-    included=[r for r in entries if r['status_in_screenshot']=='Finished']
-    scores=[r['displayed_brier_alc'] for r in included]
-    if len(scores)<2 or any(not 0<=v<=1 for v in scores):
-        raise ValueError('Invalid completed screenshot scores')
-    new={'n':len(scores),'mean':statistics.mean(scores),'sample_sd':statistics.stdev(scores),
-         'min':min(scores),'max':max(scores)}
-    aggregate={'with_rasch':alc,'without_rasch':new,
-               'difference_without_minus_with':new['mean']-alc['mean'],
-               'included_without_rasch_ids':[r['submission_id'] for r in included],
-               'excluded_without_rasch_ids':[r['submission_id'] for r in entries if r not in included],
-               'design':'Unpaired official batches from different dates; not a controlled Rasch ablation.',
-               'without_rasch_budget_scores':None}
-    (directory/'comparison.json').write_text(json.dumps(aggregate,indent=2)+'\n')
-    table=[r'\begin{tabular}{lrrr}',r'\toprule',r'Official batch & Runs & Mean ALC & SD\\',r'\midrule',
-           f"With Rasch & {n} & {alc['mean']:.5f} & {alc['sample_sd']:.5f}"+r'\\',
-           f"Without Rasch & {new['n']} & {new['mean']:.5f} & {new['sample_sd']:.5f}"+r'\\',
-           r'\bottomrule',r'\end{tabular}']
-    save('official_comparison_table.tex','\n'.join(table))
-    text=(f"The {new['n']} completed no-Rasch submissions in the later platform screenshot have mean ALC "
-          +f"${new['mean']:.5f}$ (SD ${new['sample_sd']:.5f}$), compared with ${alc['mean']:.5f}$ "
-          +f"(SD ${alc['sample_sd']:.5f}$) for the {n} with-Rasch evaluations. "
-          +r'The cancelled submission is excluded. These batches use different random draws and dates; '
-          +r'only total ALC is available for the no-Rasch batch. '
-          +r'\textbf{This unpaired comparison} motivates retaining the prior submission, '
-          +r'but cannot identify Rasch as the cause or locate the difference by label budget.')
-    save('official_comparison_analysis.tex',text)
-    table=[r'\begin{tabular}{rr@{\qquad}rr}',r'\toprule',
-           r'Submission ID & Brier ALC & Submission ID & Brier ALC\\',r'\midrule']
-    ordered=sorted(included,key=lambda r:r['submission_id']);half=(len(ordered)+1)//2
-    for index,left in enumerate(ordered[:half]):
-        cells=[str(left['submission_id']),f"{left['displayed_brier_alc']:.6f}"]
-        right=ordered[index+half] if index+half<len(ordered) else None
-        cells += [str(right['submission_id']),f"{right['displayed_brier_alc']:.6f}"] if right else ['','']
-        table.append(' & '.join(cells)+r'\\')
-    save('official_without_rasch_runs.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
     print(f'Updated official report inputs from {n} complete, distinct records.')
 
 

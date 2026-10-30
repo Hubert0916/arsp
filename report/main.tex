@@ -57,7 +57,7 @@ The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success
 
 ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
 
-\textbf{The main measured improvement comes from prediction, with a smaller acquisition benefit.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence, a reduction of $\PredictorALCGain{}$. Holding ASRP fixed, switching Random to Adaptive acquisition reduces ALC from $\ASRPRandomALC{}$ to $\ASRPAdaptiveALC{}$ ($\AcquisitionALCGain{}$). Component removals support the kernel at high budgets; six-draw Rasch ablations find a small zero-label benefit but essentially tied mean ALC. Ten separate official with-Rasch evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction. The later no-Rasch batch has worse mean ALC under different draws, motivating retention without establishing causality.
+\textbf{The main measured improvement comes from prediction, with a smaller acquisition benefit.} Across \ProxySources{} public source groups and three seeds, ASRP reduces mean Brier ALC from $\EMAdaptiveALC{}$ to $\ASRPAdaptiveALC{}$ relative to Empirical Mean under identical Adaptive evidence, a reduction of $\PredictorALCGain{}$. Switching ASRP from Random to Adaptive acquisition provides a smaller reduction of $\AcquisitionALCGain{}$. Component removals support the kernel at high budgets. Rasch's effects vary by budget; a factorial ablation finds a larger low-budget contribution when the public count prior is removed, conditional on the calibration layer. Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.
 
 \section{Competition Setting and Data}\label{sec:setting}
 
@@ -195,9 +195,11 @@ We use the metrics and equal-group weighting in Section~\ref{sec:setting}, then 
 
 We remove one prediction component at a time on the same \ProxySources{} groups and three seeds, replaying the published Adaptive acquisition trajectories. \textbf{No Rasch} sets $\eta_n=0$, retaining metadata smoothing and the kernel branch; \textbf{No Kernel Probe} sets $w_n=0$, using the Rasch hybrid at every budget; \textbf{No topic calibration} sets $\Delta_n(i)=0$. All other parameters and calibration statistics stay fixed, with no refitting or retuning. The full-model rerun is checked against every published Adaptive prediction within $10^{-7}$. We additionally repeat the paired Rasch comparison on seeds \textbf{45, 46, and 47}. These six draws reuse the same selected sources and assess split sensitivity, not transfer to unseen sources.
 
+To test overlap between the two prior signals, a \textbf{factorial prior ablation} on seeds 42--44 crosses Rasch enabled/disabled with the public count prior enabled/disabled at budgets zero and one, where the kernel weight is zero. Disabling the count prior activates the native fallback $p_{\mathrm{meta}}=\mu_s$; the binary subject prior, item features, acquired labels, and topic correction remain fixed. We record both final and pre-calibration probabilities. This tests component dependence, not performance on an unseen source.
+
 \subsection{Official formative feedback}
 
-We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. A later no-Rasch batch provides 16 completed platform scores; its one cancelled submission is excluded. Only total ALC is available for this batch. The two batches use different draws and dates and therefore form an \textbf{unpaired comparison}, distinct from the controlled public ablation. Appendix~\ref{app:official} records the submission IDs and available feedback.
+We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} records the submission IDs and available feedback.
 
 \section{Results and Analysis}
 
@@ -255,11 +257,23 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \setlength{\tabcolsep}{3pt}
 \input{rasch_retention_table}
 \vspace{6pt}
-\caption{Rasch ablation extended to seeds 42--47 on the same \ProxySources{} source groups. Each pair shares acquired labels and evaluation items; remaining parameters are fixed.}
+\caption{Rasch ablation extended to seeds 42--47 on the same \ProxySources{} source groups. Each pair shares acquired labels and evaluation items; remaining parameters are fixed. Negative differences favor Rasch.}
 \label{tab:rasch_retention}
 \end{table}
 
 \input{rasch_retention_analysis}
+
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\input{rasch_prior_table}
+\vspace{6pt}
+\caption{Factorial prior ablation at budgets zero and one, using the same 92 groups and seeds 42--44. Removing the count prior activates the native subject-mean fallback; all other components and labels are fixed.}
+\label{tab:rasch_prior}
+\end{table}
+
+\input{rasch_prior_analysis}
 
 \subsection{Official formative results}\label{sec:official}
 
@@ -275,26 +289,15 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \label{tab:official}
 \end{table}
 
-\begin{table}[H]
-\centering
-\small
-\input{official_comparison_table}
-\vspace{6pt}
-\caption{Unpaired official batches. The with-Rasch batch was evaluated on October 27 and the no-Rasch batch on October 30, 2026. SD describes variation across completed runs.}
-\label{tab:official_comparison}
-\end{table}
-
-\input{official_comparison_analysis}
-
 \section{Limitations and Discussion}
 
 \input{official_limitation}
 
-\paragraph{Evidence for model selection.} The public proxy shares its data release with offline fitting and calibration, so local gains may be optimistic. Six seeds on the same sources do not constitute six independent generalization tests. The official batches also differ in sampled subjects and items; their ALC gap cannot establish a causal Rasch benefit. Without per-budget feedback for the no-Rasch batch, we cannot locate its regression at cold start. Retaining Rasch is a conservative model-selection decision, not evidence that it is indispensable.
+\paragraph{Scope of the local evidence.} The public proxy shares its data release with offline fitting and calibration, so local gains may be optimistic. Six seeds on the same sources do not constitute six independent generalization tests. Component removals measure effects within a fixed configuration; the prior ablation does not recreate private data or establish why a different official draw scores differently. These comparisons characterize when the component contributes, rather than proving that it is indispensable.
 
 \section{Conclusion}
 
-ASRP balances public-data initialization with support-driven adaptation as labels accumulate. Paired experiments show a larger predictor benefit than acquisition benefit, with component removals supporting kernel adaptation at higher budgets and topic calibration. We retain Rasch for its small local initialization benefit and because its removal has no established overall advantage; the later official batch reinforces caution about simplification. Accurate cold-start transfer remains a challenge. Released artifacts and matched splits make these comparisons reproducible.
+ASRP balances public-data initialization with support-driven adaptation as labels accumulate. Paired experiments show a larger predictor benefit than acquisition benefit, with component removals supporting kernel adaptation at higher budgets and topic calibration. Rasch supplies a structured initialization signal whose measured contribution depends on the label budget and the other retained components. Accurate cold-start transfer remains a challenge. Released artifacts and matched splits make these comparisons reproducible.
 
 \clearpage
 \appendix
@@ -486,17 +489,6 @@ The following \ProxySources{} public binary source identifiers occur in the pair
 \label{tab:official_records}
 \end{table}
 
-\begin{table}[H]
-\centering
-\small
-\input{official_without_rasch_runs}
-\vspace{6pt}
-\caption{Completed no-Rasch submissions transcribed from the October 30 platform screenshot. Cancelled submission 1020351 is excluded. Only total ALC is available.}
-\label{tab:official_without_rasch_records}
-\end{table}
-
-The earlier ten evaluations were confirmed to use the same with-Rasch ZIP. The local inference files are restored to the pre-removal revision. Historical platform ZIP hashes are unavailable; the no-Rasch batch association follows our submission record and screenshot, rather than a hash recovered from Codabench.
-
 \section{Reproducibility and Disclosure}\label{app:reproducibility}
 
 Code, frozen weights, evaluation manifests, predictions, acquisition traces, and report source are available at \url{https://github.com/Hubert0916/arsp}. After accepting the measurement-db access conditions, run from the repository root:
@@ -515,11 +507,26 @@ For the fixed-evidence component ablations in Section~\ref{sec:ablations}, run \
 
 The additional Rasch comparisons use \path{tools/confirm_rasch_removal.py}; their pinned implementation and seeds are recorded in \path{experiments/rasch_confirmation.json}. Run \path{tools/update_rasch_report.py} to regenerate the six-seed comparison from both sets of paired predictions.
 
+The factorial prior experiment uses \path{tools/evaluate_rasch_prior.py} and \path{experiments/rasch_prior_ablation.json}. Its standard-prior conditions are checked against the published per-item Rasch ablation, and every condition is checked against native inference on the first evaluation item at each group, seed, and budget.
+
 \input{results_acquisition_details}
 
 Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
+
+\section{Prior and Calibration Interaction}\label{app:prior_ablation}
+
+\begin{table}[H]
+\centering
+\small
+\input{rasch_prior_raw_table}
+\vspace{6pt}
+\caption{Pre-calibration Brier scores for the factorial prior ablation, using the same evaluation rows as Table~\ref{tab:rasch_prior}.}
+\label{tab:rasch_prior_raw}
+\end{table}
+
+\input{rasch_prior_raw_analysis}
 
 % unsrtnat preserves the order in which references first appear in the text.
 \bibliographystyle{unsrtnat}

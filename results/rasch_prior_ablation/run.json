@@ -1,0 +1,35 @@
+{
+  "protocol": {
+    "budgets": [
+      0,
+      1
+    ],
+    "seeds": [
+      42,
+      43,
+      44
+    ],
+    "policy": "adaptive",
+    "n_groups": 92,
+    "variants": {
+      "full": "Released Rasch hybrid and public count prior",
+      "no_rasch": "Set all Rasch lambdas to zero; retain count prior",
+      "no_count_prior": "Set feature_prior to None, activating the native binary-subject-mean fallback; retain Rasch",
+      "no_count_prior_no_rasch": "Disable both count prior and Rasch; keep the same binary-subject mean"
+    },
+    "controls": "Same published acquisition prefixes, evaluation items, frozen weights, and topic corrections. No refitting or tuning. Only checkpoints where kernel mixing weight is zero.",
+    "raw_predictions": "Record pre-topic-calibration probabilities too, to inspect calibration interactions.",
+    "interpretation": "Factorial prediction-component ablation; not a source-held-out test and not a simulation of private-platform feedback."
+  },
+  "prepared_data_sha256": "de3bd4bcf3c3010caa41405cba0e9f4d29cc657a7bc93e884b0688c4ad43ab86",
+  "inputs": {
+    "experiments/proxy_manifest.json": "754619874ca41bbfca2020777c895def90889f630acc92ec8c91d5b8f65c82fc",
+    "experiments/rasch_prior_ablation.json": "24e87426e32a05ad5444bb4655bbf74ba042dfe1a48d65e86192155679e1030b",
+    "artifacts/manifest.sha256.json": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+    "uv.lock": "a9924f66312872664dcee40fa4100a78e546af49df6bcb31e7b63362679b5747",
+    "results/proxy/acquisition.jsonl": "b13cfe43ad51f6f71282ca55d28c020e35a5a90f2b49372f653a6387d7278555",
+    "results/ablation/predictions.jsonl.gz": "f5f0a4a04a19d1ce04de56b522efe4866b2d991c10da775bc5efcab1437e39db"
+  },
+  "script_sha256": "f3cb09b04de99bf7eb34d01dfc03a9b636df24106360b96292e7aad32ecec9c6",
+  "predictions_sha256": "797f84f6ae136c34b0977b41e0989a2fd4e5ee7271fa0ba38f02d8098a3dc844"
+}

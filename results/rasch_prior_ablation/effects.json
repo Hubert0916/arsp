@@ -1,0 +1,33 @@
+{
+  "count_prior_available": {
+    "brier": [
+      -0.0013691963261534268,
+      0.0006964830029987101
+    ],
+    "raw_brier": [
+      0.0005616899724992519,
+      0.0015438467913272969
+    ]
+  },
+  "count_prior_removed": {
+    "brier": [
+      -0.0021680245877022664,
+      -0.0006278372599320958
+    ],
+    "raw_brier": [
+      -0.0006466648770328542,
+      2.2729264548687622e-05
+    ]
+  },
+  "definition": "With Rasch minus without Rasch; negative is better. Same subjects, items, labels, and frozen calibration.",
+  "interaction": {
+    "brier": [
+      -0.0007988282615488396,
+      -0.001324320262930806
+    ],
+    "raw_brier": [
+      -0.0012083548495321061,
+      -0.0015211175267786092
+    ]
+  }
+}
