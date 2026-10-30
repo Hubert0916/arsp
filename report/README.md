@@ -1,14 +1,19 @@
 # ASRP technical report
 
 `main.tex` uses the supplied NeurIPS 2026 template. The main text has seven sections;
-mathematical details, source inventory, official submission IDs, reproduction, and
+mathematical details, source inventory, official-result placeholders, reproduction, and
 sampling assumptions are in the appendices. Keep the author/coauthor fields as
 intended before submitting.
 
 Current local results use the [public formative simulation](../results/formative):
 30 complete-group draws, fixed within-group pools, all evaluation responses,
-Random/Adaptive acquisition, and paired component removals. The only official
-scores reported are the ten with-Rasch evaluations in `../results/official`.
+Random/Adaptive acquisition, and paired component removals. Official score and
+submission-ID fields are currently blank (`official_results: pending` in
+`report_config.json`). Historical feedback remains in `../results/official`.
+
+The no-Rasch refinement has not passed all predefined stability gates, so it has
+not replaced the reported method or main experiments. Its 60-draw validation and
+component comparisons are documented separately in `../results/asrp_next`.
 
 From the repository root, audit, generate figures, compile, and clean intermediates:
 
@@ -35,4 +40,5 @@ Table captions remain below their tables. The NeurIPS checklist is omitted.
 Appendix F explains the Rasch uncertainty and shared-evidence checks. The archived
 code and context diagnostics are released in `../results/rasch_audit`; rerun them
 with `tools/check_rasch_versions.py` and `tools/check_shared_context.py` after data
-preparation. The official table still contains only the ten with-Rasch results.
+preparation. Both report generators respect the official-results setting; a
+normal rebuild will retain the pending fields.

@@ -200,7 +200,7 @@ On each draw we remove one prediction component while keeping the acquired evide
 
 \subsection{Official formative feedback}
 
-We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} records the submission IDs and available feedback.
+\input{official_setup}
 
 \section{Results and Analysis}
 
@@ -264,7 +264,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \setlength{\tabcolsep}{4pt}
 \input{official_table}
 \vspace{6pt}
-\caption{Official Brier scores and ALC for ASRP with adaptive acquisition: mean and sample SD over \OfficialRuns{} evaluations, with equal group weighting within each evaluation. Lower is better.}
+\input{official_caption}
 \label{tab:official}
 \end{table}
 
@@ -272,7 +272,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{official_limitation}
 
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback; Appendix~\ref{app:rasch_audit} diagnoses this sensitivity. Unknown coordinator details remain local assumptions. Component effects do not establish universal necessity.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts; Appendix~\ref{app:rasch_audit} diagnoses this sensitivity. Unknown coordinator details remain local assumptions. Component effects do not establish universal necessity.
 
 \section{Conclusion}
 
@@ -464,7 +464,7 @@ The following \ProxySources{} public binary source identifiers occur across the 
 \small
 \input{official_runs_table}
 \vspace{6pt}
-\caption{Official formative evaluations identified by Codabench submission ID. Brier ALC is reconstructed from the rounded group feedback and may differ from the platform display by $10^{-6}$. Evaluation-item counts do not determine group weights.}
+\input{official_records_caption}
 \label{tab:official_records}
 \end{table}
 
@@ -484,7 +484,7 @@ The pipeline reconstructs the eligible inventory, fixed pools, and all \ProxyDra
 
 The protocol is in \path{experiments/formative_config.json}; the manifest records every selected item and response. \path{tools/score_draws.py} audits released compressed predictions without model inference, and \path{tools/update_formative_report.py} regenerates report tables and analyses. The release includes per-group and per-draw scores, both acquisition trajectories, and paired component differences. Earlier fixed-subject experiments remain separate historical results and are not mixed into the current tables.
 
-Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
+Historical official aggregates are preserved separately. Official fields in this draft remain pending under \path{report/report_config.json}; report generation does not insert those historical scores. Private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 
