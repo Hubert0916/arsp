@@ -1,0 +1,100 @@
+{
+  "predictions_checked": 288,
+  "max_probability_error": 0.0,
+  "full_acquisition_trajectories_checked": 4,
+  "draws": [
+    {
+      "phase": "validation",
+      "draw_id": 0,
+      "policy": "random",
+      "groups": [
+        "2ec9f597161a2825ae63",
+        "f2d0eb321a4c0ab0e794",
+        "2b890ce58b524ac79572",
+        "39b45a169c2562ac4765"
+      ]
+    },
+    {
+      "phase": "validation",
+      "draw_id": 0,
+      "policy": "adaptive",
+      "groups": [
+        "2ec9f597161a2825ae63",
+        "f2d0eb321a4c0ab0e794",
+        "2b890ce58b524ac79572",
+        "39b45a169c2562ac4765"
+      ]
+    },
+    {
+      "phase": "validation",
+      "draw_id": 40,
+      "policy": "random",
+      "groups": [
+        "3b95ea5098f541988087",
+        "9e471a7b6e766548401b",
+        "b0453487270218b264ef",
+        "29ce5c4626492f2156b8",
+        "dc236eada38f6d877829",
+        "7f802ea7b05f03a78816",
+        "9ee348ddb52b5b93d248",
+        "d558c0ea264e82b24d28"
+      ]
+    },
+    {
+      "phase": "validation",
+      "draw_id": 40,
+      "policy": "adaptive",
+      "groups": [
+        "3b95ea5098f541988087",
+        "9e471a7b6e766548401b",
+        "b0453487270218b264ef",
+        "29ce5c4626492f2156b8",
+        "dc236eada38f6d877829",
+        "7f802ea7b05f03a78816",
+        "9ee348ddb52b5b93d248",
+        "d558c0ea264e82b24d28"
+      ]
+    }
+  ],
+  "locked_candidate_sha256": "762079eeb2caa74c003d93339bbbfa530e95acf7873e082182f75feeec4840c3",
+  "native_files": {
+    "adaptive_gain_policy.py": "f4a274c5fbe45fa2761bff0c0a637e4a0163b0e47ee882e42d85eedc644e2b8a",
+    "balanced_probe_policy.py": "95c4f5eae6a780ea79e248e6feb5fd2ce1026eea16e1ae7547d2f0747c1ccbcf",
+    "base_features.py": "7fb8f82b00d407898672fd5198ed3ec57dccc48c2c2a011aaf3e11b7c17f9639",
+    "binary_subject_prior.json": "64f89fad59f5d6d5a5c650cb611c818741539200748c2103e715527be339f1b6",
+    "candidate_provenance.json": "bf59346cf9b51f2c1bdaf2172bd5aeef295f6263f2939d9aa2e56a6b0a5074f0",
+    "config.json": "da489a9071876db1edcec711f57d5424af3d10a6bb47893656323f1bc8b11020",
+    "encoder/1_Pooling/config.json": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+    "encoder/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "encoder/README.md": "dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0",
+    "encoder/config.json": "953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41",
+    "encoder/model.safetensors": "53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db",
+    "encoder/sentence_bert_config.json": "fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7",
+    "encoder/special_tokens_map.json": "303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+    "encoder/tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "encoder/tokenizer_config.json": "acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b",
+    "encoder/vocab.txt": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+    "evidence_features.py": "77392f7cfc0f31aad6515ef65c81624a7cd15d04fa82037cf210bc23847ef7dd",
+    "feature_prior.json": "0d736d0348a122b5c4011196a2a1dd737d0aadede91682cbd026bb61ebdccde6",
+    "kernel_probe.py": "49d5b3f96c1109216c91b3010f340844ee2dc24edeb2c9fbe67e3bb7fc1935fa",
+    "labeling.py": "c56ae5ba3e2aa2d95b9e8849d1692eadd91ee0ef6901d4cc10c7c0f6d0b349a5",
+    "linear_gain_policy.py": "baa5293b72e9228fabbac07b360ac5b2a81645a08baa7c386ac1a73ea10fd9ab",
+    "model.py": "583141a891b5034aae97c4c457aa8b3491f5ab7ad22581ad30528bb03d50cd7d",
+    "prediction_config.json": "1ed8eb06cf043a934e6e2c1eedf49aa433bc673089c894b36d33732948af4fac",
+    "prior_features.py": "655d68396ec762ab996dfa9a0688b456252f1f3283622abaa594e1ed4ca8708d",
+    "prior_kernel.py": "1272e6855b2a1a02b4617bc1f16fe3e8c5f327e01662e0c04bc40920df159d4d",
+    "probe_config.json": "04c3a79056b7c06864bc857590c1c4eaa98b8988156848f89336ee128eda1ed8",
+    "probe_encoder/LICENSE.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "probe_encoder/README.md": "dcd602d2fd35c203a247304a06fec6654a12f7941b739f9221a064fe8dc3b7f0",
+    "probe_encoder/onnx/model.onnx": "6fd5d72fe4589f189f8ebc006442dbb529bb7ce38f8082112682524616046452",
+    "probe_encoder/tokenizer.json": "be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+    "project_core.py": "65d16300cc27897a3fbeca4270c326522c0655a141959fc98cff1d39420452ee",
+    "project_policy.py": "d8574093f9ae439be325b7e9bce0bb6168da985b82fa60740c10ce31d8c26d18",
+    "requirements.txt": "d0a338367ce96e405b43cc2afd0cd7b6e94161dec85c894900bd67a779f0328b",
+    "runtime_config.json": "1a5af437ff4f07723fb64702da5ff0598da78d06267e6499403842dd0588aa0e",
+    "text_encoder.py": "d8812d74798ce1d428e35bd3ec3f618c2849eb80baaf1d023dcc58cfbb8fc0ff",
+    "topic_calibration.json": "518e1776c7eb9edecefb583ee8518e18cd0dc2236f84b0a4473fdc583adc4821",
+    "window_features.py": "abe84e160a01ffe4f9534fde383ee2d02e432f260c15cc1166e4be3eda825af5"
+  },
+  "scope": "Phase=validation. First and last evaluation inputs of every group in the listed draws, all six budgets, both acquisition policies."
+}

@@ -1,0 +1,19 @@
+{
+  "config": {
+    "prior_shrink": 1.0,
+    "prior_center": 0.5,
+    "concentrations": [
+      4.0
+    ],
+    "masses": [
+      1.0
+    ],
+    "residual_scale": 1.0,
+    "combine": "rebase",
+    "topic_decay": 8.0
+  },
+  "selected_using": "Development only; no validation scores inspected.",
+  "search_result_sha256": "e3c6045364718298528f81a6cfd753171fa118d9a6388e128990d190ce02ac27",
+  "implementation_sha256": "1272e6855b2a1a02b4617bc1f16fe3e8c5f327e01662e0c04bc40920df159d4d",
+  "protocol_sha256": "a8c8763af8c966fd2e8f3e8216d50bfa6001d7712dc4146c28811058a1193e59"
+}
