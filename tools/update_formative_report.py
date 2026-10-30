@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import statistics
 
-from prepare_proxy import ROOT
+from prepare_proxy import ROOT, sha
 
 
 def main():
@@ -11,7 +11,16 @@ def main():
     s=json.loads((d/'summary.json').read_text());m=json.loads((ROOT/'experiments/formative_manifest.json').read_text())
     if s['protocol']!=m['config'] or s['n_draws']!=len(m['draws']):raise ValueError('Protocol mismatch')
     methods=s['methods'];pairs=s['paired']
-    def save(name,text):(r/name).write_text(text+'\n')
+    audit_dir=ROOT/'results/rasch_audit'
+    audit=json.loads((audit_dir/'local_effects.json').read_text())
+    version=json.loads((audit_dir/'version_check.json').read_text())
+    context=json.loads((audit_dir/'context_check.json').read_text())
+    for name,digest in audit['input_sha256'].items():
+        if sha(d/name)!=digest:raise ValueError('Rasch audit inputs changed: '+name)
+    def save(name,text):
+        if any(ord(c)<32 and c!='\n' for c in text):
+            raise ValueError('Unexpected control character in generated report file: '+name)
+        (r/name).write_text('\n'.join(line.rstrip() for line in text.splitlines())+'\n')
     def value(policy,variant):return methods[policy][variant]['alc']['mean']
     aa=value('adaptive','full');ar=value('random','full');ea=value('adaptive','empirical_mean')
     macros={'ProxySources':s['n_distinct_sources'],'ProxyGroups':s['n_distinct_groups'],
@@ -64,13 +73,11 @@ def main():
         x=methods['adaptive'][variant];vals=[b['mean'] for b in x['brier']]+[x['alc']['mean']]
         table.append(label+' & '+' & '.join(f'{v:.4f}' for v in vals)+f" & {x['alc']['mean']-aa:+.4f}"+r'\\')
     save('ablation_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    texts=[]
-    for v,label in [('no_rasch','Rasch'),('no_kernel','Kernel Probe'),('no_topic','topic calibration')]:
-        p=pairs['remove_'+v]
-        texts.append(f"Removing {label} changes mean ALC by ${p['mean']:+.5f}$, worsening {p['n_positive']}/{s['n_draws']} draws. ")
+    texts=[f"Removing Kernel Probe and topic calibration increases mean ALC by ${pairs['remove_no_kernel']['mean']:.5f}$ and ${pairs['remove_no_topic']['mean']:.5f}$, respectively. "]
     rasch=pairs['remove_no_rasch'];delta=rasch['brier_difference']
-    texts.append(f"For Rasch, the removal effects at budgets zero and one are ${delta[0]:+.5f}$ and ${delta[1]:+.5f}$, respectively. ")
-    texts.append(r'Rasch removal leaves predictions unchanged at budgets 15 and 31, where its mixture coefficient is zero. These matched-evidence effects concern the frozen system without refitting.')
+    lo,hi=audit['percentile_95_interval']
+    texts.append(f"Rasch removal changes mean ALC by ${rasch['mean']:+.5f}$; a paired-draw 95\\% bootstrap interval is $[{lo:.5f}, {hi:.5f}]$. ")
+    texts.append(r'This interval spans zero and establishes neither an average advantage nor equivalence. Zero Rasch weight makes predictions identical at budgets 15 and 31. See Appendix~\ref{app:rasch_audit} for resampling and diagnostic checks.')
     save('ablation_analysis.tex',r'\paragraph{Controlled component effects.} '+''.join(texts))
     names=sorted({g['source'] for g in m['groups']})
     save('source_inventory.tex',', '.join(r'\texttt{'+name.replace('_',r'\_')+'}' for name in names)+'.')
@@ -87,10 +94,34 @@ def main():
     effects.sort(key=lambda e:e['delta'])
     (d/'rasch_by_group.json').write_text(json.dumps(effects,indent=2)+'\n')
     win=sum(e['delta']>0 for e in effects);loss=sum(e['delta']<0 for e in effects)
-    save('rasch_retention_analysis.tex',r'\paragraph{Group heterogeneity.} '+f"Averaging repeated appearances per group, retaining Rasch improves ALC in {win}/{len(effects)} distinct groups and worsens it in {loss}. "+f"ASRP + Adaptive draw scores range from ${methods['adaptive']['full']['alc']['min']:.4f}$ to ${methods['adaptive']['full']['alc']['max']:.4f}$. "+r'Only one to five complete groups fit each public draw, making scores sensitive to group composition. This variation does not quantify private-test uncertainty.')
+    save('rasch_retention_analysis.tex',r'\paragraph{Group heterogeneity.} '+f"Averaging repeated appearances per group, retaining Rasch improves ALC in {win}/{len(effects)} distinct groups and worsens it in {loss}. "+r'Only one to five complete groups fit each public draw, making aggregate scores sensitive to composition. Per-group results accompany the release.')
     save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as labels accumulate. '
         +('ASRP outperforms Empirical Mean on average with matched acquired evidence. ' if aa<ea else 'Matched-evidence comparisons expose the limits of the current predictor. ')
         +r'Component and acquisition effects vary across sampled groups, while accurate cold-start transfer remains a challenge. The released protocol, frozen artifacts, predictions, and acquisition traces make these comparisons reproducible.')
+    table=[r'\begin{tabular}{lrrrr}',r'\toprule',r'Source & $B_{15}$, focal & $B_{15}$, + companion & $B_{31}$, focal & $B_{31}$, + companion\\',r'\midrule']
+    for row in context['results']:
+        vals=[row['focal_only_brier'][4],row['with_companion_brier'][4],row['focal_only_brier'][5],row['with_companion_brier'][5]]
+        table.append(r'\texttt{'+row['source'].replace('_',r'\_')+'} & '+' & '.join(f'{v:.5f}' for v in vals)+r'\\')
+    table += [r'\bottomrule',r'\end{tabular}']
+    details=(r'\paragraph{Paired uncertainty and heterogeneous effects.} '
+        +f"We resample the {s['n_draws']} complete paired public draws {audit['bootstrap_replicates']:,} times (seed {audit['bootstrap_seed']}) and take the 2.5th and 97.5th percentiles of the mean ALC difference. "
+        +f"Rasch retention helps in {audit['n_draws_retention_helps']} draws and hurts in {audit['n_draws_retention_hurts']}. "
+        +f"Under the report's group/draw weighting, group occurrences favoring retention contribute ${audit['positive_weighted_group_contributions']:+.5f}$ and those favoring removal contribute ${audit['negative_weighted_group_contributions']:+.5f}$ to the removal-minus-full difference. "
+        +r'The near-zero mean results from opposing effects, not identical predictions. The interval is conditional on this public snapshot and does not estimate private-test uncertainty. '
+        +f"The worst no-Rasch public draw already has ALC ${audit['worst_no_rasch_public_draw']['without_rasch_alc']:.5f}$, illustrating why a single difficult draw should not be compared with a multi-draw mean.\n\n"
+        +r'\paragraph{Archived implementation check.} '
+        +fr"We reconstruct the archived no-Rasch implementation (Git \texttt{{{version['archived_commit'][:7]}}}) and compare it with setting the original Rasch weights to zero. The first and last distinct evaluation inputs of each group, at all six budgets and under both policies, give {version['n_predictions']:,} checked predictions with maximum difference ${version['max_error']:.0f}$. "
+        +r'The acquisition code is unchanged and the kernel implementation is semantically identical. This checks the archived code on these inputs; it does not authenticate an unavailable historical platform ZIP. '
+        +r'The report retains the submitted with-Rasch configuration and does not infer that Rasch is universally necessary.'+'\n\n'
+        +r'\paragraph{Shared-benchmark context.} '
+        +r'All main public draws happen to contain distinct benchmarks, whereas official feedback includes multiple subjects within a benchmark. Kernel Probe and acquisition share evidence or seen candidates across those subjects. Thus a comparison of one subject across separate official draws need not hold its full context fixed, even when its own item pool is persistent. '+'\n\n'
+        +r'We isolate this mechanism using the first three eligible source/benchmark names in lexical order, taking the first group-ID pair with distinct visible subjects that fits the 1,000-pair cap. We hold the focal subject\textquotesingle s evaluation items and acquired-label prefixes fixed, then append only the companion\textquotesingle s acquired prefix at each budget. Acquisition is not rerun jointly. '
+        +r'Budgets zero and one, and Empirical Mean, stay unchanged; kernel-dependent predictions can change even at budgets 15 and 31, where Rasch is absent. This establishes context sensitivity, not the cause or magnitude of a private-platform gap.'+'\n\n'
+        +r'\begin{table}[H]'+'\n'+r'\centering\small'+'\n'+'\n'.join(table)+'\n'+r'\vspace{6pt}'+'\n'
+        +r'\caption{Controlled context diagnostic: fixed focal labels and queries, with or without another subject\textquotesingle s evidence from the same benchmark. These cases are not averaged into the main results.}'+'\n'
+        +r'\label{tab:context_audit}'+'\n'+r'\end{table}'+'\n\n'
+        +r'Results and reproducible checks are in \path{results/rasch_audit/}, with \path{tools/audit_rasch_effects.py}, \path{tools/check_rasch_versions.py}, and \path{tools/check_shared_context.py}.')
+    save('rasch_audit.tex',details)
     print('Generated formative report tables, macros, analyses, and group diagnostics.')
 
 

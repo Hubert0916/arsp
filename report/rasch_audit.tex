@@ -1,0 +1,25 @@
+\paragraph{Paired uncertainty and heterogeneous effects.} We resample the 30 complete paired public draws 100,000 times (seed 20261031) and take the 2.5th and 97.5th percentiles of the mean ALC difference. Rasch retention helps in 16 draws and hurts in 14. Under the report's group/draw weighting, group occurrences favoring retention contribute $+0.00356$ and those favoring removal contribute $-0.00380$ to the removal-minus-full difference. The near-zero mean results from opposing effects, not identical predictions. The interval is conditional on this public snapshot and does not estimate private-test uncertainty. The worst no-Rasch public draw already has ALC $0.26062$, illustrating why a single difficult draw should not be compared with a multi-draw mean.
+
+\paragraph{Archived implementation check.} We reconstruct the archived no-Rasch implementation (Git \texttt{2f85fdb}) and compare it with setting the original Rasch weights to zero. The first and last distinct evaluation inputs of each group, at all six budgets and under both policies, give 2,112 checked predictions with maximum difference $0$. The acquisition code is unchanged and the kernel implementation is semantically identical. This checks the archived code on these inputs; it does not authenticate an unavailable historical platform ZIP. The report retains the submitted with-Rasch configuration and does not infer that Rasch is universally necessary.
+
+\paragraph{Shared-benchmark context.} All main public draws happen to contain distinct benchmarks, whereas official feedback includes multiple subjects within a benchmark. Kernel Probe and acquisition share evidence or seen candidates across those subjects. Thus a comparison of one subject across separate official draws need not hold its full context fixed, even when its own item pool is persistent.
+
+We isolate this mechanism using the first three eligible source/benchmark names in lexical order, taking the first group-ID pair with distinct visible subjects that fits the 1,000-pair cap. We hold the focal subject\textquotesingle s evaluation items and acquired-label prefixes fixed, then append only the companion\textquotesingle s acquired prefix at each budget. Acquisition is not rerun jointly. Budgets zero and one, and Empirical Mean, stay unchanged; kernel-dependent predictions can change even at budgets 15 and 31, where Rasch is absent. This establishes context sensitivity, not the cause or magnitude of a private-platform gap.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Source & $B_{15}$, focal & $B_{15}$, + companion & $B_{31}$, focal & $B_{31}$, + companion\\
+\midrule
+\texttt{alignment\_faking} & 0.06160 & 0.06138 & 0.06039 & 0.06187\\
+\texttt{babilong} & 0.28805 & 0.23845 & 0.22883 & 0.22777\\
+\texttt{benger} & 0.18691 & 0.18719 & 0.18611 & 0.18637\\
+\bottomrule
+\end{tabular}
+\vspace{6pt}
+\caption{Controlled context diagnostic: fixed focal labels and queries, with or without another subject\textquotesingle s evidence from the same benchmark. These cases are not averaged into the main results.}
+\label{tab:context_audit}
+\end{table}
+
+Results and reproducible checks are in \path{results/rasch_audit/}, with \path{tools/audit_rasch_effects.py}, \path{tools/check_rasch_versions.py}, and \path{tools/check_shared_context.py}.

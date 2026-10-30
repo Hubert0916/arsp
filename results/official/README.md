@@ -20,5 +20,5 @@ uv run --locked python tools/update_official_report.py
 ```
 
 Private platform evaluations cannot be rerun using public data. Controlled
-component comparisons use the local experiments in [`../ablation`](../ablation)
-and [`../rasch_confirmation`](../rasch_confirmation).
+component comparisons use [`../formative`](../formative) and the diagnostic
+checks in [`../rasch_audit`](../rasch_audit). Earlier protocols remain historical.

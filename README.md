@@ -30,6 +30,10 @@ This follows the documented formative design on public data. The private sampler
 and test pool are unavailable; local choices are explicit. Frozen fitting and
 calibration overlap the public release, so these are not source-held-out results.
 
+The [Rasch audit](results/rasch_audit) checks uncertainty, archived-code agreement,
+and sensitivity to other subjects' evidence. The paired public Rasch effect is
+small and mixed; it does not establish that removing Rasch improves the method.
+
 **Official Codabench:** ten with-Rasch ASRP evaluations have mean Brier ALC
 **0.19107** (sample SD **0.01105**). [Aggregates](results/official).
 

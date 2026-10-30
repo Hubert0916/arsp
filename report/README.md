@@ -14,6 +14,7 @@ From the repository root, audit, generate figures, compile, and clean intermedia
 
 ```bash
 uv run --locked python tools/score_draws.py results/formative
+uv run --locked python tools/audit_rasch_effects.py
 uv run --locked python tools/update_formative_report.py
 uv run --locked python report/make_proxy_plot.py
 uv run --locked python tools/update_official_report.py
@@ -30,3 +31,8 @@ The method figure is native TikZ in `figures/asrp_method.tex`; the Brier curve i
 built by `make_proxy_plot.py`. Both retain the requested maximum width of
 `0.95\columnwidth`, maximum height of `0.24\textheight`, and aspect ratio.
 Table captions remain below their tables. The NeurIPS checklist is omitted.
+
+Appendix F explains the Rasch uncertainty and shared-evidence checks. The archived
+code and context diagnostics are released in `../results/rasch_audit`; rerun them
+with `tools/check_rasch_versions.py` and `tools/check_shared_context.py` after data
+preparation. The official table still contains only the ten with-Rasch results.

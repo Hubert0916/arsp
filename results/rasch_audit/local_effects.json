@@ -1,0 +1,65 @@
+{
+  "definition": "No Rasch minus full ASRP; positive means retaining Rasch helps.",
+  "n_draws": 30,
+  "mean_delta": -0.00023925944211320623,
+  "sample_sd_delta": 0.006478500908545789,
+  "bootstrap_seed": 20261031,
+  "bootstrap_replicates": 100000,
+  "percentile_95_interval": [
+    -0.0025563797170494434,
+    0.0020207500661195235
+  ],
+  "interval_scope": "Resample whole paired public draws; conditional on the fixed public snapshot and frozen artifacts. Not private-test uncertainty or proof of equivalence.",
+  "n_draws_retention_helps": 16,
+  "n_draws_retention_hurts": 14,
+  "n_draws_with_repeated_benchmarks": 0,
+  "budget_differences": [
+    0.00012240092742257168,
+    -0.0014943563690678922,
+    -0.00024429872868694363,
+    0.00048115742347752563,
+    0.0,
+    0.0
+  ],
+  "pointwise_budget_95_intervals": [
+    [
+      -0.007478222172385347,
+      0.0074623461945202895
+    ],
+    [
+      -0.006828461877600145,
+      0.0037070048308619832
+    ],
+    [
+      -0.0026783947707906116,
+      0.0022346738474967537
+    ],
+    [
+      -0.0005184648852385071,
+      0.001456824852433081
+    ],
+    [
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "positive_weighted_group_contributions": 0.0035557878972439206,
+  "negative_weighted_group_contributions": -0.0037950473393571255,
+  "worst_no_rasch_public_draw": {
+    "draw_id": 21,
+    "n_groups": 2,
+    "with_rasch_alc": 0.2612582547086425,
+    "without_rasch_alc": 0.26062289610227074
+  },
+  "input_sha256": {
+    "draws.json": "b6b659e9c2fe5d8d35f6f51f31ec441fe6700a8628e5884fc3b129340331c24b",
+    "by_group.json": "dbb765075eb23d3198f5b5e41421ed9d29acadc3ba4b658c74a5147b1b785c32",
+    "summary.json": "b86ce3ee641ef83d2cb0c6fb17f3267c5453fac91709c01c5baf8651f11eef90"
+  },
+  "formative_manifest_sha256": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
+  "script_sha256": "66bed68ae59e1af5939f5e4c71130782986aeeda9b7c4645d10b532bced5ddf5"
+}

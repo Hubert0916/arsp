@@ -1,0 +1,143 @@
+{
+  "selection": "First three source/benchmark names in lexical order, first group-ID pair fitting 1,000 pairs; distinct visible subjects; no score selection.",
+  "intervention": "Add companion support only; focal labels, targets, weights, calibration, and acquired-prefix order fixed. Not a rerun of joint acquisition.",
+  "budgets": [
+    0,
+    1,
+    3,
+    7,
+    15,
+    31
+  ],
+  "results": [
+    {
+      "source": "alignment_faking",
+      "focal_group": "14082c2874e495f5bd39",
+      "companion_group": "2e9e6c77631e3bb52090",
+      "n_source_pairs": 810,
+      "n_evaluation_responses": 249,
+      "focal_only_brier": [
+        0.19942448605416802,
+        0.13982005700717098,
+        0.09144190936398565,
+        0.06386355518089848,
+        0.061601366712754166,
+        0.060394134122129364
+      ],
+      "with_companion_brier": [
+        0.19942448605416802,
+        0.13982005700717098,
+        0.09219424241105569,
+        0.062475058008720406,
+        0.06137927582588069,
+        0.06186670856071888
+      ],
+      "brier_delta": [
+        0.0,
+        0.0,
+        0.0007523330470700362,
+        -0.0013884971721780728,
+        -0.0002220908868734786,
+        0.0014725744385895162
+      ],
+      "max_prediction_change": [
+        0.0,
+        0.0,
+        0.05146264626462646,
+        0.07105337153058908,
+        0.20124758074424787,
+        0.2662736713959347
+      ],
+      "empirical_mean_max_change": 0.0,
+      "focal_only_alc": 0.0973272396705916,
+      "with_companion_alc": 0.09730284611205425
+    },
+    {
+      "source": "babilong",
+      "focal_group": "0d47aab7ec8d8580ac28",
+      "companion_group": "a764be455878abe019f3",
+      "n_source_pairs": 200,
+      "n_evaluation_responses": 50,
+      "focal_only_brier": [
+        0.25317280109982965,
+        0.2661450984617102,
+        0.2210673178824729,
+        0.22876622855150913,
+        0.2880548883965625,
+        0.22883284340573767
+      ],
+      "with_companion_brier": [
+        0.25317280109982965,
+        0.2661450984617102,
+        0.22254029545328777,
+        0.21893551193787256,
+        0.238447390762389,
+        0.2277697580699296
+      ],
+      "brier_delta": [
+        0.0,
+        0.0,
+        0.001472977570814854,
+        -0.009830716613636575,
+        -0.04960749763417352,
+        -0.0010630853358080672
+      ],
+      "max_prediction_change": [
+        0.0,
+        0.0,
+        0.03343065477058493,
+        0.0604790028012866,
+        0.14602280805043388,
+        0.10599458392219896
+      ],
+      "empirical_mean_max_change": 0.0,
+      "focal_only_alc": 0.2490072711090077,
+      "with_companion_alc": 0.2373079152400278
+    },
+    {
+      "source": "benger",
+      "focal_group": "43fe5150a5324c4a24d0",
+      "companion_group": "46abe9d360d85f4c0588",
+      "n_source_pairs": 736,
+      "n_evaluation_responses": 263,
+      "focal_only_brier": [
+        0.18419191929128886,
+        0.18664771339481048,
+        0.188813820439275,
+        0.18420872349677975,
+        0.18691224051799796,
+        0.18611253425622082
+      ],
+      "with_companion_brier": [
+        0.18419191929128886,
+        0.18664771339481048,
+        0.18871098520317223,
+        0.18425247679220114,
+        0.1871927187114847,
+        0.18636963858822694
+      ],
+      "brier_delta": [
+        0.0,
+        0.0,
+        -0.00010283523610277179,
+        4.375329542138928e-05,
+        0.00028047819348675507,
+        0.00025710433200612504
+      ],
+      "max_prediction_change": [
+        0.0,
+        0.0,
+        0.004506572619121685,
+        0.00896409425624256,
+        0.020449302338938713,
+        0.05838035238631423
+      ],
+      "empirical_mean_max_change": 0.0,
+      "focal_only_alc": 0.1863469449245236,
+      "with_companion_alc": 0.1864169346082853
+    }
+  ],
+  "input_manifest_sha256": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
+  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+  "script_sha256": "c715b60c9e007903a88a199c48b253d46c0760d9f2dc45c70283c3e4e2d892ef"
+}
