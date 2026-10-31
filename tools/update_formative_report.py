@@ -59,7 +59,7 @@ def main():
         +f"Topic calibration contributes most at budget 0 (Brier difference on removal: ${topic['brier_difference'][0]:+.4f}$), "
         +f"and the kernel at budget 31 (${kernel['brier_difference'][5]:+.4f}$). "
         +f"Rasch has a small mean ALC benefit (${rasch['mean']:.6f}$) and no effect at budgets 15 and 31, where its branch has zero weight. "
-        +r'These benefits are not uniform across budgets or draws; the mean differences alone do not establish a consistent gain from each component.')
+        +r'These benefits are not uniform across budgets or draws.')
     save('results_overview.tex',f"Across {s['n_draws']} public-data draws, \\textbf{{ASRP reaches mean Brier ALC ${asrp:.4f}$}}, compared with ${baseline:.4f}$ for Empirical Mean using identical randomly acquired labels (Table~\\ref{{tab:proxy}}). Each draw contains complete groups under the 1,000-pair cap; Table~\\ref{{tab:seeds}} reports score variation across sampled group compositions.")
     save('results_analysis.tex',r'\paragraph{Matched-evidence comparison.} '
         +f"With randomly acquired evidence held fixed, ASRP changes ALC by ${pred['mean']:+.4f}$ relative to Empirical Mean and scores lower in {pred['n_negative']} of {s['n_draws']} draws. "
