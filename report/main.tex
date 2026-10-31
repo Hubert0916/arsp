@@ -187,7 +187,7 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
 \]
 It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Both predictors receive the same labels selected by the random streaming rule.
 
-We use the metrics in Section~\ref{sec:setting}: average all response losses within a group, groups equally within a draw, then the \ProxyDraws{} draws equally. We report sample SD and range across draw scores. Paired differences compare methods on the same draw. Repeated appearances of a group are retained as part of the sampling distribution; draw SD describes composition variability, not independent evidence about new-source transfer.
+We average response losses within each group, then weight groups equally within each draw and average over \ProxyDraws{} draws. We report the mean, sample standard deviation, and range of draw scores, comparing methods on identical draws.
 
 \section{Results and Analysis}
 
@@ -244,9 +244,7 @@ We remove one component at a time while keeping the same \ProxyDraws{} draws, Ra
 
 \section{Limitations and Discussion}
 
-\paragraph{Generalization.} Frozen public priors, difficulty estimates, and topic corrections may transfer imperfectly to unseen subjects and benchmarks, especially before labels are available.
-
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit draws containing multiple subjects from the same benchmark. Unknown coordinator details remain local assumptions. The component ablations in Section~\ref{sec:ablations} yield small, draw-dependent ALC differences and do not establish a stable benefit for each module.
+\paragraph{Evaluation scope and generalization.} Public fitting and calibration overlap the evaluation release, so local gains may be optimistic. The \ProxyDraws{} draws can reuse groups and measure variation within this snapshot rather than transfer to unseen subjects or benchmarks, especially at cold start. The simulation also omits multiple-subject draws from the same benchmark and makes assumptions about unavailable coordinator details. Component ablations show small, draw-dependent ALC differences (Section~\ref{sec:ablations}); consistent benefits across new groups remain unverified.
 
 \section{Conclusion}
 
