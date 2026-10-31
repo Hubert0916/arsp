@@ -228,7 +228,7 @@ We average response losses within each group, then weight groups equally within 
 \subsection{Component ablations}
 \label{sec:ablations}
 
-We remove one component at a time while keeping the same \ProxyDraws{} draws, Random acquisition trajectories, evaluation outcomes, and frozen artifacts. Without Rasch, its mixing weight $\eta_n$ is set to zero, retaining the smoothed evidence estimate. Without the kernel, $w_n=0$ leaves the Rasch hybrid branch. Without topic calibration, the final correction is bypassed. Remaining parameters are not retrained or retuned.
+We disable Rasch ($\eta_n=0$), the kernel ($w_n=0$), or topic calibration individually, keeping the same draws and randomly acquired labels without retraining or retuning.
 
 \begin{table}[H]
 \centering
@@ -236,7 +236,7 @@ We remove one component at a time while keeping the same \ProxyDraws{} draws, Ra
 \setlength{\tabcolsep}{3pt}
 \input{results_ablation_table}
 \vspace{6pt}
-\caption{Component removals with matched Random evidence. $\Delta$ALC is the variant minus ASRP; positive values indicate worse performance. ALC uses six decimals to show the small differences; budget scores are rounded to four decimals.}
+\caption{Component ablations over \ProxyDraws{} matched Random draws. Positive $\Delta$ALC (variant minus ASRP) indicates worse performance.}
 \label{tab:ablations}
 \end{table}
 
