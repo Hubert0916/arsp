@@ -1,4 +1,5 @@
-"""Generate official-feedback report tables from audited evaluation aggregates."""
+"""Export optional official-feedback fragments, separate from the public-only paper."""
+import argparse
 import json
 import hashlib
 from pathlib import Path
@@ -6,7 +7,11 @@ from parse_official_results import ROOT, summarize
 
 
 def main():
-    directory=ROOT/'results/official';report=ROOT/'report'
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output',type=Path,default=ROOT/'results/official/report_fragments')
+    args=parser.parse_args()
+    directory=ROOT/'results/official';report=args.output
+    report.mkdir(parents=True,exist_ok=True)
     state=json.loads((directory/'status.json').read_text())
     digest=hashlib.sha256((ROOT/'artifacts/manifest.sha256.json').read_bytes()).hexdigest()
     if state['status']=='pending':

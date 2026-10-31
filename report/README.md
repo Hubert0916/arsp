@@ -2,14 +2,13 @@
 
 `main.tex` uses the NeurIPS 2026 template and the seven-section structure. Author/coauthor fields are retained for completion before submission.
 
-The report compares ASRP and Empirical Mean on 30 complete-group public draws with identical randomly acquired labels. Diagnostic component removals remain in the released data. Official scores for the Random-acquisition submission are pending; historical evaluations are excluded from the report.
+The report compares ASRP and Empirical Mean on 30 complete-group public draws with identical randomly acquired labels. It presents only local public-data results. Diagnostic component removals remain in the released data.
 
 From the repository root:
 
 ```bash
 uv run --locked python tools/score_draws.py results/formative
 uv run --locked python tools/update_formative_report.py
-uv run --locked python tools/update_official_report.py
 uv run --locked python report/make_proxy_plot.py
 latexmk -cd -pdf -interaction=nonstopmode -halt-on-error report/main.tex
 latexmk -cd -c -bibtex report/main.tex

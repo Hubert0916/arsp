@@ -225,13 +225,9 @@ We use the metrics in Section~\ref{sec:setting}: average all response losses wit
 
 \input{results_analysis}
 
-\subsection{Official formative results}\label{sec:official}
-
-\input{official_overview}
-
 \section{Limitations and Discussion}
 
-\input{official_limitation}
+\paragraph{Generalization.} Frozen public priors, difficulty estimates, and topic corrections may transfer imperfectly to unseen subjects and benchmarks, especially before labels are available.
 
 \paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit draws containing multiple subjects from the same benchmark. Unknown coordinator details remain local assumptions. Local component ablations yield small, draw-dependent ALC differences and do not establish a stable benefit for each module; the complete results are available in the repository.
 
@@ -404,7 +400,7 @@ The pipeline reconstructs the eligible inventory, fixed pools, and all \ProxyDra
 
 The protocol is in \path{experiments/formative_config.json}; the manifest records every selected item and response. \path{tools/score_draws.py} audits released compressed predictions without model inference, and \path{tools/update_formative_report.py} regenerates report tables and analyses. The release includes per-group and per-draw scores, random acquisition trajectories, and paired component differences. Earlier fixed-subject experiments remain separate historical results and are not mixed into the current tables.
 
-Official evaluation of this submission is pending; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
+File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 
