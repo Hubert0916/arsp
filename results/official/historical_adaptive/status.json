@@ -1,0 +1,9 @@
+{
+  "status": "complete",
+  "model_version": "rasch-hybrid-v1",
+  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+  "acquisition_policy": "adaptive_4_warm",
+  "n_evaluations": 10,
+  "restored_from_commit": "f9afbd258cc1f47ef158487261c79db14a48eafa",
+  "historical_submission_zip_sha256": null
+}

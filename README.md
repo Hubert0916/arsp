@@ -3,7 +3,7 @@
 **Yuhan Chiu — National Taiwan University**
 
 ASRP predicts success with 0–31 revealed labels using a Rasch hybrid, Kernel Probe,
-topic calibration, and adaptive acquisition.
+topic calibration, and **uniform random acquisition**. Prediction adapts to the revealed support; label selection uses the streaming probability `labels_remaining / items_remaining`.
 
 [Report](report/main.pdf) · [Method code](src/asrp) · [Report source](report/README.md)
 
@@ -11,18 +11,15 @@ topic calibration, and adaptive acquisition.
 
 The current public simulation uses **30 complete-group draws capped at 1,000
 subject–item pairs each**. Subjects vary between draws; within-group pools remain
-fixed, and every evaluation response is scored. Predictors share labels within
-Random or Adaptive acquisition. See the [protocol](experiments/formative_protocol.md)
+fixed, and every evaluation response is scored. Both predictors share the same randomly acquired labels. See the [protocol](experiments/formative_protocol.md)
 and [released predictions and ablations](results/formative).
 
 <!-- RESULTS_START -->
 
-| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |
+| Predictor (Random acquisition) | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Empirical Mean + Random | 0.2500 | 0.3439 | 0.2161 | 0.1909 | 0.1794 | 0.1745 | 0.2285 |
-| Empirical Mean + Adaptive | 0.2500 | 0.3462 | 0.2139 | 0.1931 | 0.1805 | 0.1765 | 0.2294 |
-| ASRP + Random | 0.2111 | 0.2032 | 0.1924 | 0.1830 | 0.1778 | 0.1707 | 0.1895 |
-| ASRP + Adaptive | 0.2111 | 0.2061 | 0.1915 | 0.1847 | 0.1797 | 0.1720 | 0.1907 |
+| Empirical Mean | 0.2500 | 0.3439 | 0.2161 | 0.1909 | 0.1794 | 0.1745 | 0.2285 |
+| ASRP | 0.2111 | 0.2032 | 0.1924 | 0.1830 | 0.1778 | 0.1707 | 0.1895 |
 
 <!-- RESULTS_END -->
 
@@ -30,12 +27,9 @@ This follows the documented formative design on public data. The private sampler
 and test pool are unavailable; local choices are explicit. Frozen fitting and
 calibration overlap the public release, so these are not source-held-out results.
 
-The [Rasch audit](results/rasch_audit) checks uncertainty, archived-code agreement,
-and sensitivity to other subjects' evidence. The paired public Rasch effect is
-small and mixed; it does not establish that removing Rasch improves the method.
-
-**Official Codabench:** ten with-Rasch ASRP evaluations have mean Brier ALC
-**0.19107** (sample SD **0.01105**). [Aggregates](results/official).
+**Official Codabench:** results for this Random-acquisition release are pending.
+Earlier evaluations used a different acquisition policy and are retained only as
+[historical records](results/official/historical_adaptive).
 
 ## Reproduce
 
@@ -65,8 +59,7 @@ uv run --locked python tools/update_formative_report.py
 ```
 
 Earlier fixed-subject experiments remain under `results/proxy`, `results/ablation`,
-and `results/rasch_*`; they are not mixed into the current report. Use
-`tools/reproduce.py --legacy` to reproduce the old main proxy.
+and `results/rasch_*`; they are not mixed into the current report. To reproduce historical paired-policy experiments, use Git revision `ee9257a`; the current runtime supports Random acquisition only.
 
 ## Submission and files
 
@@ -77,7 +70,7 @@ uv run --locked python tools/smoke_test.py dist/asrp.zip
 ```
 
 Upload `dist/asrp.zip` to Codabench. Replace `asrp` with `empirical_mean` to package
-the official baseline. The evaluation revision does not alter the submitted model.
+the official baseline. This ZIP replaces the earlier acquisition policy with Random; a new Codabench submission is required to evaluate it.
 
 - `src/asrp`, `artifacts`: inference code and frozen models.
 - `experiments`, `tools`: protocols, manifests, and reproduction scripts.

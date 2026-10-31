@@ -7,23 +7,9 @@
     "n_groups": 4
   },
   {
-    "draw_id": 0,
-    "policy": "adaptive",
-    "n_candidates_seen": 495,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
     "draw_id": 1,
     "policy": "random",
     "n_candidates_seen": 457,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
-    "draw_id": 1,
-    "policy": "adaptive",
-    "n_candidates_seen": 465,
     "n_labels": 62,
     "n_groups": 2
   },
@@ -35,23 +21,9 @@
     "n_groups": 2
   },
   {
-    "draw_id": 2,
-    "policy": "adaptive",
-    "n_candidates_seen": 465,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
     "draw_id": 3,
     "policy": "random",
     "n_candidates_seen": 492,
-    "n_labels": 155,
-    "n_groups": 5
-  },
-  {
-    "draw_id": 3,
-    "policy": "adaptive",
-    "n_candidates_seen": 495,
     "n_labels": 155,
     "n_groups": 5
   },
@@ -63,23 +35,9 @@
     "n_groups": 2
   },
   {
-    "draw_id": 4,
-    "policy": "adaptive",
-    "n_candidates_seen": 492,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
     "draw_id": 5,
     "policy": "random",
     "n_candidates_seen": 493,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
-    "draw_id": 5,
-    "policy": "adaptive",
-    "n_candidates_seen": 497,
     "n_labels": 124,
     "n_groups": 4
   },
@@ -91,23 +49,9 @@
     "n_groups": 3
   },
   {
-    "draw_id": 6,
-    "policy": "adaptive",
-    "n_candidates_seen": 500,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
     "draw_id": 7,
     "policy": "random",
     "n_candidates_seen": 456,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
-    "draw_id": 7,
-    "policy": "adaptive",
-    "n_candidates_seen": 469,
     "n_labels": 124,
     "n_groups": 4
   },
@@ -119,23 +63,9 @@
     "n_groups": 3
   },
   {
-    "draw_id": 8,
-    "policy": "adaptive",
-    "n_candidates_seen": 485,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
     "draw_id": 9,
     "policy": "random",
     "n_candidates_seen": 458,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
-    "draw_id": 9,
-    "policy": "adaptive",
-    "n_candidates_seen": 476,
     "n_labels": 93,
     "n_groups": 3
   },
@@ -147,23 +77,9 @@
     "n_groups": 5
   },
   {
-    "draw_id": 10,
-    "policy": "adaptive",
-    "n_candidates_seen": 498,
-    "n_labels": 155,
-    "n_groups": 5
-  },
-  {
     "draw_id": 11,
     "policy": "random",
     "n_candidates_seen": 498,
-    "n_labels": 31,
-    "n_groups": 1
-  },
-  {
-    "draw_id": 11,
-    "policy": "adaptive",
-    "n_candidates_seen": 500,
     "n_labels": 31,
     "n_groups": 1
   },
@@ -175,23 +91,9 @@
     "n_groups": 2
   },
   {
-    "draw_id": 12,
-    "policy": "adaptive",
-    "n_candidates_seen": 469,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
     "draw_id": 13,
     "policy": "random",
     "n_candidates_seen": 495,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
-    "draw_id": 13,
-    "policy": "adaptive",
-    "n_candidates_seen": 498,
     "n_labels": 93,
     "n_groups": 3
   },
@@ -203,23 +105,9 @@
     "n_groups": 1
   },
   {
-    "draw_id": 14,
-    "policy": "adaptive",
-    "n_candidates_seen": 500,
-    "n_labels": 31,
-    "n_groups": 1
-  },
-  {
     "draw_id": 15,
     "policy": "random",
     "n_candidates_seen": 468,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
-    "draw_id": 15,
-    "policy": "adaptive",
-    "n_candidates_seen": 476,
     "n_labels": 93,
     "n_groups": 3
   },
@@ -231,23 +119,9 @@
     "n_groups": 1
   },
   {
-    "draw_id": 16,
-    "policy": "adaptive",
-    "n_candidates_seen": 499,
-    "n_labels": 31,
-    "n_groups": 1
-  },
-  {
     "draw_id": 17,
     "policy": "random",
     "n_candidates_seen": 488,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
-    "draw_id": 17,
-    "policy": "adaptive",
-    "n_candidates_seen": 490,
     "n_labels": 124,
     "n_groups": 4
   },
@@ -259,23 +133,9 @@
     "n_groups": 4
   },
   {
-    "draw_id": 18,
-    "policy": "adaptive",
-    "n_candidates_seen": 499,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
     "draw_id": 19,
     "policy": "random",
     "n_candidates_seen": 490,
-    "n_labels": 31,
-    "n_groups": 1
-  },
-  {
-    "draw_id": 19,
-    "policy": "adaptive",
-    "n_candidates_seen": 500,
     "n_labels": 31,
     "n_groups": 1
   },
@@ -287,23 +147,9 @@
     "n_groups": 5
   },
   {
-    "draw_id": 20,
-    "policy": "adaptive",
-    "n_candidates_seen": 461,
-    "n_labels": 155,
-    "n_groups": 5
-  },
-  {
     "draw_id": 21,
     "policy": "random",
     "n_candidates_seen": 461,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
-    "draw_id": 21,
-    "policy": "adaptive",
-    "n_candidates_seen": 467,
     "n_labels": 62,
     "n_groups": 2
   },
@@ -315,13 +161,6 @@
     "n_groups": 4
   },
   {
-    "draw_id": 22,
-    "policy": "adaptive",
-    "n_candidates_seen": 493,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
     "draw_id": 23,
     "policy": "random",
     "n_candidates_seen": 463,
@@ -329,13 +168,6 @@
     "n_groups": 2
   },
   {
-    "draw_id": 23,
-    "policy": "adaptive",
-    "n_candidates_seen": 494,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
     "draw_id": 24,
     "policy": "random",
     "n_candidates_seen": 466,
@@ -343,23 +175,9 @@
     "n_groups": 3
   },
   {
-    "draw_id": 24,
-    "policy": "adaptive",
-    "n_candidates_seen": 486,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
     "draw_id": 25,
     "policy": "random",
     "n_candidates_seen": 466,
-    "n_labels": 124,
-    "n_groups": 4
-  },
-  {
-    "draw_id": 25,
-    "policy": "adaptive",
-    "n_candidates_seen": 498,
     "n_labels": 124,
     "n_groups": 4
   },
@@ -371,23 +189,9 @@
     "n_groups": 2
   },
   {
-    "draw_id": 26,
-    "policy": "adaptive",
-    "n_candidates_seen": 473,
-    "n_labels": 62,
-    "n_groups": 2
-  },
-  {
     "draw_id": 27,
     "policy": "random",
     "n_candidates_seen": 490,
-    "n_labels": 155,
-    "n_groups": 5
-  },
-  {
-    "draw_id": 27,
-    "policy": "adaptive",
-    "n_candidates_seen": 499,
     "n_labels": 155,
     "n_groups": 5
   },
@@ -399,23 +203,9 @@
     "n_groups": 1
   },
   {
-    "draw_id": 28,
-    "policy": "adaptive",
-    "n_candidates_seen": 500,
-    "n_labels": 31,
-    "n_groups": 1
-  },
-  {
     "draw_id": 29,
     "policy": "random",
     "n_candidates_seen": 478,
-    "n_labels": 93,
-    "n_groups": 3
-  },
-  {
-    "draw_id": 29,
-    "policy": "adaptive",
-    "n_candidates_seen": 487,
     "n_labels": 93,
     "n_groups": 3
   }

@@ -36,7 +36,8 @@ def evaluate_draw_inner(draw):
     runtime.VECTOR.cache_clear();runtime.DIFFICULTY.cache_clear()
     model.get_predictor().vectors.clear();model.get_predictor().fits.clear()
     for policy in cfg['policies']:
-        runtime.LABELING._policy=None
+        if policy != 'random':
+            raise ValueError('The current release supports only random acquisition')
         records=[];targets=[]
         for g in groups:
             _,evaluation=fixed_split(g,cfg['snapshot_seed'])
@@ -48,8 +49,10 @@ def evaluate_draw_inner(draw):
                         'y':response['label'],**{v:[] for v in METHODS}})
                     targets.append(input_pair(g,item,response))
         def choose(x,evidence,context):
-            if policy=='random':return random_choose(x,context)
-            return runtime.LABELING.acquisition_function(x,labeled=evidence,context=context)
+            decision=runtime.LABELING.acquisition_function(x,labeled=evidence,context=context)
+            if decision != random_choose(x,context):
+                raise ValueError('Submission hook differs from uniform random acquisition')
+            return decision
         def checkpoint(budget,evidence,counts):
             if any(n!=budget for n in counts):raise ValueError('Policy failed to reach checkpoint')
             model.get_predictor().fits.clear()
@@ -97,6 +100,10 @@ def main():
     frozen=json.loads((ROOT/'artifacts/manifest.sha256.json').read_text())
     for name,checksum in frozen.items():
         if sha(ROOT/name)!=checksum:raise ValueError('Frozen inference changed')
+    paths=['experiments/formative_config.json','experiments/formative_manifest.json','artifacts/manifest.sha256.json','uv.lock']
+    scripts=['tools/evaluate_draws.py','tools/draw_protocol.py','tools/prepare_draws.py','tools/evaluate_ablation.py','tools/evaluate_proxy.py']
+    input_hashes={name:sha(ROOT/name) for name in paths}
+    script_hashes={name:sha(ROOT/name) for name in scripts}
     args.output.mkdir(parents=True,exist_ok=True)
     chunks=args.output/'chunks';chunks.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='asrp-formative-') as temp:
@@ -112,16 +119,17 @@ def main():
                 did,records,traces,seconds=future.result()
                 for kind,rows in [('predictions',records),('acquisition',traces)]:
                     (chunks/f'{did:03d}.{kind}.jsonl').write_text(''.join(json.dumps(r,separators=(',',':'))+'\n' for r in rows))
-                print(f'Draw {did}: {len(records)} scored rows across both policies; {seconds:.1f}s',flush=True)
+                print(f'Draw {did}: {len(records)} scored rows under random acquisition; {seconds:.1f}s',flush=True)
     for kind in ('predictions','acquisition'):
         with (args.output/f'{kind}.jsonl.gz').open('wb') as raw:
             with gzip.GzipFile(filename='',mode='wb',fileobj=raw,mtime=0) as compressed:
                 with io.TextIOWrapper(compressed,encoding='utf-8') as stream:
                     for d in manifest['draws']:stream.write((chunks/f"{d['draw_id']:03d}.{kind}.jsonl").read_text())
-    paths=['experiments/formative_config.json','experiments/formative_manifest.json','artifacts/manifest.sha256.json','uv.lock']
+    for name,checksum in {**input_hashes,**script_hashes,**frozen}.items():
+        if sha(ROOT/name)!=checksum:raise ValueError('File changed during evaluation: '+name)
     write_json(args.output/'run.json',{'protocol':config,'prepared_sha256':sha(data),
-        'inputs':{name:sha(ROOT/name) for name in paths},
-        'scripts':{name:sha(ROOT/name) for name in ['tools/evaluate_draws.py','tools/draw_protocol.py','tools/prepare_draws.py','tools/evaluate_ablation.py','tools/evaluate_proxy.py']},
+        'inputs':input_hashes,
+        'scripts':script_hashes,
         'files':{f'{kind}.jsonl.gz':sha(args.output/f'{kind}.jsonl.gz') for kind in ('predictions','acquisition')}})
 
 

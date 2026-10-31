@@ -1,5 +1,7 @@
 # Rasch effect and implementation audit
 
+**Historical commands:** use Git revision `ee9257a` for this paired-policy experiment. The current release supports Random acquisition only.
+
 The public comparison does **not** establish that removing Rasch improves ASRP.
 No-Rasch minus full-ASRP ALC is -0.000239; a paired-draw percentile bootstrap
 interval is [-0.002556, 0.002021]. It spans zero and is conditional on the fixed

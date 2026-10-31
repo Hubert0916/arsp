@@ -1,9 +1,0 @@
-{
-  "prepared_sha256": "2e89304b3e632bc2ba416dce0b34ee2938308675a082d0460f091561720277f0",
-  "manifest_sha256": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
-  "n_draws": 30,
-  "n_distinct_groups": 80,
-  "n_verified_public_tables": 568,
-  "verification": "prepare_draws.py --cache-only reconstructed the inputs and passed exact manifest comparison, including after canonical inventory sorting and fresh-checkout directory handling.",
-  "preparation_script_sha256": "ccaa21f2ebb3951a3e77f26cc0afb839a4bf567d35903a24b7b35464f082cafa"
-}

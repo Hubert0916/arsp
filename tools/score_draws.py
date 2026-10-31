@@ -81,10 +81,8 @@ def score(directory):
                             'alc':describe([r['methods'][v]['alc'] for r in rows])} for v in METHODS}
     paired={}
     index={(r['draw_id'],r['policy']):r['methods'] for r in by_draw}
-    comparisons=[('predictor_adaptive','adaptive','full','adaptive','empirical_mean'),
-                 ('predictor_random','random','full','random','empirical_mean'),
-                 ('acquisition_asrp','adaptive','full','random','full')]
-    comparisons += [('remove_'+v,'adaptive',v,'adaptive','full') for v in ('no_rasch','no_kernel','no_topic')]
+    comparisons=[('predictor_random','random','full','random','empirical_mean')]
+    comparisons += [('remove_'+v,'random',v,'random','full') for v in ('no_rasch','no_kernel','no_topic')]
     for name,pa,va,pb,vb in comparisons:
         deltas=[index[(d['draw_id'],pa)][va]['alc']-index[(d['draw_id'],pb)][vb]['alc'] for d in manifest['draws']]
         paired[name]={'definition':f'{pa}/{va} minus {pb}/{vb}',**describe(deltas),
@@ -109,7 +107,7 @@ def score(directory):
         acquisition.append({'draw_id':t['draw_id'],'policy':t['policy'],
             'n_candidates_seen':len(t['decisions']),'n_labels':seen_count,
             'n_groups':len(t['groups'])})
-    all_draws=[d for d in by_draw if d['policy']=='adaptive']
+    all_draws=[d for d in by_draw if d['policy']=='random']
     summary={'protocol':config,'n_draws':len(manifest['draws']),
         'n_eligible_groups':len(manifest['eligible_groups']),
         'n_eligible_sources':sum(i['eligible_groups']>0 for i in manifest['inventory']),

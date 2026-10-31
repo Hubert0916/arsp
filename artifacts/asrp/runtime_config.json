@@ -8,7 +8,21 @@
   "metadata_match_concentration": 2.0,
   "lambda_max": 0.25,
   "lambda_tau": 1.0,
-  "lambdas": [0.2875, 0.3000, 0.2875, 0.2750, 0.2250, 0.2375],
-  "probe_weights": [0.0, 0.0, 0.2, 0.4, 1.0, 1.0],
-  "acquisition_policy": "adaptive_4_warm"
+  "lambdas": [
+    0.2875,
+    0.3,
+    0.2875,
+    0.275,
+    0.225,
+    0.2375
+  ],
+  "probe_weights": [
+    0.0,
+    0.0,
+    0.2,
+    0.4,
+    1.0,
+    1.0
+  ],
+  "acquisition_policy": "random"
 }

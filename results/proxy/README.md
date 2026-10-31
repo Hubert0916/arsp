@@ -1,5 +1,7 @@
 # ASRP public-proxy evaluation
 
+**Historical commands:** use Git revision `ee9257a` for this paired-policy experiment. The current release supports Random acquisition only.
+
 **Historical protocol.** The current report uses the complete-group formative
 simulation in [`../formative`](../formative). These fixed-subject results remain
 available for comparison and use `tools/reproduce.py --legacy` for reproduction.

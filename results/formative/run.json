@@ -198,8 +198,7 @@
     ],
     "draw_limit": 1000,
     "policies": [
-      "random",
-      "adaptive"
+      "random"
     ],
     "group_selection": "All eligible public benchmark/subject groups; complete groups only. At each step choose uniformly among feasible least-represented benchmarks, then uniformly among least-represented subjects within it, using seeded hash order. Counts reset within each draw; benchmark tie-breaking precedes subject selection.",
     "split": "Fixed item-level 50/50 pools for the pinned snapshot; odd extra to acquisition; independent fixed stream ordering.",
@@ -215,20 +214,20 @@
   },
   "prepared_sha256": "2e89304b3e632bc2ba416dce0b34ee2938308675a082d0460f091561720277f0",
   "inputs": {
-    "experiments/formative_config.json": "dde64d1de27a81ccfe5982298539d7cbdc236ddad78d9285208d8b14dad8cf0f",
-    "experiments/formative_manifest.json": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
-    "artifacts/manifest.sha256.json": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
+    "experiments/formative_config.json": "7261af147536bef669b2de173c99ae91e36b15962eaff8dfda87c054cdcf18d6",
+    "experiments/formative_manifest.json": "ef0d5d792501a601d4129fa35f63efbc265d3b12496e02c8861ba39d90ff45da",
+    "artifacts/manifest.sha256.json": "d34adf1d7712b7b610358d9d8183351471b53178f7c98de51121f0712a9f8d8c",
     "uv.lock": "a9924f66312872664dcee40fa4100a78e546af49df6bcb31e7b63362679b5747"
   },
   "scripts": {
-    "tools/evaluate_draws.py": "e0ae23afe27e0379bb4d49f35645b5ff07073464309a940d27257643ceb98804",
+    "tools/evaluate_draws.py": "9454caabc57195310592c2ff23bedf416ebdf9b2d27196466636d0350d76ef3a",
     "tools/draw_protocol.py": "951fc5059376788563a00f6a9940368538ba3254f61727fb945dec8d7a5b247a",
     "tools/prepare_draws.py": "ccaa21f2ebb3951a3e77f26cc0afb839a4bf567d35903a24b7b35464f082cafa",
     "tools/evaluate_ablation.py": "6b7343c93f3146a24fb7677e351ffafdc45a6bfa86678189d959044eff22cb0d",
-    "tools/evaluate_proxy.py": "5c7a7c1404d53831d851efb5cdbf7c748600f97eaa480ae21b2227c2aa8be85a"
+    "tools/evaluate_proxy.py": "f3df7a67ae6c9b69cc046312eb62cfc505be77e74f00384f53056f646e56261d"
   },
   "files": {
-    "predictions.jsonl.gz": "b9836d26a76b88559b188a9f910947c24b45f1fadd60181f48a42e8500cded85",
-    "acquisition.jsonl.gz": "e9cae0f966ff0470b50316398f01eda242b06989d6853ec50b875de71ae2bf57"
+    "predictions.jsonl.gz": "d63ae42a97b44d13d06fde7cc4b3525a5435eb2d64784bc9a5b65e467583b5f6",
+    "acquisition.jsonl.gz": "c2fee7ed7b1a5fbf24ae0f45464c5d65c459581a6c3c0af0e594129b58cad638"
   }
 }

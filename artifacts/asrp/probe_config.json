@@ -23,5 +23,5 @@
     "scripts/research_policy.py": "49e65208208155ff99657ab0cf8d0df9fa4cc91f8650cb54da54330c5d3d35ea",
     "scripts/screen_local_features.py": "38e17802f8e2bf19751586f4758c4bdc72150db59b4f87d0d8a2a34ab53edf36"
   },
-  "policy": "adaptive_4_warm"
+  "policy": "random"
 }

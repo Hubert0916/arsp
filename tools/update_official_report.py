@@ -9,9 +9,19 @@ def main():
     directory=ROOT/'results/official';report=ROOT/'report'
     state=json.loads((directory/'status.json').read_text())
     digest=hashlib.sha256((ROOT/'artifacts/manifest.sha256.json').read_bytes()).hexdigest()
-    if (state['status']!='complete' or state['model_version']!='rasch-hybrid-v1'
+    if state['status']=='pending':
+        if state['acquisition_policy']!='random' or state['inference_manifest_sha256']!=digest:
+            raise ValueError('Pending official status does not match the current release')
+        (report/'official_overview.tex').write_text('Official evaluation of the current ASRP submission with uniform random acquisition is pending.\n')
+        (report/'official_limitation.tex').write_text(r'\paragraph{Transfer to private evaluation.} Frozen public priors, difficulty estimates, and topic corrections may transfer imperfectly to unseen subjects and benchmarks, especially before labels are available. Official results for the current random-acquisition submission are pending.'+'\n')
+        for name in ['official_metadata.tex','official_table.tex','official_runs_table.tex','official_audit.tex']:
+            (report/name).unlink(missing_ok=True)
+        print('Official results pending for the current Random-acquisition release.')
+        return
+    if (state['status']!='complete' or state['model_version']!='rasch-hybrid-random-v1'
+            or state['acquisition_policy']!='random'
             or state['inference_manifest_sha256']!=digest):
-        raise ValueError('Official results must be associated with the restored inference version')
+        raise ValueError('Official results must match the current Random-acquisition release')
     runs=json.loads((directory/'runs.json').read_text())
     summary=json.loads((directory/'summary.json').read_text())
     if summarize(runs)!=summary:
@@ -37,11 +47,11 @@ def main():
             'OfficialZeroBrier':f"{metrics['brier'][0]['mean']:.4f}"}
     save('official_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+v+'}' for k,v in macros.items()))
     table=[r'\begin{tabular}{lrrrrrrr}',r'\toprule',
-           r'ASRP + Adaptive & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
+           r'ASRP + Random & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
     for key,label in [('mean','Mean'),('sample_sd','SD')]:
         table.append(label+' & '+' & '.join(f'{m[key]:.4f}' for m in metrics['brier']+[alc])+r'\\')
     save('official_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    text=(f"Across {n} official draws of the same ASRP + Adaptive submission, "
+    text=(f"Across {n} official draws of the same ASRP + Random submission, "
           +r"\textbf{mean Brier ALC is $"+f"{alc['mean']:.4f}"+r"$} (sample SD $"+f"{alc['sample_sd']:.4f}"+r"$; Table~\ref{tab:official}). "
           +"These private-data results are separate from the public simulation.")
     save('official_overview.tex',text)
@@ -53,7 +63,7 @@ def main():
          +f"Revealed evidence reduces it to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
          +r'These aggregate scores do not identify which initialization component causes the private-data errors; accurate cold-start prediction remains a limitation.')
     note=(f"We evaluated the same ASRP + "
-          +r"\texttt{adaptive\_4\_warm} ZIP in "
+          +r"\texttt{random} ZIP in "
           +f"{n} official formative evaluations. " if same_zip else "")
     note+=r'Table~\ref{tab:official_records} lists the submission IDs and corresponding results.'
     save('official_audit.tex',note)

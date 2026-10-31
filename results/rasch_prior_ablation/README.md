@@ -1,5 +1,7 @@
 # Rasch and count-prior interaction
 
+**Historical commands:** use Git revision `ee9257a` for this paired-policy experiment. The current release supports Random acquisition only.
+
 **Historical fixed-subject experiment.** Current report results use the
 [formative simulation](../formative); the scores below are not part of its tables.
 

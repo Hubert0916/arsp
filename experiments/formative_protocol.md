@@ -3,7 +3,7 @@
 This protocol replaces the report's fixed-subject, three-split proxy. It follows
 the public PAIEC evaluation rules on a pinned **public** dataset snapshot. It is
 not an exact replay of the private Codabench sampler or a source-held-out test.
-The submitted predictor and its frozen artifacts are unchanged.
+The predictor and predictive weights are retained; the current submission uses uniform random acquisition.
 
 | Protocol feature | Implementation |
 |---|---|
@@ -12,11 +12,11 @@ The submitted predictor and its frozen artifacts are unchanged.
 | Repeated draws | 30 seeds fixed in `formative_config.json`; subjects can change across draws. |
 | Balanced selection | Among groups that fit, choose a least-represented benchmark, then a least-represented subject within it; randomize ties. |
 | Persistent pools | One snapshot seed fixes a 50/50 item split and candidate order; all response runs of an item stay together. |
-| Acquisition | One recorded response per acquired item; nested prefixes at 0, 1, 3, 7, 15, 31. |
+| Acquisition | Uniform streaming acquisition with probability L/R; one recorded response per acquired item; nested prefixes at 0, 1, 3, 7, 15, 31. |
 | Evidence | All groups complete a checkpoint before evaluation; predictors receive the complete acquired evidence across groups. |
 | Repeated outcomes | Score every binary response in the evaluation pool; identical visible inputs reuse their prediction at a checkpoint. |
 | Scoring | Average response losses within group, groups within draw, then draws equally; preserve the official ALC weights. |
-| Comparisons | Random/Adaptive policies share draws, pools and candidate order. Prediction ablations share the evidence acquired by each policy. |
+| Comparisons | ASRP and Empirical Mean share draws, pools, candidate order, and randomly acquired labels. Diagnostic prediction ablations use the same evidence. |
 
 ## Explicit local choices
 

@@ -1,10 +1,22 @@
 {
-  "draw_id": 0,
-  "n_response_records": 3724,
-  "n_probability_values": 111720,
+  "scope": "Fresh full inference of all 30 Random-acquisition draws, compared with the previous release Random records; all variants and all six budgets are checked.",
+  "reference_commit": "ee9257a",
+  "n_draws": 30,
+  "records": {
+    "predictions": 665052,
+    "acquisition": 30
+  },
+  "n_probability_values": 19951560,
   "max_probability_difference": 0.0,
   "acquisition_exact_match": true,
-  "inference_manifest_sha256": "6243e12e9d71e8697f12e5443f5f3157ea5808c7c3b3e5f3c081f5f9d40b211d",
-  "formative_manifest_sha256": "5867c81cf790e3cef3d31dc64d8f4eb19b50b73e420bcc476e67c0a6ff228356",
-  "scope": "Independent fresh model process reproduces both policies and all component variants for draw 0; all draws also receive native per-group/checkpoint inference checks."
+  "inference_manifest_sha256": "d34adf1d7712b7b610358d9d8183351471b53178f7c98de51121f0712a9f8d8c",
+  "formative_manifest_sha256": "ef0d5d792501a601d4129fa35f63efbc265d3b12496e02c8861ba39d90ff45da",
+  "reference_files": {
+    "predictions.jsonl.gz": "b9836d26a76b88559b188a9f910947c24b45f1fadd60181f48a42e8500cded85",
+    "acquisition.jsonl.gz": "e9cae0f966ff0470b50316398f01eda242b06989d6853ec50b875de71ae2bf57"
+  },
+  "current_files": {
+    "predictions.jsonl.gz": "d63ae42a97b44d13d06fde7cc4b3525a5435eb2d64784bc9a5b65e467583b5f6",
+    "acquisition.jsonl.gz": "c2fee7ed7b1a5fbf24ae0f45464c5d65c459581a6c3c0af0e594129b58cad638"
+  }
 }

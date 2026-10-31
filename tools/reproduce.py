@@ -14,29 +14,19 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache-only", action="store_true", help="Require all pinned data in the Hugging Face cache")
     parser.add_argument("--prepared", action="store_true", help="Reuse prepared data (its checksum is still verified)")
-    parser.add_argument("--legacy", action="store_true", help="Reproduce the historical fixed-subject proxy instead")
     parser.add_argument("--workers", type=int, default=4, help="Independent CPU workers; use 1 on a small machine")
     args = parser.parse_args()
     def run(script, *arguments):
         subprocess.run([sys.executable, str(ROOT / "tools" / script), *arguments], cwd=ROOT, check=True)
     run("verify_artifacts.py")
-    if not args.legacy:
-        run('test_draw_protocol.py')
-        if not args.prepared:
-            run('prepare_draws.py', *(['--cache-only'] if args.cache_only else []))
-        output=ROOT/'results/check-formative'
-        run('evaluate_draws.py','--workers',str(args.workers),'--output',str(output))
-        run('score_draws.py',str(output))
-        compare_formative(output,ROOT/'results/formative')
-        print('Formative reproduction complete: results/check-formative/summary.json')
-        return
-    run("test_proxy.py")
+    run('test_draw_protocol.py')
     if not args.prepared:
-        run("prepare_proxy.py", *(["--cache-only"] if args.cache_only else []))
-    run("build_submission.py", "asrp")
-    run("evaluate_proxy.py", "--workers", str(args.workers))
-    run("score_proxy.py", "results/reproduced", "--compare", "results/proxy")
-    print("Reproduction complete: results/reproduced/summary.json")
+        run('prepare_draws.py', *(['--cache-only'] if args.cache_only else []))
+    output=ROOT/'results/check-formative'
+    run('evaluate_draws.py','--workers',str(args.workers),'--output',str(output))
+    run('score_draws.py',str(output))
+    compare_formative(output,ROOT/'results/formative')
+    print('Random-acquisition reproduction complete: results/check-formative/summary.json')
 
 
 def compare_formative(actual,reference):

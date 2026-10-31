@@ -40,13 +40,12 @@
 \newcommand{\alc}{\mathrm{ALC}}
 
 \input{results_metadata}
-\input{official_metadata}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. Across \ProxyDraws{} public-data draws following the documented formative protocol, ASRP achieves mean Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels. Paired policy comparisons separate overall prediction quality from label selection.
+A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a uniform random streaming rule supplies the revealed labels. Across \ProxyDraws{} public-data draws following the documented formative protocol, ASRP achieves mean Brier ALC $\ASRPRandomALC{}$ versus $\EMRandomALC{}$ for Empirical Mean with identical randomly acquired labels. This matched-evidence comparison evaluates the complete predictor.
 \end{abstract}
 
 \section{Introduction}
@@ -55,7 +54,7 @@ The Predictive AI Evaluation Competition (PAIEC) asks for an AI system's success
 
 \textbf{Shared structure and local evidence address different limitations.} Item response theory models subject ability and item difficulty \citep{lord1980}, while amortized evaluation predicts difficulty from content \citep{amortized_eval}. This shared structure supports cold-start prediction, but a scalar ability cannot express every relative strength across item types, and frozen estimates may transfer imperfectly to new benchmarks. Conversely, local corrections learned from one or two labels can overreact to individual outcomes. ASRP therefore combines prior-based estimation with regularized support-driven adaptation, increasing the latter's weight as evidence grows.
 
-ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while covariance-based acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
+ASRP couples two prediction branches. A Rasch hybrid combines difficulty from frozen MiniLM representations \citep{wang2020minilm}, updated subject ability, and metadata-informed smoothing. A kernel probe learns item-dependent residuals around a smoothed subject baseline from revealed responses. \textbf{Budget-dependent mixing} controls their relative influence. Shrunk topic calibration corrects systematic public-data residuals, while uniform random acquisition selects labels from the candidate stream. This integration is accompanied by released source selections, matched splits, predictions, and acquisition traces for reproducible evaluation.
 
 \input{introduction_results}
 
@@ -67,7 +66,7 @@ At runtime the platform supplies a pair of dictionaries $x=(s,i)$ describing a s
 \[
   n \in \{0,1,3,7,15,31\}.
 \]
-Acquisition items are never scored and evaluation outcomes are never revealed. The optional acquisition hook receives the current candidate, acquired labels, and remaining-label context; the interface can also supply a current prediction when requested. ASRP uses the first three inputs.
+Acquisition items are never scored and evaluation outcomes are never revealed. The optional acquisition hook receives the current candidate, acquired labels, and remaining-label context; the interface can also supply a current prediction when requested. ASRP uses the current candidate and remaining-budget context for its reproducible random draw.
 
 For a budget $n$ and a subject--benchmark group with $N_{\mathrm{eval}}$ evaluated responses, the Brier score is the mean squared error between the predicted probability $p$ and the binary outcome $y$:
 \[
@@ -92,7 +91,7 @@ For a query subject $s$ and item $i$ in benchmark $b$, let $\mathcal D_b$ be the
 \begin{figure}[H]
   \centering
   \adjustbox{width=0.95\columnwidth,height=0.24\textheight,keepaspectratio}{\input{figures/asrp_method}}
-  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Random samples uniformly; Adaptive skips up to 16 warm-up candidates before covariance-gain selection. Both supply nested label prefixes.}
+  \caption{ASRP overview. Frozen public-data artifacts supply difficulty, prior, and calibration estimates. Revealed labels adapt the Rasch hybrid and kernel probe before budget-specific ensembling and topic correction. For a complete group of $N$ items, the candidate pool contains $\lceil N/2\rceil$ items. Uniform random acquisition supplies nested label prefixes.}
   \label{fig:method}
 \end{figure}
 
@@ -150,21 +149,17 @@ The budget-specific ensemble is followed by topic correction:
 \]
 Appendix~\ref{app:ensemble} gives the exact correction and lookup rules.
 
-\subsection{Adaptive acquisition}\label{sec:acquisition}
+\subsection{Random acquisition}\label{sec:acquisition}
 
-The \textbf{\texttt{adaptive\_4\_warm}} hook skips up to 16 early candidates to establish feature geometry, without revealing their labels. A reference set $\mathcal P$ deduplicates the last 64 seen candidates by visible text, metadata, and interactor features. For the current candidate $*$, a conditional covariance gain $G_*$ is a feature-based uncertainty-reduction surrogate over $\mathcal P$. It depends on acquired-item features, but not on their outcome values, and does not directly estimate a change in Brier score. Normalizing and capping this gain, then raising it to power four, gives utility $V_*$.
-
-For $L$ labels and $R$ candidates remaining, including the current candidate, the acquisition probability is
+The submission uses uniform random streaming acquisition. With $L$ labels and $R$ candidates remaining, including the current candidate, the acquisition probability is
 \[
- \pi_*^{\mathrm{acq}}=\min\!\left(1,\frac{L}{R}\operatorname{clip}\!\left(
- \frac{V_*}{\max(\overline V_{\mathcal P},10^{-12})},0.05,20\right)\right),\qquad
- \overline V_{\mathcal P}=\frac{1}{|\mathcal P|}\sum_{j\in\mathcal P}V_j.
+ \pi^{\mathrm{acq}}=\min(1,L/R).
 \]
-A deterministic uniform hash supplies the draw. When $R\le L$ and $L>0$, every remaining candidate is acquired, overriding warm-up. Appendix~\ref{app:acquisition} defines $G_j$, $V_j$, and the boundary cases. The rule uses only acquired support and already-seen/current features; it never accesses future candidates or unseen outcomes.
+A deterministic pseudorandom draw makes decisions reproducible. The rule stops acquiring when $L=0$ and acquires every remaining candidate when $R\le L$ and $L>0$. It uses no warm-up, feature-based priority, or outcome-dependent selection. Appendix~\ref{app:acquisition} specifies the implementation. The term ``Adaptive'' in ASRP refers to prediction updates from revealed support, not to label selection.
 
 \section{Experimental Setup}\label{sec:setup}
 
-We use paired public-data comparisons to separate prediction and acquisition effects, and report private-platform evaluations separately. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
+We compare ASRP and Empirical Mean using identical randomly acquired labels on public-data draws. Code, frozen artifacts, and exact reproduction commands are provided in Appendix~\ref{app:reproducibility}.
 
 \subsection{Public formative simulation}
 
@@ -175,7 +170,7 @@ The pinned public snapshot contains \EligibleGroups{} eligible subject--benchmar
 One snapshot seed fixes each group's 50/50 item split and candidate order across draws. All runs of an item stay together. Acquisition reveals one fixed recorded response per selected item; \textbf{all recorded evaluation responses are scored}, reusing a prediction for identical visible inputs. Across draws, this yields \ProxyTargets{} evaluation-item occurrences and \ProxyResponses{} response occurrences per policy, including repeated appearances of groups.
 
 \paragraph{Matched evidence and checkpoint barriers.}
-ASRP and Empirical Mean use the same draws and pools under Random and Adaptive acquisition. Predictors share labels within each policy; policies may select different labels. One trajectory supplies nested prefixes. \textbf{Every group completes a checkpoint before evaluation}; each call receives all evidence revealed across groups, excluding future labels and evaluation outcomes. Ablations use these same labels and frozen artifacts.
+ASRP and Empirical Mean use the same draws, pools, and uniformly sampled labels. One trajectory supplies nested prefixes. \textbf{Every group completes a checkpoint before evaluation}; each call receives all evidence revealed across groups, excluding future labels and evaluation outcomes. Released diagnostic variants use these same labels and frozen artifacts.
 
 \paragraph{Alignment.}
 These constraints follow the public rules and starting kit. Private coordinator details are unavailable, so benchmark-first tie-breaking, group scheduling, and acquisition-response selection remain explicit local choices (Appendix~\ref{app:protocol}). This is a \textbf{public simulation of the documented design}, not an exact private-sampler replay or a source-held-out test; public fitting and calibration overlap the evaluation release.
@@ -190,13 +185,9 @@ We use the \textbf{Empirical Mean predictor} from the official PAIEC repository 
   \frac{1}{n}\sum_{k=1}^{n}y_k, & n>0.
  \end{cases}
 \]
-It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Random is its default acquisition policy; the Adaptive variant uses ASRP's selected labels.
+It uses only the current subject--benchmark group's acquired labels, without item features or a learned prior. Both predictors receive the same labels selected by the random streaming rule.
 
 We use the metrics in Section~\ref{sec:setting}: average all response losses within a group, groups equally within a draw, then the \ProxyDraws{} draws equally. We report sample SD and range across draw scores. Paired differences compare methods on the same draw. Repeated appearances of a group are retained as part of the sampling distribution; draw SD describes composition variability, not independent evidence about new-source transfer.
-
-\subsection{Official formative feedback}
-
-We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} records the submission IDs and available feedback.
 
 \section{Results and Analysis}
 
@@ -210,14 +201,14 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \setlength{\tabcolsep}{4pt}
 \input{results_table}
 \vspace{6pt}
-\caption{Public formative-simulation Brier scores: equal groups within each draw, then equal weight across \ProxyDraws{} draws. Evaluation pools are matched across policies; acquired labels are matched across predictors within each policy. Lower is better.}
+\caption{Public formative-simulation Brier scores: equal groups within each draw, then equal weight across \ProxyDraws{} draws. Both predictors share evaluation pools and randomly acquired labels. Lower is better.}
 \label{tab:proxy}
 \end{table}
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.95\columnwidth,height=0.24\textheight,keepaspectratio]{figures/public_proxy_curve.pdf}
-  \caption{Public formative-simulation results on the $\log_2(1+n)$ budget axis. Left: mean Brier scores under Adaptive acquisition. Right: paired differences, Adaptive minus Random, in units of $10^{-3}$; positive values favor Random and negative values favor Adaptive. Blue denotes ASRP and orange Empirical Mean in both panels. Values match Table~\ref{tab:proxy}.}
+  \caption{Public formative-simulation results with Random acquisition on the $\log_2(1+n)$ budget axis. Left: mean Brier scores. Right: the paired Brier reduction, Empirical Mean minus ASRP; positive values favor ASRP. Values match Table~\ref{tab:proxy}.}
   \label{fig:proxy_curve}
 \end{figure}
 
@@ -230,7 +221,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 \label{tab:seeds}
 \end{table}
 
-\subsection{Prediction and acquisition effects}
+\subsection{Prediction with matched evidence}
 
 \input{results_analysis}
 
@@ -238,21 +229,11 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{official_overview}
 
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{4pt}
-\input{official_table}
-\vspace{6pt}
-\caption{Official Brier scores and ALC for ASRP with adaptive acquisition: mean and sample SD over \OfficialRuns{} evaluations, with equal group weighting within each evaluation. Lower is better.}
-\label{tab:official}
-\end{table}
-
 \section{Limitations and Discussion}
 
 \input{official_limitation}
 
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback. Unknown coordinator details remain local assumptions. Local component ablations yield small, draw-dependent ALC differences and do not establish a stable benefit for each module; the complete results are available in the repository.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit draws containing multiple subjects from the same benchmark. Unknown coordinator details remain local assumptions. Local component ablations yield small, draw-dependent ALC differences and do not establish a stable benefit for each module; the complete results are available in the repository.
 
 \section{Conclusion}
 
@@ -268,7 +249,7 @@ These equations specify inference with the released frozen artifacts at the six 
 \paragraph{Shared notation.}
 A support row $r$ contains a subject $s_r$, item $i_r$, and binary outcome $y_r$. The row collection $\mathcal D_b$ contains all revealed responses for benchmark $b$ and has size $M$. Its subject-specific subset $\mathcal D_s$ has $n_s$ rows and $S_s$ successes. For the current query subject, the budget is $n=n_s\le31$. The kernel can share residual evidence across subjects in the same benchmark; $M$ need not equal $n$. Runtime subject identity uses the complete subject dictionary, whereas frozen subject-prior lookup uses \texttt{normalized\_name}.
 
-We distinguish $\eta_n$ (Rasch mixing weight), $w_n$ (kernel mixing weight), and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Acquisition uses gain $G_j$, utility $V_j$, probability $\pi_*^{\mathrm{acq}}$, and uniform variate $\xi$; none denotes an embedding coordinate.
+We distinguish $\eta_n$ (Rasch mixing weight), $w_n$ (kernel mixing weight), and $\lambda_K$ (ridge penalty). Beta component index $k\in\{1,2\}$ has concentration $c_k$, prior mass $\pi_k$, and posterior mass $\omega_{sk}$. Random acquisition uses probability $\pi^{\mathrm{acq}}$ and pseudorandom variate $\xi$.
 
 \subsection{Feature construction for Section~\ref{sec:difficulty}}\label{app:features}
 
@@ -394,37 +375,9 @@ If no entry exists, $\Delta_n(i)=0$. Cluster cosine normalization floors norms a
 
 The correction $\Delta_n(i)$ is added after mixing the hybrid and kernel predictions with weight $w_n$. A final clip to $[0,1]$ completes \texttt{predict}.
 
-\subsection{Covariance calculation for Section~\ref{sec:acquisition}}\label{app:acquisition}
+\subsection{Random acquisition implementation}\label{app:acquisition}
 
-The acquisition kernel is denoted $K^{\mathrm{acq}}$ to distinguish it from the prediction kernel $K$. Its geometry is fitted to the concatenation of acquired support $\mathcal D_b$, the reference list $\mathcal P$, and the current candidate $*$. The same visible item may appear in both support and reference positions; these occurrences remain in the concatenation. Only $\mathcal P$ itself is deduplicated. Thus acquisition may use seen but unlabeled features, whereas prediction geometry uses only acquired support features.
-
-Use the feature normalization and RBF rule in Appendix~\ref{app:kernel}, but compute the median-distance bandwidth from pairs in $\mathcal P$ only. Let $\mathcal U$ concatenate $\mathcal P$ and $*$. For the current subject $s$, augment the kernel blocks as
-\[
- \begin{aligned}
- A_{\mathcal D\mathcal D}[r,t]&=K^{\mathrm{acq}}_{\mathcal D\mathcal D}[r,t]+0.25\,\mathbf1[s_r=s_t],\\
- A_{\mathcal U\mathcal D}[j,r]&=K^{\mathrm{acq}}_{\mathcal U\mathcal D}[j,r]+0.25\,\mathbf1[s_r=s],\\
- A_{\mathcal U\mathcal U}&=K^{\mathrm{acq}}_{\mathcal U\mathcal U}+0.25\mathbf1\mathbf1^\top,
- \end{aligned}
-\]
-where block subscript $\mathcal D$ abbreviates $\mathcal D_b$. Conditional covariance and gain are
-\[
- \Sigma=A_{\mathcal U\mathcal U}-A_{\mathcal U\mathcal D}
- (A_{\mathcal D\mathcal D}+I_M)^{-1}A_{\mathcal U\mathcal D}^\top,\qquad
- G_j=\max\!\left(
- \frac{|\mathcal P|^{-1}\sum_{r\in\mathcal P}\Sigma_{rj}^{2}}
-      {1+\max(\Sigma_{jj},0)},10^{-12}\right).
-\]
-The identity term implements unit observation noise; without support, the subtraction is omitted. Define
-\[
- \overline G_{\mathcal P}=|\mathcal P|^{-1}\sum_{r\in\mathcal P}G_r,\qquad
- V_j=\left[\min\!\left(\frac{G_j}{\max(\overline G_{\mathcal P},10^{-12})},20\right)\right]^4.
-\]
-These utilities enter $\pi_*^{\mathrm{acq}}$ in Section~\ref{sec:acquisition}. The power four is applied before dividing by mean reference utility. Gain depends on support membership and features; the numerical values of the revealed outcomes do not enter this covariance calculation.
-
-\paragraph{Acquisition rules and reproducibility.}
-Let $A$ be the initial candidate count and $B_{\max}=31$ the total label allowance in this experiment. Warm-up skips the first $W=\min(16,\max(0,A-B_{\max}))$ candidates. Checks occur in this order: reject if $L\le0$; acquire if $R\le L$; otherwise skip during warm-up. After warm-up, an empty reference list falls back to probability $L/R$; otherwise use $\pi_*^{\mathrm{acq}}$.
-
-To ensure reproducibility, we generate a deterministic pseudorandom value $\xi\in[0,1)$ from the current context and input using SHA256. We acquire the label when $\xi<\pi_*^{\mathrm{acq}}$, using $L/R$ as the fallback acquisition probability. The reference list uses the last 64 candidates before the current one, deduplicated by the hash of visible item text/metadata/interactor content. Skipped outcomes are never supplied. See \texttt{AdaptiveGainPolicy.choose} in \path{src/asrp/adaptive_gain_policy.py}.
+The hook in \path{src/asrp/labeling.py} returns false when no labels or candidates remain, and true when all remaining candidates are needed to fill the label allowance. Otherwise it accepts with probability $L/R$. The pseudorandom value $\xi\in[0,1)$ is derived deterministically from the current context and input using SHA256; the label is acquired when $\xi<L/R$. This matches the uniform streaming rule used in the public starting kit. The hook requires no model inference and does not inspect outcome values. The maximum allowance is 31 labels; the evaluation checkpoints use nested prefixes of this trajectory.
 
 \section{Public source inventory}\label{app:sources}
 
@@ -434,19 +387,6 @@ The following \ProxySources{} public binary source identifiers occur across the 
 \scriptsize
 \input{source_inventory}
 \endgroup
-
-\section{Official feedback provenance}\label{app:official}
-
-\input{official_audit}
-
-\begin{table}[H]
-\centering
-\small
-\input{official_runs_table}
-\vspace{6pt}
-\caption{Official formative evaluations identified by Codabench submission ID. Brier ALC is reconstructed from the rounded group feedback and may differ from the platform display by $10^{-6}$. Evaluation-item counts do not determine group weights.}
-\label{tab:official_records}
-\end{table}
 
 \section{Reproducibility and Disclosure}\label{app:reproducibility}
 
@@ -460,11 +400,11 @@ uv run --locked python tools/reproduce.py
 \end{verbatim}
 \end{samepage}
 
-The pipeline reconstructs the eligible inventory, fixed pools, and all \ProxyDraws{} draws, evaluates both policies and all variants on CPU, and compares probabilities within $10^{-7}$ and acquisition decisions exactly against the release. An independent fresh-process rerun of one complete draw reproduced all 111,720 probabilities exactly; a separate NumPy audit verified all response labels, Empirical Mean prefixes, and aggregate scores. Reproduction uses frozen artifacts; original offline fitting scripts are not included.
+The pipeline reconstructs the eligible inventory, fixed pools, and all \ProxyDraws{} draws, evaluates Random acquisition and the released prediction variants on CPU, and compares probabilities within $10^{-7}$ and acquisition decisions exactly against the release. The submission hook is checked against the reference random rule at every candidate. Reproduction uses frozen artifacts; original offline fitting scripts are not included.
 
-The protocol is in \path{experiments/formative_config.json}; the manifest records every selected item and response. \path{tools/score_draws.py} audits released compressed predictions without model inference, and \path{tools/update_formative_report.py} regenerates report tables and analyses. The release includes per-group and per-draw scores, both acquisition trajectories, and paired component differences. Earlier fixed-subject experiments remain separate historical results and are not mixed into the current tables.
+The protocol is in \path{experiments/formative_config.json}; the manifest records every selected item and response. \path{tools/score_draws.py} audits released compressed predictions without model inference, and \path{tools/update_formative_report.py} regenerates report tables and analyses. The release includes per-group and per-draw scores, random acquisition trajectories, and paired component differences. Earlier fixed-subject experiments remain separate historical results and are not mixed into the current tables.
 
-Released official aggregates and scripts regenerate the official result tables; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
+Official evaluation of this submission is pending; private platform evaluations cannot be rerun locally. File descriptions and build instructions are provided in the repository README.
 
 Competition-specific artifacts use permitted measurement-db data and the pretrained MiniLM encoder. Codex assisted development and report preparation; no external LLM API is used during scoring.
 

@@ -198,8 +198,7 @@
     ],
     "draw_limit": 1000,
     "policies": [
-      "random",
-      "adaptive"
+      "random"
     ],
     "group_selection": "All eligible public benchmark/subject groups; complete groups only. At each step choose uniformly among feasible least-represented benchmarks, then uniformly among least-represented subjects within it, using seeded hash order. Counts reset within each draw; benchmark tie-breaking precedes subject selection.",
     "split": "Fixed item-level 50/50 pools for the pinned snapshot; odd extra to acquisition; independent fixed stream ordering.",

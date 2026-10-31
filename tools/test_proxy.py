@@ -68,30 +68,25 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError):source_comparisons(metrics[:-1],CONFIG['seeds'])
         with self.assertRaises(ValueError):source_comparisons(metrics+[metrics[0]],CONFIG['seeds'])
 
-    def test_adaptive_policy_has_real_discretion_at_80_candidates(self):
-        import sys
+    def test_submission_random_hook_matches_reference_stream(self):
         from pathlib import Path
-        import numpy as np
-        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src/asrp'))
-        from adaptive_gain_policy import AdaptiveGainPolicy
-        called=[]
-        def gram(items):
-            called.append(len(items))
-            x=np.asarray([[math.sin(int(i['item_content'])),math.cos(int(i['item_content']))] for i in items])
-            return 2*(x@x.T)
-        policy=AdaptiveGainPolicy(gram,power=4,warmup=16)
-        support=[];decisions=[]
-        for i in range(80):
-            item={'item_content':str(i),'item_features':'','interactors':'','benchmark_id':'b'}
-            pair=[{'normalized_name':'s'},item]
-            context={'benchmark_id':'b','subject_id':'s','labels_remaining':31-len(support),
-                     'labels_acquired':len(support),'max_labels':31,'items_remaining':80-i}
-            chosen=policy.choose(pair,support,context);decisions.append(chosen)
-            if chosen:support.append([pair,i%2])
-        self.assertEqual(decisions[:16],[False]*16)
-        self.assertEqual(len(support),31)
-        self.assertGreater(len(called),0)
-        self.assertIn(False,decisions[16:])
+        from smoke_test import load_module
+        hook=load_module(Path(__file__).resolve().parents[1]/'src/asrp/labeling.py',
+                         'random_hook_test').acquisition_function
+        for size in [40,80,500]:
+            support=[]
+            for i in range(size):
+                pair=[{'normalized_name':'s'}, {'item_content':str(i),'benchmark_id':'b'}]
+                context={'benchmark_id':'b','subject_id':'s','labels_remaining':31-len(support),
+                         'labels_acquired':len(support),'max_labels':31,'items_remaining':size-i}
+                chosen=hook(pair,support,context)
+                self.assertIsInstance(chosen,bool)
+                self.assertEqual(chosen,random_choose(pair,context))
+                self.assertEqual(chosen,hook(pair,[[pair,1]],context))
+                if chosen:support.append([pair,i%2])
+            self.assertEqual(len(support),31)
+        self.assertFalse(hook([{},{}],context={'labels_remaining':0,'items_remaining':0}))
+        with self.assertRaises(ValueError):hook([{},{}])
 
 
 if __name__=='__main__':unittest.main()

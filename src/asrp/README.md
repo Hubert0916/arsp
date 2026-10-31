@@ -11,7 +11,7 @@ ASRP (Adaptive Support-Based Response Prediction) combines the following compone
 
 The metadata prior uses only public `measurement-db` training responses. At test time it reads the query's `item_features`; the current conservative configuration updates this prior with the aggregate revealed labels and lets the kernel Probe use the acquired item embeddings. No benchmark response lookup or private item data is used.
 
-`runtime_config.json` contains the frozen budget-specific blend. `labeling.py` uses the `adaptive_4_warm` acquisition policy. The six budgets are 0, 1, 3, 7, 15, and 31 labels.
+`runtime_config.json` contains the frozen budget-specific blend. `labeling.py` uses uniform random streaming acquisition with probability `labels_remaining / items_remaining`. It requires no encoder, warm-up, or covariance calculation. The six budgets are 0, 1, 3, 7, 15, and 31 labels.
 
 `topic_calibration.json` is generated only from public binary responses. Topic
 corrections are shrunk toward zero and capped. If this artifact is absent, the predictor

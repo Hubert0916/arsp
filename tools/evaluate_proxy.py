@@ -137,6 +137,7 @@ def evaluate_group_inner(group):
 
 
 def main():
+    raise SystemExit('Historical evaluator: use Git revision ee9257a for the paired-policy release; use evaluate_draws.py for the current Random release.')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data', type=Path, default=ROOT / 'data/proxy.jsonl')
     parser.add_argument('--output', type=Path, default=ROOT / 'results/reproduced')

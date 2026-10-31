@@ -119,7 +119,7 @@ def summarize(runs):
     complete = [r for r in unique if r['complete_six_budget']]
     if not complete:
         raise ValueError('No complete six-budget feedback block')
-    return {'method': 'ASRP + adaptive acquisition (identified by the submitter)',
+    return {'method': 'ASRP (acquisition policy recorded separately in provenance)',
             'budgets': BUDGETS, 'alc_weights': WEIGHTS,
             'weighting': 'Equal groups within each evaluation; equal evaluations across included blocks.',
             'precision': 'Aggregated from the six-decimal scores in copied platform feedback.',
@@ -136,7 +136,7 @@ def summarize(runs):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--input',type=Path,default=ROOT/'results/official/raw/official_result.log')
+    p.add_argument('--input',type=Path,required=True)
     p.add_argument('--output',type=Path,default=ROOT/'results/official')
     args=p.parse_args()
     raw=args.input.read_bytes();runs,issues=parse(raw.decode('utf-8-sig'))

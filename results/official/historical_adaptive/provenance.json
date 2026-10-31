@@ -15,7 +15,8 @@
   "attachment_sha256": "e47e8611bb4c4f7722577f0a38802516ab4f2bc56f1cade95cd5daf28b798fbc",
   "submission_ids_source": "User-supplied Codabench screenshot; see submissions.json. IDs are absent from the raw feedback text.",
   "model_version": "rasch-hybrid-v1",
-  "applies_to_current_runtime": true,
+  "applies_to_current_runtime": false,
   "restoration_reference_commit": "f9afbd258cc1f47ef158487261c79db14a48eafa",
-  "linkage": "Historical feedback identified by the submitter as the same with-Rasch ASRP + adaptive_4_warm ZIP. Local inference files have been restored to the pre-removal Git revision; the historical submitted ZIP hash is unavailable."
+  "linkage": "Historical feedback identified by the submitter as the same with-Rasch ASRP + adaptive_4_warm ZIP. Local inference files have been restored to the pre-removal Git revision; the historical submitted ZIP hash is unavailable.",
+  "historical_reason": "The current release uses uniform random acquisition; these evaluations used adaptive_4_warm."
 }

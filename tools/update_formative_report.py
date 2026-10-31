@@ -1,22 +1,22 @@
-"""Generate report values from the complete, fixed formative simulation."""
+"""Generate the Random-acquisition report from the verified formative scores."""
 import json
-from pathlib import Path
-import statistics
-
 from prepare_proxy import ROOT
 
 
 def main():
-    d=ROOT/'results/formative';r=ROOT/'report'
-    s=json.loads((d/'summary.json').read_text());m=json.loads((ROOT/'experiments/formative_manifest.json').read_text())
-    if s['protocol']!=m['config'] or s['n_draws']!=len(m['draws']):raise ValueError('Protocol mismatch')
-    methods=s['methods'];pairs=s['paired']
+    d=ROOT/'results/formative'; r=ROOT/'report'
+    s=json.loads((d/'summary.json').read_text())
+    m=json.loads((ROOT/'experiments/formative_manifest.json').read_text())
+    if s['protocol']!=m['config'] or s['n_draws']!=len(m['draws']):
+        raise ValueError('Protocol mismatch')
+    if s['protocol']['policies']!=['random']:
+        raise ValueError('The current report requires Random acquisition only')
+    methods=s['methods']['random']; pred=s['paired']['predictor_random']
+    asrp=methods['full']['alc']['mean']; baseline=methods['empirical_mean']['alc']['mean']
     def save(name,text):
         if any(ord(c)<32 and c!='\n' for c in text):
-            raise ValueError('Unexpected control character in generated report file: '+name)
+            raise ValueError('Control character in report input: '+name)
         (r/name).write_text('\n'.join(line.rstrip() for line in text.splitlines())+'\n')
-    def value(policy,variant):return methods[policy][variant]['alc']['mean']
-    aa=value('adaptive','full');ar=value('random','full');ea=value('adaptive','empirical_mean')
     macros={'ProxySources':s['n_distinct_sources'],'ProxyGroups':s['n_distinct_groups'],
         'ProxyDraws':s['n_draws'],'EligibleGroups':f"{s['n_eligible_groups']:,}",
         'EligibleSources':s['n_eligible_sources'],'ProxyGroupOccurrences':s['group_occurrences'],
@@ -24,61 +24,37 @@ def main():
         'ProxyResponses':f"{s['n_eval_response_occurrences_per_policy']:,}",
         'ProxyMinGroups':s['group_count_range'][0],'ProxyMaxGroups':s['group_count_range'][1],
         'ProxyMinPairs':s['source_pair_range'][0],'ProxyMaxPairs':s['source_pair_range'][1],
-        'ASRPAdaptiveALC':f'{aa:.4f}','ASRPRandomALC':f'{ar:.4f}','EMAdaptiveALC':f'{ea:.4f}',
-        'PredictorALCGain':f'{ea-aa:.4f}','AcquisitionALCGain':f'{ar-aa:.4f}'}
+        'ASRPRandomALC':f'{asrp:.4f}','EMRandomALC':f'{baseline:.4f}',
+        'PredictorALCGain':f'{baseline-asrp:.4f}'}
     save('results_metadata.tex','\n'.join('\\newcommand{\\'+k+'}{'+str(v)+'}' for k,v in macros.items()))
-    combinations={};table=[r'\begin{tabular}{lrrrrrrr}',r'\toprule',r'Predictor + acquisition & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
-    md=['| Predictor + acquisition | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |', '|---|---:|---:|---:|---:|---:|---:|---:|']
+    table=[r'\begin{tabular}{lrrrrrrr}',r'\toprule',r'Predictor (Random acquisition) & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC\\',r'\midrule']
+    md=['| Predictor (Random acquisition) | B0 | B1 | B3 | B7 | B15 | B31 | Brier ALC |','|---|---:|---:|---:|---:|---:|---:|---:|']
+    combinations={}
     for variant,name in [('empirical_mean','Empirical Mean'),('full','ASRP')]:
-        for policy in ['random','adaptive']:
-            x=methods[policy][variant];curve=[b['mean'] for b in x['brier']];alc=x['alc']['mean']
-            label=f'{name} + {policy.capitalize()}'
-            table.append(label+' & '+' & '.join(f'{v:.4f}' for v in curve+[alc])+r'\\')
-            md.append('| '+label+' | '+' | '.join(f'{v:.4f}' for v in curve+[alc])+' |')
-            combinations[('asrp' if variant=='full' else variant)+'_'+policy]={'brier':curve,'brier_alc':alc}
+        x=methods[variant]; curve=[b['mean'] for b in x['brier']]; alc=x['alc']['mean']
+        table.append(name+' & '+' & '.join(f'{v:.4f}' for v in curve+[alc])+r'\\')
+        md.append('| '+name+' | '+' | '.join(f'{v:.4f}' for v in curve+[alc])+' |')
+        combinations[('asrp' if variant=='full' else variant)+'_random']={'brier':curve,'brier_alc':alc}
     save('results_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
     save('results_proxy.json',json.dumps({'budgets':s['protocol']['budgets'],'combinations':combinations},indent=2))
     save('formative_readme_table.md','\n'.join(md))
-    readme=ROOT/'README.md';current=readme.read_text()
-    start=current.index('<!-- RESULTS_START -->')+len('<!-- RESULTS_START -->')
-    end=current.index('<!-- RESULTS_END -->')
-    readme.write_text(current[:start]+'\n\n'+'\n'.join(md)+'\n\n'+current[end:])
-    table=[r'\begin{tabular}{lrrrr}',r'\toprule',r'Predictor + acquisition & Mean ALC & SD & Minimum & Maximum\\',r'\midrule']
+    p=ROOT/'README.md';text=p.read_text();start=text.index('<!-- RESULTS_START -->')+len('<!-- RESULTS_START -->');end=text.index('<!-- RESULTS_END -->')
+    p.write_text(text[:start]+'\n\n'+'\n'.join(md)+'\n\n'+text[end:])
+    table=[r'\begin{tabular}{lrrrr}',r'\toprule',r'Predictor (Random acquisition) & Mean ALC & SD & Minimum & Maximum\\',r'\midrule']
     for variant,name in [('empirical_mean','Empirical Mean'),('full','ASRP')]:
-        for policy in ['random','adaptive']:
-            x=methods[policy][variant]['alc']
-            table.append(f'{name} + {policy.capitalize()} & '+' & '.join(f'{x[k]:.4f}' for k in ['mean','sample_sd','min','max'])+r'\\')
+        x=methods[variant]['alc'];table.append(name+' & '+' & '.join(f'{x[k]:.4f}' for k in ['mean','sample_sd','min','max'])+r'\\')
     save('results_seed_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    save('results_overview.tex',f"Across {s['n_draws']} fixed public-data draws, \\textbf{{ASRP + Adaptive reaches mean Brier ALC ${aa:.4f}$}}, compared with ${ea:.4f}$ for Empirical Mean using the same labels (Table~\\ref{{tab:proxy}}). Each draw contains complete groups under the 1,000-pair cap; Table~\\ref{{tab:seeds}} reports variation across these changing group compositions.")
-    pred=pairs['predictor_adaptive'];acq=pairs['acquisition_asrp']
-    text=(r'\paragraph{Prediction and acquisition.} '
-        +f"With Adaptive evidence held fixed, ASRP changes ALC by ${pred['mean']:+.4f}$ relative to Empirical Mean and scores lower in {pred['n_negative']} of {s['n_draws']} draws. "
-        +f"Changing ASRP from Random to Adaptive acquisition changes mean ALC by ${acq['mean']:+.4f}$; Adaptive scores lower in {acq['n_negative']} draws, higher in {acq['n_positive']}, and ties in {acq['n_zero']}. "
-        +r'These paired comparisons distinguish the predictor contribution from the acquisition-policy contribution; draw-level SD describes the sampled public group compositions.')
-    save('results_analysis.tex',text)
-    acquisition_word='reduces' if ar>aa else 'increases'
-    save('introduction_results.tex',r'\textbf{The evaluation separates prediction quality from label selection.} '
-        +f"Across {s['n_draws']} complete-group public draws, ASRP achieves mean Brier ALC ${aa:.4f}$ versus ${ea:.4f}$ for Empirical Mean under identical Adaptive evidence. "
-        +f"Switching ASRP from Random to Adaptive acquisition {acquisition_word} mean ALC by ${abs(ar-aa):.4f}$. "
-        +r'Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.')
+    save('results_overview.tex',f"Across {s['n_draws']} public-data draws, \\textbf{{ASRP reaches mean Brier ALC ${asrp:.4f}$}}, compared with ${baseline:.4f}$ for Empirical Mean using identical randomly acquired labels (Table~\\ref{{tab:proxy}}). Each draw contains complete groups under the 1,000-pair cap; Table~\\ref{{tab:seeds}} reports score variation across sampled group compositions.")
+    save('results_analysis.tex',r'\paragraph{Matched-evidence comparison.} '
+        +f"With randomly acquired evidence held fixed, ASRP changes ALC by ${pred['mean']:+.4f}$ relative to Empirical Mean and scores lower in {pred['n_negative']} of {s['n_draws']} draws. "
+        +r'The comparison measures the complete predictor under the same label-selection rule. Draw-level SD describes variability in the sampled public group compositions.')
+    save('introduction_results.tex',r'\textbf{Matched randomly acquired labels isolate the predictor comparison.} '
+        +f"Across {s['n_draws']} complete-group public draws, ASRP achieves mean Brier ALC ${asrp:.4f}$ versus ${baseline:.4f}$ for Empirical Mean. "
+        +r'All six mean budget scores favor ASRP in this public simulation. Public fitting and evaluation overlap, and transfer to the private competition pool remains unverified for the current submission.')
     names=sorted({g['source'] for g in m['groups']})
     save('source_inventory.tex',', '.join(r'\texttt{'+name.replace('_',r'\_')+'}' for name in names)+'.')
-    group_rows=json.loads((d/'by_group.json').read_text())
-    unique={}
-    for row in group_rows:
-        if row['policy']=='adaptive':unique.setdefault(row['group_id'],[]).append(row)
-    effects=[]
-    for gid,rows in unique.items():
-        effects.append({'group_id':gid,'source':rows[0]['source'],'subject_id':rows[0]['subject_id'],
-            'n_draws':len(rows),'with_rasch':statistics.mean(x['methods']['full']['alc'] for x in rows),
-            'without_rasch':statistics.mean(x['methods']['no_rasch']['alc'] for x in rows)})
-    for e in effects:e['delta']=e['without_rasch']-e['with_rasch']
-    effects.sort(key=lambda e:e['delta'])
-    (d/'rasch_by_group.json').write_text(json.dumps(effects,indent=2)+'\n')
-    save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as labels accumulate. '
-        +('ASRP outperforms Empirical Mean on average with matched acquired evidence. ' if aa<ea else 'Matched-evidence comparisons expose the limits of the current predictor. ')
-        +r'Acquisition effects vary across sampled groups, while accurate cold-start transfer remains a challenge. The released protocol, frozen artifacts, predictions, and acquisition traces make these comparisons reproducible.')
-    print('Generated formative report tables, macros, analyses, and group diagnostics.')
+    save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as randomly acquired labels accumulate. ASRP outperforms Empirical Mean on average with matched acquired evidence in the public simulation. The released protocol, frozen artifacts, predictions, and acquisition traces make the predictor comparison reproducible.')
+    print('Generated Random-acquisition report inputs.')
 
 
 if __name__=='__main__':main()
