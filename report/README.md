@@ -1,6 +1,6 @@
 # ASRP technical report
 
-`main.tex` uses the NeurIPS 2026 template and the seven-section structure. The authors are Yuhan Chiu (National Taiwan University) and Mi-Yen Yeh (Academia Sinica).
+`main.tex` uses the NeurIPS 2026 template and the seven-section structure. The authors are Yuhan Chiu (Data Science Degree Program, National Taiwan University and Academia Sinica) and Mi-Yen Yeh (Academia Sinica).
 
 The report compares ASRP and Empirical Mean on 30 complete-group public draws with identical randomly acquired labels. It presents only local public-data results. Section 5.3 reports matched-evidence removals of Rasch, the kernel, and topic calibration, including all six budget scores and ALC differences. These tables and their analysis are generated from `results/formative/summary.json` by `tools/update_formative_report.py`.
 

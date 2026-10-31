@@ -1,6 +1,6 @@
 # ASRP: Adaptive Support-Based Response Prediction
 
-**Yuhan Chiu — National Taiwan University**
+**Yuhan Chiu — Data Science Degree Program, National Taiwan University and Academia Sinica**
 
 ASRP predicts success with 0–31 revealed labels using a Rasch hybrid, Kernel Probe,
 topic calibration, and **uniform random acquisition**. Prediction adapts to the revealed support; label selection uses the streaming probability `labels_remaining / items_remaining`.
