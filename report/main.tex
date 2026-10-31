@@ -46,7 +46,7 @@
 \maketitle
 
 \begin{abstract}
-A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. Across \ProxyDraws{} public-data draws following the documented formative protocol, ASRP achieves mean Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels. Paired policy and component comparisons characterize the contributions of prediction, acquisition, and initialization.
+A single ability estimate can miss a subject's relative strengths across item types, while local adaptation from very few labels can overreact to individual outcomes. We present \textbf{ASRP (Adaptive Support-Based Response Prediction)}, which addresses this tension by shifting from public-data priors and content-based Rasch estimation at low label budgets to support-conditioned kernel residuals as evidence accumulates. A fixed budget-dependent ensemble controls this transition, shrunk topic corrections adjust systematic errors, and a streaming acquisition rule selects labels using covariance gain. Across \ProxyDraws{} public-data draws following the documented formative protocol, ASRP achieves mean Brier ALC $\ASRPAdaptiveALC{}$ versus $\EMAdaptiveALC{}$ for Empirical Mean with identical adaptively acquired labels. Paired policy comparisons separate overall prediction quality from label selection.
 \end{abstract}
 
 \section{Introduction}
@@ -194,10 +194,6 @@ It uses only the current subject--benchmark group's acquired labels, without ite
 
 We use the metrics in Section~\ref{sec:setting}: average all response losses within a group, groups equally within a draw, then the \ProxyDraws{} draws equally. We report sample SD and range across draw scores. Paired differences compare methods on the same draw. Repeated appearances of a group are retained as part of the sampling distribution; draw SD describes composition variability, not independent evidence about new-source transfer.
 
-\subsection{Component ablations}\label{sec:ablation_setup}
-
-On each draw we remove one prediction component while keeping the acquired evidence and all remaining parameters fixed. \textbf{No Rasch} sets $\eta_n=0$; \textbf{No Kernel Probe} sets $w_n=0$; \textbf{No topic calibration} sets $\Delta_n(i)=0$. No component is refitted or retuned. Shared-branch calculations are checked against the native packaged prediction path for each variant on the first evaluation input of every group, budget, and policy. The report presents the Adaptive ablations; predictions for both policies are released.
-
 \subsection{Official formative feedback}
 
 We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP in \OfficialRuns{} Codabench formative runs. Each run samples a private subset. We average group scores equally within each run, then report the mean and sample SD across runs using all six budgets. Appendix~\ref{app:official} records the submission IDs and available feedback.
@@ -238,22 +234,6 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{results_analysis}
 
-\subsection{Component contributions}\label{sec:ablations}
-
-\begin{table}[H]
-\centering
-\small
-\setlength{\tabcolsep}{3pt}
-\input{ablation_table}
-\vspace{6pt}
-\caption{Component removals with matched Adaptive evidence, averaged within and across the same \ProxyDraws{} draws. Positive $\Delta$ALC (variant minus full ASRP) indicates worse performance.}
-\label{tab:ablation}
-\end{table}
-
-\input{ablation_analysis}
-
-\input{rasch_retention_analysis}
-
 \subsection{Official formative results}\label{sec:official}
 
 \input{official_overview}
@@ -272,7 +252,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{official_limitation}
 
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback. Unknown coordinator details remain local assumptions. Component effects do not establish universal necessity.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback. Unknown coordinator details remain local assumptions. Local component ablations yield small, draw-dependent ALC differences and do not establish a stable benefit for each module; the complete results are available in the repository.
 
 \section{Conclusion}
 

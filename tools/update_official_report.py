@@ -51,7 +51,7 @@ def main():
          +f"Across {n} official evaluations, zero-label Brier is ${metrics['brier'][0]['mean']:.4f}$, "
          +r'above the $0.2500$ of a constant $0.5$ prediction. '
          +f"Revealed evidence reduces it to ${metrics['brier'][-1]['mean']:.4f}$ at budget 31. "
-         +r'The public ablations do not identify which initialization component causes the private-data errors; accurate cold-start prediction remains a limitation.')
+         +r'These aggregate scores do not identify which initialization component causes the private-data errors; accurate cold-start prediction remains a limitation.')
     note=(f"We evaluated the same ASRP + "
           +r"\texttt{adaptive\_4\_warm} ZIP in "
           +f"{n} official formative evaluations. " if same_zip else "")

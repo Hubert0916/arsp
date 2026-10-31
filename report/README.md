@@ -7,14 +7,14 @@ intended before submitting.
 
 Current local results use the [public formative simulation](../results/formative):
 30 complete-group draws, fixed within-group pools, all evaluation responses,
-Random/Adaptive acquisition, and paired component removals. The only official
+Random/Adaptive acquisition. Component-removal results remain available in the
+repository; the report summarizes their limited evidence in the limitations. The only official
 scores reported are the ten with-Rasch evaluations in `../results/official`.
 
 From the repository root, audit, generate figures, compile, and clean intermediates:
 
 ```bash
 uv run --locked python tools/score_draws.py results/formative
-uv run --locked python tools/audit_rasch_effects.py
 uv run --locked python tools/update_formative_report.py
 uv run --locked python report/make_proxy_plot.py
 uv run --locked python tools/update_official_report.py

@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import statistics
 
-from prepare_proxy import ROOT, sha
+from prepare_proxy import ROOT
 
 
 def main():
@@ -11,10 +11,6 @@ def main():
     s=json.loads((d/'summary.json').read_text());m=json.loads((ROOT/'experiments/formative_manifest.json').read_text())
     if s['protocol']!=m['config'] or s['n_draws']!=len(m['draws']):raise ValueError('Protocol mismatch')
     methods=s['methods'];pairs=s['paired']
-    audit_dir=ROOT/'results/rasch_audit'
-    audit=json.loads((audit_dir/'local_effects.json').read_text())
-    for name,digest in audit['input_sha256'].items():
-        if sha(d/name)!=digest:raise ValueError('Rasch audit inputs changed: '+name)
     def save(name,text):
         if any(ord(c)<32 and c!='\n' for c in text):
             raise ValueError('Unexpected control character in generated report file: '+name)
@@ -64,19 +60,7 @@ def main():
     save('introduction_results.tex',r'\textbf{The evaluation separates prediction quality from label selection.} '
         +f"Across {s['n_draws']} complete-group public draws, ASRP achieves mean Brier ALC ${aa:.4f}$ versus ${ea:.4f}$ for Empirical Mean under identical Adaptive evidence. "
         +f"Switching ASRP from Random to Adaptive acquisition {acquisition_word} mean ALC by ${abs(ar-aa):.4f}$. "
-        +r'Component ablations find that Rasch has mixed group-dependent effects, while kernel adaptation and topic calibration yield small mean improvements under Adaptive evidence. '
         +r'Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.')
-    table=[r'\begin{tabular}{lrrrrrrrr}',r'\toprule',r'Adaptive predictor & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC & $\Delta$ALC\\',r'\midrule']
-    for variant,label in [('full','Full ASRP'),('no_rasch','No Rasch'),('no_kernel','No Kernel Probe'),('no_topic','No topic calibration')]:
-        x=methods['adaptive'][variant];vals=[b['mean'] for b in x['brier']]+[x['alc']['mean']]
-        table.append(label+' & '+' & '.join(f'{v:.4f}' for v in vals)+f" & {x['alc']['mean']-aa:+.4f}"+r'\\')
-    save('ablation_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
-    texts=[f"Removing Kernel Probe and topic calibration increases mean ALC by ${pairs['remove_no_kernel']['mean']:.5f}$ and ${pairs['remove_no_topic']['mean']:.5f}$, respectively. "]
-    rasch=pairs['remove_no_rasch'];delta=rasch['brier_difference']
-    lo,hi=audit['percentile_95_interval']
-    texts.append(f"Rasch removal changes mean ALC by ${rasch['mean']:+.5f}$; a paired-draw 95\\% bootstrap interval is $[{lo:.5f}, {hi:.5f}]$. ")
-    texts.append(r'This interval spans zero and establishes neither an average advantage nor equivalence. Zero Rasch weight makes predictions identical at budgets 15 and 31.')
-    save('ablation_analysis.tex',r'\paragraph{Controlled component effects.} '+''.join(texts))
     names=sorted({g['source'] for g in m['groups']})
     save('source_inventory.tex',', '.join(r'\texttt{'+name.replace('_',r'\_')+'}' for name in names)+'.')
     group_rows=json.loads((d/'by_group.json').read_text())
@@ -91,11 +75,9 @@ def main():
     for e in effects:e['delta']=e['without_rasch']-e['with_rasch']
     effects.sort(key=lambda e:e['delta'])
     (d/'rasch_by_group.json').write_text(json.dumps(effects,indent=2)+'\n')
-    win=sum(e['delta']>0 for e in effects);loss=sum(e['delta']<0 for e in effects)
-    save('rasch_retention_analysis.tex',r'\paragraph{Group heterogeneity.} '+f"Averaging repeated appearances per group, retaining Rasch improves ALC in {win}/{len(effects)} distinct groups and worsens it in {loss}. "+r'Only one to five complete groups fit each public draw, making aggregate scores sensitive to composition. Per-group results accompany the release.')
     save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as labels accumulate. '
         +('ASRP outperforms Empirical Mean on average with matched acquired evidence. ' if aa<ea else 'Matched-evidence comparisons expose the limits of the current predictor. ')
-        +r'Component and acquisition effects vary across sampled groups, while accurate cold-start transfer remains a challenge. The released protocol, frozen artifacts, predictions, and acquisition traces make these comparisons reproducible.')
+        +r'Acquisition effects vary across sampled groups, while accurate cold-start transfer remains a challenge. The released protocol, frozen artifacts, predictions, and acquisition traces make these comparisons reproducible.')
     print('Generated formative report tables, macros, analyses, and group diagnostics.')
 
 
