@@ -16,4 +16,4 @@ latexmk -cd -c -bibtex report/main.tex
 
 For an inference rerun, use `tools/reproduce.py` as described in the repository README. Reproduction uses frozen artifacts, without retraining the original priors or calibration.
 
-The method figure is TikZ in `figures/asrp_method.tex`. Figure 2 shows Random-acquisition Brier scores and Empirical-Mean-minus-ASRP differences. Both figures retain width `0.95\columnwidth`, height `0.24\textheight`, and `keepaspectratio`. Table captions remain below their tables. The NeurIPS checklist is omitted.
+The method figure is TikZ in `figures/asrp_method.tex`. Figure 2 is a single line chart of mean Random-acquisition Brier scores, with serif fonts, thin lines, and distinct filled-circle/open-square markers. Both figures retain width `0.95\columnwidth`, height `0.24\textheight`, and `keepaspectratio`. Table captions remain below their tables. The NeurIPS checklist is omitted.
