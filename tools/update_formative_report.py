@@ -63,10 +63,12 @@ def main():
     save('results_overview.tex',f"Across {s['n_draws']} public-data draws, \\textbf{{ASRP reaches mean Brier ALC ${asrp:.4f}$}}, compared with ${baseline:.4f}$ for Empirical Mean using identical randomly acquired labels (Table~\\ref{{tab:proxy}}). Each draw contains complete groups under the 1,000-pair cap; Table~\\ref{{tab:seeds}} reports score variation across sampled group compositions.")
     save('results_analysis.tex',r'\paragraph{Matched-evidence comparison.} '
         +f"With randomly acquired evidence held fixed, ASRP changes ALC by ${pred['mean']:+.4f}$ relative to Empirical Mean and scores lower in {pred['n_negative']} of {s['n_draws']} draws. "
-        +r'The comparison measures the complete predictor under the same label-selection rule. Draw-level SD describes variability in the sampled public group compositions.')
+        +r'The comparison measures the complete predictor under the same label-selection rule. '
+        +f"The largest mean Brier reduction is at budget 1 (${ -pred['brier_difference'][1]:.4f}$), where Empirical Mean predicts only zero or one from a single label. "
+        +r'ASRP instead combines its prior with the observed response. The gap narrows as more labels stabilize the empirical estimate.')
     save('introduction_results.tex',r'\textbf{Matched randomly acquired labels isolate the predictor comparison.} '
         +f"Across {s['n_draws']} complete-group public draws, ASRP achieves mean Brier ALC ${asrp:.4f}$ versus ${baseline:.4f}$ for Empirical Mean. "
-        +r'All six mean budget scores favor ASRP in this public simulation. Public fitting and evaluation overlap, and transfer to the private competition pool remains unverified for the current submission.')
+        +r'All six mean budget scores favor ASRP. Component removals identify the largest topic-calibration effect at budget zero and kernel effect at budget 31, while the mean Rasch effect is small. These findings concern predictor changes with label selection held fixed; public fitting and evaluation overlap, so cold-start transfer to unseen benchmarks remains an open question.')
     names=sorted({g['source'] for g in m['groups']})
     save('source_inventory.tex',', '.join(r'\texttt{'+name.replace('_',r'\_')+'}' for name in names)+'.')
     save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as randomly acquired labels accumulate. ASRP outperforms Empirical Mean on average with matched acquired evidence in the public simulation. The released protocol, frozen artifacts, predictions, and acquisition traces make the predictor comparison reproducible.')

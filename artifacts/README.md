@@ -6,7 +6,7 @@ The released evaluation uses these files directly. Verify their checksums with
 | File in `asrp/` | Runtime role |
 |---|---|
 | `encoder/` | Frozen MiniLM encoder for difficulty and cluster assignment. |
-| `probe_encoder/` | Frozen ONNX MiniLM encoder for kernel and acquisition features. |
+| `probe_encoder/` | Frozen ONNX MiniLM encoder for kernel features. |
 | `difficulty_model.npz` | Feature normalization and 390–128–32–1 difficulty network. |
 | `binary_subject_prior.json` | Model-name offsets for initial ability and Beta means. |
 | `feature_prior.json` | Public subject/metadata success counts for the hybrid prior. |
@@ -24,7 +24,7 @@ See [third-party notices](../THIRD_PARTY_NOTICES.md).
 
 `tools/reproduce.py` reproduces predictions and scores with these frozen files.
 The original offline fitting scripts and artifact-specific training-row manifests
-are not included. `experiments/proxy_manifest.json` describes the evaluation
+are not included. `experiments/formative_manifest.json` describes the current evaluation
 selection, not the original training selection. Historical `research_files`
 entries inside configuration files are provenance hashes, not runnable paths in
 this release.
