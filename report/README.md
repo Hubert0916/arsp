@@ -27,7 +27,9 @@ Frozen-artifact reproduction does not retrain the original priors or calibration
 Older result generators are for historical protocols and should not be used to
 update the current report.
 
-The method figure is native TikZ in `figures/asrp_method.tex`; the Brier curve is
-built by `make_proxy_plot.py`. Both retain the requested maximum width of
+The method figure is native TikZ in `figures/asrp_method.tex`. Figure 2, built by
+`make_proxy_plot.py`, shows Adaptive Brier scores alongside Adaptive-minus-Random
+differences in thousandths, using the same predictor colors in both panels.
+Both figures retain the requested maximum width of
 `0.95\columnwidth`, maximum height of `0.24\textheight`, and aspect ratio.
 Table captions remain below their tables. The NeurIPS checklist is omitted.
