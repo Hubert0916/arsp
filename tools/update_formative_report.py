@@ -4,7 +4,6 @@ from pathlib import Path
 import statistics
 
 from prepare_proxy import ROOT, sha
-from update_official_report import official_results_enabled
 
 
 def main():
@@ -68,8 +67,7 @@ def main():
         +f"Across {s['n_draws']} complete-group public draws, ASRP achieves mean Brier ALC ${aa:.4f}$ versus ${ea:.4f}$ for Empirical Mean under identical Adaptive evidence. "
         +f"Switching ASRP from Random to Adaptive acquisition {acquisition_word} mean ALC by ${abs(ar-aa):.4f}$. "
         +r'Component ablations find that Rasch has mixed group-dependent effects, while kernel adaptation and topic calibration yield small mean improvements under Adaptive evidence. '
-        +(r'Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.'
-          if official_results_enabled() else ''))
+        +r'Ten official evaluations yield mean ALC $\OfficialALC{}$, but expose a \textbf{cold-start transfer weakness}: zero-label Brier is $\OfficialZeroBrier{}$, above the $0.2500$ of a constant $0.5$ prediction.')
     table=[r'\begin{tabular}{lrrrrrrrr}',r'\toprule',r'Adaptive predictor & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC & $\Delta$ALC\\',r'\midrule']
     for variant,label in [('full','Full ASRP'),('no_rasch','No Rasch'),('no_kernel','No Kernel Probe'),('no_topic','No topic calibration')]:
         x=methods['adaptive'][variant];vals=[b['mean'] for b in x['brier']]+[x['alc']['mean']]
@@ -116,7 +114,7 @@ def main():
         +r'The acquisition code is unchanged and the kernel implementation is semantically identical. This checks the archived code on these inputs; it does not authenticate an unavailable historical platform ZIP. '
         +r'The report retains the submitted with-Rasch configuration and does not infer that Rasch is universally necessary.'+'\n\n'
         +r'\paragraph{Shared-benchmark context.} '
-        +r'All main public draws happen to contain distinct benchmarks. In draws containing multiple subjects within a benchmark, Kernel Probe and acquisition can share evidence or seen candidates across those subjects. Comparing one subject across separate draws therefore need not hold its full context fixed, even when its own item pool is persistent. '+'\n\n'
+        +r'All main public draws happen to contain distinct benchmarks, whereas official feedback includes multiple subjects within a benchmark. Kernel Probe and acquisition share evidence or seen candidates across those subjects. Thus a comparison of one subject across separate official draws need not hold its full context fixed, even when its own item pool is persistent. '+'\n\n'
         +r'We isolate this mechanism using the first three eligible source/benchmark names in lexical order, taking the first group-ID pair with distinct visible subjects that fits the 1,000-pair cap. We hold the focal subject\textquotesingle s evaluation items and acquired-label prefixes fixed, then append only the companion\textquotesingle s acquired prefix at each budget. Acquisition is not rerun jointly. '
         +r'Budgets zero and one, and Empirical Mean, stay unchanged; kernel-dependent predictions can change even at budgets 15 and 31, where Rasch is absent. This establishes context sensitivity, not the cause or magnitude of a private-platform gap.'+'\n\n'
         +r'\begin{table}[H]'+'\n'+r'\centering\small'+'\n'+'\n'.join(table)+'\n'+r'\vspace{6pt}'+'\n'

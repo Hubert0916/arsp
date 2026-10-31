@@ -1,6 +1,0 @@
-{
-  "official_results": "pending",
-  "reported_method": "rasch-hybrid-v1",
-  "candidate_evaluation": "results/asrp_next/validation/summary.json",
-  "candidate_promotion": "Not promoted: broad-pool paired confidence interval includes zero."
-}

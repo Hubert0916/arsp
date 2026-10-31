@@ -34,12 +34,8 @@ The [Rasch audit](results/rasch_audit) checks uncertainty, archived-code agreeme
 and sensitivity to other subjects' evidence. The paired public Rasch effect is
 small and mixed; it does not establish that removing Rasch improves the method.
 
-A [no-Rasch refinement experiment](results/asrp_next) wins all 20 Adaptive small-pool
-validation draws, but its 40-draw broad-pool gain is inconclusive. The candidate
-is available for further testing; the released model and report remain unchanged.
-
-Historical with-Rasch Codabench [aggregates](results/official) are preserved
-separately. Official fields in the current report are pending.
+**Official Codabench:** ten with-Rasch ASRP evaluations have mean Brier ALC
+**0.19107** (sample SD **0.01105**). [Aggregates](results/official).
 
 ## Reproduce
 

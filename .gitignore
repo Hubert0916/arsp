@@ -32,8 +32,3 @@ report/*.fdb_latexmk
 
 # Preserve original private platform feedback locally.
 /results/official/raw/
-
-# Reconstructed from public tables; the compressed manifest is released.
-/experiments/asrp_next/validation_manifest.json
-/results/asrp_next/*_cache/trace_chunks/
-/results/asrp_next/*_cache/acquisition.json
