@@ -18,6 +18,9 @@ Codabench draws.
 - `reproduction_check.json`: fresh inference compared with the previous release's
   Random records, including all probabilities and acquisition decisions.
 
+Temporary `chunks/` files are not required to audit these released results or
+start a fresh rerun; the evaluator creates them again while running inference.
+
 Audit and regenerate report inputs:
 
 ```bash

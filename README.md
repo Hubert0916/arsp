@@ -76,5 +76,11 @@ the official baseline. This ZIP replaces the earlier acquisition policy with Ran
 - `experiments`, `tools`: protocols, manifests, and reproduction scripts.
 - `results`, `report`: predictions, scores, paper, and figures.
 
+Keep `data/`, the Hugging Face cache, `artifacts/`, and `experiments/` for local
+reruns. `proxy_manifest.json`, `evaluate_proxy.py`, and `evaluate_ablation.py`
+remain dependencies of the current pipeline despite their historical names.
+Temporary result `chunks/` are regenerated during inference; the released
+compressed predictions and acquisition traces are the verification reference.
+
 See [third-party notices](THIRD_PARTY_NOTICES.md). Codex assisted development and
 writing; no external LLM API is used during scoring.
