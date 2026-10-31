@@ -225,11 +225,28 @@ We use the metrics in Section~\ref{sec:setting}: average all response losses wit
 
 \input{results_analysis}
 
+\subsection{Component ablations}
+\label{sec:ablations}
+
+We remove one component at a time while keeping the same \ProxyDraws{} draws, Random acquisition trajectories, evaluation outcomes, and frozen artifacts. Without Rasch, its mixing weight $\eta_n$ is set to zero, retaining the smoothed evidence estimate. Without the kernel, $w_n=0$ leaves the Rasch hybrid branch. Without topic calibration, the final correction is bypassed. Remaining parameters are not retrained or retuned.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\input{results_ablation_table}
+\vspace{6pt}
+\caption{Component removals with matched Random evidence. $\Delta$ALC is the variant minus ASRP; positive values indicate worse performance. ALC uses six decimals to show the small differences; budget scores are rounded to four decimals.}
+\label{tab:ablations}
+\end{table}
+
+\input{results_ablation_analysis}
+
 \section{Limitations and Discussion}
 
 \paragraph{Generalization.} Frozen public priors, difficulty estimates, and topic corrections may transfer imperfectly to unseen subjects and benchmarks, especially before labels are available.
 
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit draws containing multiple subjects from the same benchmark. Unknown coordinator details remain local assumptions. Local component ablations yield small, draw-dependent ALC differences and do not establish a stable benefit for each module; the complete results are available in the repository.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit draws containing multiple subjects from the same benchmark. Unknown coordinator details remain local assumptions. The component ablations in Section~\ref{sec:ablations} yield small, draw-dependent ALC differences and do not establish a stable benefit for each module.
 
 \section{Conclusion}
 

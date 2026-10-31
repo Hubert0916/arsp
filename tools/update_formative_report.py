@@ -44,6 +44,28 @@ def main():
     for variant,name in [('empirical_mean','Empirical Mean'),('full','ASRP')]:
         x=methods[variant]['alc'];table.append(name+' & '+' & '.join(f'{x[k]:.4f}' for k in ['mean','sample_sd','min','max'])+r'\\')
     save('results_seed_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
+    table=[r'\begin{tabular}{lrrrrrrrr}',r'\toprule',
+        r'Variant & $B_0$ & $B_1$ & $B_3$ & $B_7$ & $B_{15}$ & $B_{31}$ & ALC & $\Delta$ALC\\',r'\midrule']
+    for variant,name in [('full','ASRP'),('no_rasch','w/o Rasch'),
+                         ('no_kernel','w/o kernel'),('no_topic','w/o topic')]:
+        x=methods[variant]; alc=x['alc']['mean']
+        delta='---' if variant=='full' else f'{alc-asrp:+.6f}'
+        table.append(name+' & '+' & '.join(f"{b['mean']:.4f}" for b in x['brier'])
+                     +f' & {alc:.6f} & {delta}'+r'\\')
+    save('results_ablation_table.tex','\n'.join(table+[r'\bottomrule',r'\end{tabular}']))
+    rasch=s['paired']['remove_no_rasch']; kernel=s['paired']['remove_no_kernel']; topic=s['paired']['remove_no_topic']
+    save('results_ablation_analysis.tex',
+        r'\textbf{All three removals increase mean ALC, but their effects depend on the budget.} '
+        +f"Removing topic calibration has the largest mean ALC increase (${topic['mean']:+.6f}$); "
+        +f"its Brier penalty is largest at budget zero (${topic['brier_difference'][0]:+.4f}$), "
+        +r'whereas removing it slightly improves the mean scores at budgets 7--31. '
+        +f"Removing the kernel raises Brier score most at budget 31 (${kernel['brier_difference'][5]:+.4f}$), "
+        +r'consistent with its role in using accumulated support. '
+        +f"Removing Rasch changes mean ALC by only ${rasch['mean']:+.6f}$: "
+        +r'it worsens mean scores at budgets 0, 3, and 7, improves budget 1, and leaves budgets 15 and 31 unchanged because the ensemble uses only the kernel at those budgets.'
+        +'\n\n'+r'\textbf{The average benefit is not uniform across draws.} '
+        +f"ASRP has lower ALC than the no-Rasch, no-kernel, and no-topic variants in {rasch['n_positive']}, {kernel['n_positive']}, and {topic['n_positive']} of {s['n_draws']} draws, respectively. "
+        +r'These fixed-artifact removals identify budget-specific effects in this public snapshot; the small Rasch and kernel ALC differences do not establish a consistent improvement on unseen groups.')
     save('results_overview.tex',f"Across {s['n_draws']} public-data draws, \\textbf{{ASRP reaches mean Brier ALC ${asrp:.4f}$}}, compared with ${baseline:.4f}$ for Empirical Mean using identical randomly acquired labels (Table~\\ref{{tab:proxy}}). Each draw contains complete groups under the 1,000-pair cap; Table~\\ref{{tab:seeds}} reports score variation across sampled group compositions.")
     save('results_analysis.tex',r'\paragraph{Matched-evidence comparison.} '
         +f"With randomly acquired evidence held fixed, ASRP changes ALC by ${pred['mean']:+.4f}$ relative to Empirical Mean and scores lower in {pred['n_negative']} of {s['n_draws']} draws. "

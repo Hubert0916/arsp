@@ -2,7 +2,7 @@
 
 `main.tex` uses the NeurIPS 2026 template and the seven-section structure. Author/coauthor fields are retained for completion before submission.
 
-The report compares ASRP and Empirical Mean on 30 complete-group public draws with identical randomly acquired labels. It presents only local public-data results. Diagnostic component removals remain in the released data.
+The report compares ASRP and Empirical Mean on 30 complete-group public draws with identical randomly acquired labels. It presents only local public-data results. Section 5.3 reports matched-evidence removals of Rasch, the kernel, and topic calibration, including all six budget scores and ALC differences. These tables and their analysis are generated from `results/formative/summary.json` by `tools/update_formative_report.py`.
 
 From the repository root:
 
