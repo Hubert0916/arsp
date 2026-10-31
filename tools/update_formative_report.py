@@ -13,8 +13,6 @@ def main():
     methods=s['methods'];pairs=s['paired']
     audit_dir=ROOT/'results/rasch_audit'
     audit=json.loads((audit_dir/'local_effects.json').read_text())
-    version=json.loads((audit_dir/'version_check.json').read_text())
-    context=json.loads((audit_dir/'context_check.json').read_text())
     for name,digest in audit['input_sha256'].items():
         if sha(d/name)!=digest:raise ValueError('Rasch audit inputs changed: '+name)
     def save(name,text):
@@ -77,7 +75,7 @@ def main():
     rasch=pairs['remove_no_rasch'];delta=rasch['brier_difference']
     lo,hi=audit['percentile_95_interval']
     texts.append(f"Rasch removal changes mean ALC by ${rasch['mean']:+.5f}$; a paired-draw 95\\% bootstrap interval is $[{lo:.5f}, {hi:.5f}]$. ")
-    texts.append(r'This interval spans zero and establishes neither an average advantage nor equivalence. Zero Rasch weight makes predictions identical at budgets 15 and 31. See Appendix~\ref{app:rasch_audit} for resampling and diagnostic checks.')
+    texts.append(r'This interval spans zero and establishes neither an average advantage nor equivalence. Zero Rasch weight makes predictions identical at budgets 15 and 31.')
     save('ablation_analysis.tex',r'\paragraph{Controlled component effects.} '+''.join(texts))
     names=sorted({g['source'] for g in m['groups']})
     save('source_inventory.tex',', '.join(r'\texttt{'+name.replace('_',r'\_')+'}' for name in names)+'.')
@@ -98,30 +96,6 @@ def main():
     save('conclusion_results.tex',r'ASRP combines structured initialization with support-conditioned residual adaptation as labels accumulate. '
         +('ASRP outperforms Empirical Mean on average with matched acquired evidence. ' if aa<ea else 'Matched-evidence comparisons expose the limits of the current predictor. ')
         +r'Component and acquisition effects vary across sampled groups, while accurate cold-start transfer remains a challenge. The released protocol, frozen artifacts, predictions, and acquisition traces make these comparisons reproducible.')
-    table=[r'\begin{tabular}{lrrrr}',r'\toprule',r'Source & $B_{15}$, focal & $B_{15}$, + companion & $B_{31}$, focal & $B_{31}$, + companion\\',r'\midrule']
-    for row in context['results']:
-        vals=[row['focal_only_brier'][4],row['with_companion_brier'][4],row['focal_only_brier'][5],row['with_companion_brier'][5]]
-        table.append(r'\texttt{'+row['source'].replace('_',r'\_')+'} & '+' & '.join(f'{v:.5f}' for v in vals)+r'\\')
-    table += [r'\bottomrule',r'\end{tabular}']
-    details=(r'\paragraph{Paired uncertainty and heterogeneous effects.} '
-        +f"We resample the {s['n_draws']} complete paired public draws {audit['bootstrap_replicates']:,} times (seed {audit['bootstrap_seed']}) and take the 2.5th and 97.5th percentiles of the mean ALC difference. "
-        +f"Rasch retention helps in {audit['n_draws_retention_helps']} draws and hurts in {audit['n_draws_retention_hurts']}. "
-        +f"Under the report's group/draw weighting, group occurrences favoring retention contribute ${audit['positive_weighted_group_contributions']:+.5f}$ and those favoring removal contribute ${audit['negative_weighted_group_contributions']:+.5f}$ to the removal-minus-full difference. "
-        +r'The near-zero mean results from opposing effects, not identical predictions. The interval is conditional on this public snapshot and does not estimate private-test uncertainty. '
-        +f"The worst no-Rasch public draw already has ALC ${audit['worst_no_rasch_public_draw']['without_rasch_alc']:.5f}$, illustrating why a single difficult draw should not be compared with a multi-draw mean.\n\n"
-        +r'\paragraph{Archived implementation check.} '
-        +fr"We reconstruct the archived no-Rasch implementation (Git \texttt{{{version['archived_commit'][:7]}}}) and compare it with setting the original Rasch weights to zero. The first and last distinct evaluation inputs of each group, at all six budgets and under both policies, give {version['n_predictions']:,} checked predictions with maximum difference ${version['max_error']:.0f}$. "
-        +r'The acquisition code is unchanged and the kernel implementation is semantically identical. This checks the archived code on these inputs; it does not authenticate an unavailable historical platform ZIP. '
-        +r'The report retains the submitted with-Rasch configuration and does not infer that Rasch is universally necessary.'+'\n\n'
-        +r'\paragraph{Shared-benchmark context.} '
-        +r'All main public draws happen to contain distinct benchmarks, whereas official feedback includes multiple subjects within a benchmark. Kernel Probe and acquisition share evidence or seen candidates across those subjects. Thus a comparison of one subject across separate official draws need not hold its full context fixed, even when its own item pool is persistent. '+'\n\n'
-        +r'We isolate this mechanism using the first three eligible source/benchmark names in lexical order, taking the first group-ID pair with distinct visible subjects that fits the 1,000-pair cap. We hold the focal subject\textquotesingle s evaluation items and acquired-label prefixes fixed, then append only the companion\textquotesingle s acquired prefix at each budget. Acquisition is not rerun jointly. '
-        +r'Budgets zero and one, and Empirical Mean, stay unchanged; kernel-dependent predictions can change even at budgets 15 and 31, where Rasch is absent. This establishes context sensitivity, not the cause or magnitude of a private-platform gap.'+'\n\n'
-        +r'\begin{table}[H]'+'\n'+r'\centering\small'+'\n'+'\n'.join(table)+'\n'+r'\vspace{6pt}'+'\n'
-        +r'\caption{Controlled context diagnostic: fixed focal labels and queries, with or without another subject\textquotesingle s evidence from the same benchmark. These cases are not averaged into the main results.}'+'\n'
-        +r'\label{tab:context_audit}'+'\n'+r'\end{table}'+'\n\n'
-        +r'Results and reproducible checks are in \path{results/rasch_audit/}, with \path{tools/audit_rasch_effects.py}, \path{tools/check_rasch_versions.py}, and \path{tools/check_shared_context.py}.')
-    save('rasch_audit.tex',details)
     print('Generated formative report tables, macros, analyses, and group diagnostics.')
 
 

@@ -272,7 +272,7 @@ We separately evaluate the same with-Rasch ASRP + \texttt{adaptive\_4\_warm} ZIP
 
 \input{official_limitation}
 
-\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback; Appendix~\ref{app:rasch_audit} diagnoses this sensitivity. Unknown coordinator details remain local assumptions. Component effects do not establish universal necessity.
+\paragraph{Public evaluation scope.} Frozen fitting and calibration overlap the evaluation release, potentially inflating local gains. Thirty public draws characterize this snapshot, not unseen benchmarks or private groups. They also omit repeated-benchmark contexts present in official feedback. Unknown coordinator details remain local assumptions. Component effects do not establish universal necessity.
 
 \section{Conclusion}
 
@@ -495,10 +495,6 @@ The local sampler is implemented in \path{tools/draw_protocol.py}. For each draw
 Within each checkpoint, groups advance sequentially in draw order. Later groups can use evidence already revealed by earlier groups, but no group receives evidence from a higher checkpoint. All groups finish the cap before predictions are committed. The model and acquisition policy filter global evidence using the visible subject dictionary and anonymous benchmark ID. Repeated response rows are preserved, and prediction reuse never changes their scoring weight. Missing metadata can make different upstream subjects indistinguishable through the visible interface; no identifying fields are invented.
 
 The public starting-kit documentation specifies the complete-group draw preference but does not expose the coordinator implementation. The local hierarchy, RNG, group scheduling, alias assignment, and acquisition-response selection therefore remain explicit implementation choices. The protocol audit and source checksums are released in \path{experiments/formative_protocol.md}. These choices provide a reproducible approximation to the published design; they cannot reproduce private group selection or remove overlap with public offline fitting.
-
-\section{Rasch Sensitivity and Implementation Checks}\label{app:rasch_audit}
-
-\input{rasch_audit}
 
 % unsrtnat preserves the order in which references first appear in the text.
 \bibliographystyle{unsrtnat}
